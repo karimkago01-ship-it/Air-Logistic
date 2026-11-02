@@ -1,0 +1,231 @@
+
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Air Logistic | إدارة الشحن</title>
+<style>
+*{box-sizing:border-box}
+body{margin:0;background:#f1f5f9;color:#172033;font-family:Arial,sans-serif}
+header{background:#102c35;color:white;padding:22px}
+header h1{margin:0 0 8px;font-size:25px}
+header p{margin:0;color:#b9d4d8}
+.container{max-width:1100px;margin:auto;padding:18px}
+.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}
+.card{background:white;border-radius:13px;padding:18px;box-shadow:0 2px 9px #0000000b}
+.stat b{display:block;font-size:27px;color:#087e8b;margin-top:10px}
+.stat span{color:#64748b;font-size:14px}
+h2{font-size:19px;margin:0 0 15px}
+.panel{margin-top:18px}
+input,select,button{font:inherit;border-radius:8px;padding:12px;border:1px solid #dbe2ea}
+input,select{background:white;min-width:0;width:100%}
+button{cursor:pointer;border:0;background:#087e8b;color:white;font-weight:bold}
+button:hover{opacity:.88}
+.form{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+.actions{display:flex;gap:8px;margin-top:12px;flex-wrap:wrap}
+.secondary{background:#64748b}
+.danger{background:#dc3545}
+.search{margin:15px 0}
+.tablewrap{overflow-x:auto}
+table{width:100%;border-collapse:collapse;min-width:650px}
+th,td{padding:13px;text-align:right;border-bottom:1px solid #edf0f4;font-size:14px}
+th{background:#f8fafc;color:#526174}
+.status{padding:5px 9px;border-radius:20px;font-size:12px;background:#e0f2fe;color:#0369a1}
+.empty{text-align:center;padding:30px;color:#8793a3}
+footer{text-align:center;color:#82909e;padding:25px;font-size:12px}
+@media(max-width:650px){
+.stats{grid-template-columns:repeat(2,1fr)}
+.form{grid-template-columns:1fr}
+.container{padding:12px}
+header{padding:18px}
+}
+</style>
+</head>
+<body>
+<header>
+<h1>✈ Air Logistic</h1>
+<p>نظام إدارة ومتابعة الشحن والخدمات اللوجستية</p>
+</header>
+
+<main class="container">
+<section class="stats">
+<div class="card stat"><span>إجمالي الشحنات</span><b id="total">0</b></div>
+<div class="card stat"><span>قيد التنفيذ</span><b id="active">0</b></div>
+<div class="card stat"><span>تم التسليم</span><b id="done">0</b></div>
+<div class="card stat"><span>متأخرة</span><b id="late">0</b></div>
+</section>
+
+<section class="card panel">
+<h2>＋ تسجيل شحنة جديدة</h2>
+<form id="shipmentForm">
+<div class="form">
+<input id="code" placeholder="رقم الشحنة" required>
+<input id="customer" placeholder="اسم العميل" required>
+<input id="destination" placeholder="جهة الوصول" required>
+<input id="carrier" placeholder="شركة النقل">
+<select id="status">
+<option value="جديدة">جديدة</option>
+<option value="قيد التنفيذ">قيد التنفيذ</option>
+<option value="تم الشحن">تم الشحن</option>
+<option value="تم التسليم">تم التسليم</option>
+<option value="متأخرة">متأخرة</option>
+</select>
+<input id="date" type="date">
+</div>
+<div class="actions">
+<button type="submit" id="saveBtn">حفظ الشحنة</button>
+<button type="button" class="secondary" onclick="resetForm()">إلغاء</button>
+</div>
+</form>
+</section>
+
+<section class="card panel">
+<h2>📦 سجل الشحنات</h2>
+<input class="search" id="search" placeholder="ابحث برقم الشحنة أو العميل أو الوجهة...">
+<div class="tablewrap">
+<table>
+<thead>
+<tr>
+<th>رقم الشحنة</th>
+<th>العميل</th>
+<th>الوجهة</th>
+<th>شركة النقل</th>
+<th>الحالة</th>
+<th>التاريخ</th>
+<th>الإجراءات</th>
+</tr>
+</thead>
+<tbody id="rows"></tbody>
+</table>
+</div>
+<div id="empty" class="empty">لا توجد شحنات مسجلة حتى الآن</div>
+<div class="actions">
+<button onclick="exportCSV()">تصدير Excel / CSV</button>
+<button class="secondary" onclick="window.print()">طباعة التقرير</button>
+</div>
+</section>
+</main>
+<footer>Air Logistic Management System © 2026</footer>
+
+<script>
+let shipments=JSON.parse(localStorage.getItem("airShipments")||"[]");
+let editing=null;
+
+const $=id=>document.getElementById(id);
+
+function saveData(){
+localStorage.setItem("airShipments",JSON.stringify(shipments));
+render();
+}
+
+function resetForm(){
+$("shipmentForm").reset();
+editing=null;
+$("saveBtn").textContent="حفظ الشحنة";
+}
+
+$("shipmentForm").addEventListener("submit",function(e){
+e.preventDefault();
+
+const item={
+code:$("code").value.trim(),
+customer:$("customer").value.trim(),
+destination:$("destination").value.trim(),
+carrier:$("carrier").value.trim(),
+status:$("status").value,
+date:$("date").value
+};
+
+if(editing===null && shipments.some(x=>x.code===item.code)){
+alert("رقم الشحنة مسجل بالفعل");
+return;
+}
+
+if(editing!==null){
+shipments[editing]=item;
+}else{
+shipments.push(item);
+}
+
+saveData();
+resetForm();
+});
+
+function editItem(i){
+const x=shipments[i];
+editing=i;
+$("code").value=x.code;
+$("customer").value=x.customer;
+$("destination").value=x.destination;
+$("carrier").value=x.carrier;
+$("status").value=x.status;
+$("date").value=x.date;
+$("saveBtn").textContent="حفظ التعديلات";
+window.scrollTo({top:0,behavior:"smooth"});
+}
+
+function deleteItem(i){
+if(confirm("هل تريد حذف هذه الشحنة؟")){
+shipments.splice(i,1);
+saveData();
+}
+}
+
+function render(){
+$("total").textContent=shipments.length;
+$("active").textContent=shipments.filter(x=>["جديدة","قيد التنفيذ","تم الشحن"].includes(x.status)).length;
+$("done").textContent=shipments.filter(x=>x.status==="تم التسليم").length;
+$("late").textContent=shipments.filter(x=>x.status==="متأخرة").length;
+
+const q=$("search").value.toLowerCase();
+const filtered=shipments.map((x,i)=>({...x,index:i})).filter(x=>
+[x.code,x.customer,x.destination,x.carrier].join(" ").toLowerCase().includes(q)
+);
+
+$("rows").innerHTML=filtered.map(x=>`
+<tr>
+<td>${escapeHTML(x.code)}</td>
+<td>${escapeHTML(x.customer)}</td>
+<td>${escapeHTML(x.destination)}</td>
+<td>${escapeHTML(x.carrier)}</td>
+<td><span class="status">${escapeHTML(x.status)}</span></td>
+<td>${escapeHTML(x.date)}</td>
+<td>
+<button onclick="editItem(${x.index})">تعديل</button>
+<button class="danger" onclick="deleteItem(${x.index})">حذف</button>
+</td>
+</tr>`).join("");
+
+$("empty").style.display=filtered.length?"none":"block";
+}
+
+function escapeHTML(s){
+return String(s||"").replace(/[&<>"']/g,c=>({
+"&":"&amp;","<":"&lt;",">":"&gt;",
+'"':"&quot;","'":"&#39;"
+})[c]);
+}
+
+$("search").addEventListener("input",render);
+
+function exportCSV(){
+const headers=["رقم الشحنة","العميل","الوجهة","شركة النقل","الحالة","التاريخ"];
+const data=shipments.map(x=>[
+x.code,x.customer,x.destination,x.carrier,x.status,x.date
+]);
+const csv="\uFEFF"+[headers,...data].map(row=>
+row.map(v=>'"'+String(v||"").replace(/"/g,'""')+'"').join(",")
+).join("\n");
+
+const a=document.createElement("a");
+a.href=URL.createObjectURL(new Blob([csv],{type:"text/csv;charset=utf-8"}));
+a.download="Air_Logistic_Shipments.csv";
+a.click();
+URL.revokeObjectURL(a.href);
+}
+
+render();
+</script>
+</body>
+</html>
