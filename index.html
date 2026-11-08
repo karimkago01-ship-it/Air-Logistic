@@ -409,7 +409,7 @@ body.auth-locked>header,body.auth-locked>.wrap,body.auth-locked>footer,body.auth
 <div class="app-layout">
 <aside class="air-sidebar">
 <div class="sidebar-brand"><span class="sidebar-mark">📦</span><div><b>Air Logistic</b><small>القائمة الرئيسية</small></div></div>
-<nav id="nav"><button data-page="accountRequests">طلبات الحسابات</button>
+<nav id="nav"><button data-page="accountRequests">إدارة الموظفين والصلاحيات</button>
 <button class="active" data-page="home">الرئيسية</button><button data-page="shipments">الشحنات</button><button data-page="customers">العملاء</button><button data-page="drivers">السائقون</button><button data-page="vehicles">السيارات</button><button data-page="finance">الحسابات</button><button data-page="ocr">قراءة البوليصة OCR</button><button data-page="importer">استيراد Excel</button><button data-page="scanner">ماسح الموبايل</button><button data-page="transfers">التحويلات</button><button data-page="merchantPortal">بوابة التاجر</button><button data-page="courierPortal">لوحة المندوب</button><button data-page="tracking">تتبع العميل</button><button data-page="settlements">التسويات المالية</button><button data-page="policies">الشروط والسياسات</button><button data-page="workflow">دورة الشحنة (48 حالة)</button><button data-page="agents">الوكلاء الخارجيون</button><button data-page="pricing">مناطق وأسعار الشحن</button><button data-page="roles">الصلاحيات والأدوار</button><button data-page="finance">دفتر الحركة المالية</button><button data-page="tools">النسخ والاستيراد</button>
 </nav>
 <div class="sidebar-foot">Fast • Safe • Everywhere</div>
@@ -604,6 +604,7 @@ body.auth-locked>header,body.auth-locked>.wrap,body.auth-locked>footer,body.auth
   <div class="span4"><button class="primary">إضافة سجل مستخدم</button></div>
  </form><div id="roleTable"></div>
  </div>
+ <div class="panel"><h3>إدارة الحسابات المسجلة</h3><p class="muted">لعرض جميع الموظفين والمديرين، وتغيير الدور بين موظف أو مندوب أو مدير، أو تشغيل الحساب وإيقافه.</p><button type="button" class="primary" onclick="document.querySelector('#nav button[data-page=accountRequests]').click()">فتح إدارة الموظفين والحسابات</button></div>
  <div class="panel"><h3>مصفوفة الصلاحيات المقترحة</h3><div id="permissionMatrix"></div></div>
 </section>
 <section id="finance" class="page hidden">
@@ -945,24 +946,8 @@ addPageNavigation();
 render();
 
 
-// ===== تشغيل مباشر بدون شاشة تسجيل دخول =====
-const AUTH_KEY='air_logistic_auth_v1';
-let authData={users:[]},activeAuthUser={username:'admin',fullName:'مدير النظام',role:'مدير النظام'};
-function readAuth(){try{const x=JSON.parse(localStorage.getItem(AUTH_KEY)||'null');if(x&&Array.isArray(x.users))authData=x}catch(e){}}
-function saveAuth(){localStorage.setItem(AUTH_KEY,JSON.stringify(authData))}
-readAuth();
-function renderAccountRequests(){
- const pending=authData.users.filter(x=>x.status==='pending'),approved=authData.users.filter(x=>x.status!=='pending');
- const p=document.getElementById('pendingAccounts'),a=document.getElementById('approvedAccounts');
- if(p)p.innerHTML=pending.length?'<div class="tablewrap"><table><thead><tr><th>الاسم</th><th>اسم المستخدم</th><th>الدور المطلوب</th><th>تاريخ الطلب</th><th>الإجراء</th></tr></thead><tbody>'+pending.map(x=>`<tr><td>${esc(x.fullName)}</td><td>${esc(x.username)}</td><td>${esc(x.role)}</td><td>${new Date(x.createdAt).toLocaleString('ar-EG')}</td><td><button class="account-action account-approve" onclick="decideAccount('${esc(x.id)}','approved')">موافقة</button><button class="account-action account-reject" onclick="decideAccount('${esc(x.id)}','rejected')">رفض</button></td></tr>`).join('')+'</tbody></table></div>':'لا توجد طلبات معلقة';
- if(a)a.innerHTML=approved.length?'<div class="tablewrap"><table><thead><tr><th>الاسم</th><th>اسم المستخدم</th><th>الدور</th><th>الحالة</th><th>الإجراء</th></tr></thead><tbody>'+approved.map(x=>`<tr><td>${esc(x.fullName)}</td><td>${esc(x.username)}</td><td>${esc(x.role)}</td><td>${x.status==='approved'?'معتمد':x.status==='disabled'?'موقوف':'مرفوض'}</td><td>${x.role==='مدير النظام'?'—':`<button class="account-action account-reject" onclick="decideAccount('${esc(x.id)}','disabled')">إيقاف الحساب</button>`}</td></tr>`).join('')+'</tbody></table></div>':'لا توجد حسابات أخرى';
-}
-function decideAccount(id,status){
- if(!activeAuthUser||activeAuthUser.role!=='مدير النظام'){alert('هذه الصلاحية للمدير فقط');return}
- const u=authData.users.find(x=>x.id===id);if(!u)return;u.status=status;saveAuth();renderAccountRequests();audit('قرار حساب مستخدم',u.username+' : '+status);save();toast('تم تحديث حالة الحساب')
-}
-const nav=document.querySelector('#nav button[data-page="accountRequests"]');if(nav)nav.addEventListener('click',renderAccountRequests);
-
+// Used by the secure Supabase authentication module.
+let activeAuthUser = null;
 </script>
 <script src="./auth.js"></script>
 <script>
