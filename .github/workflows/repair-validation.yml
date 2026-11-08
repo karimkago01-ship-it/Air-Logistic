@@ -48,6 +48,48 @@ jobs:
               raise SystemExit("Duplicate HTML ids: " + ", ".join(duplicates))
           print(f"HTML ID audit passed ({len(parser.ids)} IDs).")
           PY
+      - name: Check inline JavaScript syntax
+        run: |
+          python - <<'PY'
+          from html.parser import HTMLParser
+          from pathlib import Path
+
+          class Scripts(HTMLParser):
+              def __init__(self):
+                  super().__init__()
+                  self.current = None
+                  self.parts = []
+                  self.files = []
+              def handle_starttag(self, tag, attrs):
+                  if tag.lower() != "script":
+                      return
+                  attrs = dict(attrs)
+                  if "src" in attrs:
+                      self.current = None
+                      return
+                  kind = attrs.get("type", "text/javascript").lower()
+                  if kind not in ("text/javascript", "application/javascript", "module"):
+                      self.current = None
+                      return
+                  self.current = []
+              def handle_data(self, data):
+                  if self.current is not None:
+                      self.current.append(data)
+              def handle_endtag(self, tag):
+                  if tag.lower() == "script" and self.current is not None:
+                      path = Path(f"/tmp/air-inline-{len(self.files)}.js")
+                      path.write_text("".join(self.current), encoding="utf-8")
+                      self.files.append(str(path))
+                      self.current = None
+
+          parser = Scripts()
+          parser.feed(Path("index.html").read_text(encoding="utf-8"))
+          print("\\n".join(parser.files))
+          PY
+          for file in /tmp/air-inline-*.js; do
+            [ -f "$file" ] || continue
+            node --check "$file"
+          done
       - name: Check recovery safety and PWA cache scope
         run: |
           ! grep -q "localStorage.removeItem('air_logistic_full_v1')" auth.js
