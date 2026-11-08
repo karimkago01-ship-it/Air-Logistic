@@ -6,6 +6,7 @@
     key: 'sb_publishable_4LoEfXDeogMpZ18AfQtz_Q_2zjBcyKi'
   };
   const $ = id => document.getElementById(id);
+  const APP_REDIRECT = 'https://karimkago01-ship-it.github.io/Air-Logistic/';
   const say = (message, error = false) => {
     const n = $('authNotice'); if (!n) return;
     n.textContent = message; n.style.color = error ? '#b42318' : '#176b46';
@@ -54,6 +55,15 @@
   $('loginModeBtn')?.addEventListener('click', () => showMode('login'));
   $('signupModeBtn')?.addEventListener('click', () => showMode('signup'));
   $('forgotPasswordBtn')?.addEventListener('click', () => showMode('reset'));
+  $('resendConfirmBtn')?.addEventListener('click', async () => {
+    const email = $('loginEmail')?.value.trim().toLowerCase();
+    if (!email) return say('اكتب البريد الإلكتروني في خانة الدخول أولًا.', true);
+    const button = $('resendConfirmBtn'); button.disabled = true;
+    const result = await client.auth.resend({type:'signup',email,options:{emailRedirectTo:APP_REDIRECT}});
+    button.disabled = false;
+    if (result.error) return say('تعذر إعادة إرسال التأكيد. تأكد من إعداد رابط الموقع وحاول مرة أخرى.', true);
+    say('تم طلب إرسال رسالة تأكيد جديدة. افحص البريد الوارد والرسائل غير المرغوب فيها.');
+  });
   $('backToLoginBtn')?.addEventListener('click', () => showMode('login'));
 
   $('loginForm')?.addEventListener('submit', async event => {
@@ -79,7 +89,7 @@
     if (password !== confirm) return say('تأكيد كلمة المرور غير مطابق.', true);
     const button = $('signupSubmit'); button.disabled = true; button.textContent = 'جارٍ إنشاء الحساب...';
     const result = await client.auth.signUp({
-      email, password, options:{data:{full_name},emailRedirectTo:location.origin + location.pathname}
+      email, password, options:{data:{full_name},emailRedirectTo:APP_REDIRECT}
     });
     button.disabled = false; button.textContent = 'إرسال طلب إنشاء الحساب';
     if (result.error) return say('تعذر إنشاء الحساب. راجع البريد أو جرّب بريدًا آخر.', true);
@@ -93,7 +103,7 @@
   $('resetForm')?.addEventListener('submit', async event => {
     event.preventDefault();
     const email = $('resetEmail').value.trim().toLowerCase();
-    const result = await client.auth.resetPasswordForEmail(email,{redirectTo:location.origin + location.pathname});
+    const result = await client.auth.resetPasswordForEmail(email,{redirectTo:APP_REDIRECT});
     if (result.error) return say('تعذر إرسال رابط الاستعادة. تحقق من البريد وحاول مرة أخرى.', true);
     say('إذا كان البريد مسجلًا، ستصلك رسالة آمنة لإعادة تعيين كلمة المرور.');
   });
