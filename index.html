@@ -248,80 +248,29 @@ tr:hover td{background:#f7fbff}
 
 
 <style id="air-sidebar-final">
-/* Clear, consistent navigation with reliable page selection */
-.wrap{max-width:100%;padding:12px clamp(10px,1.5vw,24px)}
-.app-layout{display:grid;grid-template-columns:252px minmax(0,1fr);gap:16px;direction:rtl;align-items:start}
-.air-sidebar{
- position:sticky;top:12px;align-self:start;height:calc(100vh - 24px);height:calc(100dvh - 24px);
- min-height:420px;max-height:none;overflow:hidden;display:flex;flex-direction:column;
- background:linear-gradient(180deg,#123b68 0%,#0b294b 100%);border:1px solid #245784;
- border-radius:17px;padding:13px 10px;color:#fff;box-shadow:0 8px 25px #123b6824
-}
-.sidebar-brand{display:flex;align-items:center;gap:10px;padding:7px 9px 14px;margin-bottom:10px;border-bottom:1px solid #ffffff24}
-.sidebar-mark{width:42px;height:42px;border-radius:12px;background:#fff;color:#123b68;display:grid;place-items:center;font-size:24px}
-.sidebar-brand b{display:block;font-size:15px;color:#fff}.sidebar-brand small{display:block;color:#c4d9ec;font-size:10px;margin-top:3px}
-#nav{position:static;display:flex;flex:1 1 auto;min-height:0;flex-direction:column;flex-wrap:nowrap;gap:5px;overflow-y:auto;overflow-x:hidden;
- padding:0 2px 0 0;margin:0;background:transparent;border:0;border-radius:0;box-shadow:none;scroll-behavior:smooth;scrollbar-width:thin;scrollbar-color:#557b9e transparent}
-#nav:before{display:none}
-#nav button{width:100%;min-width:0;min-height:43px;flex:0 0 auto;display:flex;align-items:center;justify-content:flex-start;
- gap:10px;text-align:right;white-space:normal;padding:9px 11px;border:1px solid transparent;
- border-radius:11px;background:transparent;color:#e7f1fb;font-size:13px;line-height:1.4;font-weight:600;
- cursor:pointer;transition:background .18s ease,color .18s ease,border-color .18s ease,transform .18s ease,box-shadow .18s ease}
-#nav button:before{display:inline-flex;align-items:center;justify-content:center;content:"•";width:27px;min-width:27px;height:27px;
- border-radius:8px;background:#ffffff12;color:#cfe5f8;font-size:16px;line-height:1}
-#nav button[data-page="accountRequests"]:before{content:"👤"}
-#nav button[data-page="home"]:before{content:"⌂"}
-#nav button[data-page="shipments"]:before{content:"📦"}
-#nav button[data-page="customers"]:before{content:"👥"}
-#nav button[data-page="drivers"]:before{content:"🚚"}
-#nav button[data-page="vehicles"]:before{content:"🚐"}
-#nav button[data-page="finance"]:before{content:"💰"}
-#nav button[data-page="ocr"]:before{content:"🧾"}
-#nav button[data-page="importer"]:before{content:"📊"}
-#nav button[data-page="scanner"]:before{content:"📷"}
-#nav button[data-page="transfers"]:before{content:"🔁"}
-#nav button[data-page="merchantPortal"]:before{content:"🏪"}
-#nav button[data-page="courierPortal"]:before{content:"🛵"}
-#nav button[data-page="tracking"]:before{content:"🔎"}
-#nav button[data-page="settlements"]:before{content:"💳"}
-#nav button[data-page="policies"]:before{content:"📜"}
-#nav button[data-page="workflow"]:before{content:"🧭"}
-#nav button[data-page="agents"]:before{content:"🌍"}
-#nav button[data-page="pricing"]:before{content:"⚖️"}
-#nav button[data-page="roles"]:before{content:"🛡️"}
-#nav button[data-page="tools"]:before{content:"🗂️"}
-#nav button:hover{background:#ffffff16;color:#fff;border-color:#ffffff20;transform:translateX(-2px)}
-#nav button:focus-visible{outline:2px solid #68c7ff;outline-offset:2px}
-#nav button.active{background:linear-gradient(100deg,#1674c8 0%,#239bd0 100%);color:#fff;border-color:#69c4f0;
- box-shadow:0 4px 13px #061c3655;font-weight:800}
-#nav button.active:before{background:#ffffff25;color:#fff}
-.sidebar-foot{text-align:center;color:#b7d0e5;font-size:10px;padding:12px 4px 4px;margin-top:9px;border-top:1px solid #ffffff24}
-.air-content{min-width:0}.air-hero{margin-top:0}.air-content>.page{min-width:0}.air-content footer{margin-top:16px}
-@media(max-width:900px){
- .app-layout{grid-template-columns:205px minmax(0,1fr);gap:10px}
- .air-sidebar{padding:10px 7px}
- #nav button{font-size:12px;padding:9px 8px;gap:7px}
- .sidebar-brand b{font-size:13px}
-}
+/* Restore the original horizontal main navigation; keep all current modules and permissions */
+.wrap{display:block!important;width:100%;max-width:1600px;margin:0 auto;padding:14px clamp(12px,1.7vw,26px)}
+.app-layout{display:block!important;width:100%;direction:rtl}
+.air-sidebar{position:static!important;display:block!important;width:100%;height:auto!important;min-height:0!important;max-height:none!important;overflow:visible!important;padding:0!important;margin:0 0 14px!important;background:transparent!important;border:0!important;border-radius:0!important;box-shadow:none!important;color:inherit}
+.sidebar-brand,.sidebar-foot{display:none!important}
+.air-content{display:block!important;width:100%;min-width:0}
+#nav{position:sticky!important;top:0;z-index:30;display:flex!important;flex-direction:row!important;flex-wrap:nowrap!important;gap:5px;overflow-x:auto!important;overflow-y:hidden!important;width:100%;min-height:0;padding:8px;margin:0 0 14px;background:linear-gradient(100deg,#10375f,#164d7d);border:1px solid #1d5687;border-radius:14px;box-shadow:0 6px 18px #123b6820;scrollbar-width:thin;scroll-behavior:smooth}
+#nav:before{display:none!important}
+#nav button{flex:0 0 auto!important;width:auto!important;min-width:max-content;min-height:0!important;white-space:nowrap!important;text-align:center!important;color:#eaf3fc!important;background:transparent!important;border:1px solid transparent!important;padding:11px 16px!important;border-radius:9px!important;font-size:13px!important;line-height:1.4!important;display:inline-flex!important;align-items:center;justify-content:center;gap:7px;box-shadow:none!important;transform:none}
+#nav button:before{display:none!important;content:none!important}
+#nav button:hover{background:#ffffff18!important;color:#fff!important;transform:translateY(-1px)!important}
+#nav button.active{background:#f28a16!important;color:#fff!important;border-color:#ffad48!important;box-shadow:0 3px 10px #f28a1640!important;font-weight:800}
+.air-content>.page{display:block;min-width:0}
 @media(max-width:650px){
- .wrap{padding:8px}
- .app-layout{grid-template-columns:116px minmax(0,1fr);gap:7px}
- .air-sidebar{top:7px;height:calc(100vh - 14px);height:calc(100dvh - 14px);min-height:360px;max-height:none;padding:8px 5px;border-radius:12px}
- .sidebar-brand{gap:5px;padding:4px 2px 9px;flex-direction:column;text-align:center}
- .sidebar-mark{width:32px;height:32px;font-size:18px}
- .sidebar-brand b{font-size:11px}.sidebar-brand small{font-size:9px}
- #nav{gap:3px}
- #nav button{min-height:40px;font-size:10px;padding:7px 5px;gap:4px;line-height:1.25;border-radius:8px}
- #nav button:before{width:23px;min-width:23px;height:23px;font-size:13px;border-radius:7px}
- .sidebar-foot{font-size:8px;line-height:1.3}
- .air-content .air-hero{padding:10px;min-height:90px}
- .air-content .air-hero h2{font-size:14px}
- .air-content .air-hero p{font-size:10px}
- .air-content .air-hero-art{display:none}
- .air-content .air-hero-chip{display:none}
- .air-content .grid{grid-template-columns:1fr}
- .air-content .formgrid{grid-template-columns:1fr}
- .air-content .span2,.air-content .span4{grid-column:span 1}
+ .wrap{padding:10px!important}
+ .air-sidebar{margin-bottom:10px!important}
+ #nav{position:sticky!important;top:0;gap:4px;padding:6px;border-radius:11px;margin-bottom:10px}
+ #nav button{padding:10px 12px!important;font-size:12px!important}
+ .air-content .air-hero{min-height:110px;padding:15px;border-radius:13px}
+ .air-content .air-hero h2{font-size:17px}
+ .air-content .air-hero p{font-size:11px}
+ .air-content .grid{grid-template-columns:repeat(2,minmax(0,1fr))}
+ .air-content .formgrid{grid-template-columns:repeat(2,minmax(0,1fr))}
 }
 </style>
 
