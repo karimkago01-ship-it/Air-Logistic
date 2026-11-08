@@ -548,6 +548,17 @@ img,video,canvas,svg{max-width:100%}
  <p id="importStatus" class="muted">يدعم النظام قراءة الورقة الأولى افتراضياً، مع إمكانية اختيار ورقة أخرى بعد القراءة.</p>
  <div id="sheetPickerWrap" class="hidden"><label>ورقة العمل<select id="sheetPicker" onchange="changeImportSheet()"></select></label></div>
  </div>
+ <div class="panel" id="templateCenter">
+  <h2>مركز قوالب Excel الجاهزة</h2>
+  <p class="muted">حمّل نموذجًا فارغًا، املأه ببياناتك، ثم ارفعه في قسم الاستيراد. القوالب لا تحتوي على بيانات عملاء حقيقية.</p>
+  <div class="formgrid">
+   <label>قالب الشحنات الموحد <small>الشحنات، العملاء، العناوين، التاجر، المندوب، التحصيل، الحالة</small><button class="secondary" type="button" onclick="downloadAirTemplate('shipments')">تنزيل قالب الشحنات Excel</button></label>
+   <label>قالب العملاء والتجار <small>بيانات التجار والعملاء واتفاقات الشحن</small><button class="secondary" type="button" onclick="downloadAirTemplate('clients')">تنزيل قالب العملاء والتجار</button></label>
+   <label>قالب المناديب والوكلاء <small>بيانات التواصل والمناطق والعهد والحدود</small><button class="secondary" type="button" onclick="downloadAirTemplate('agents')">تنزيل قالب المناديب والوكلاء</button></label>
+   <label>قالب المناطق والتسعير <small>السعر الأساسي والوزن والزيادة والمرتجع والمنطقة البعيدة</small><button class="secondary" type="button" onclick="downloadAirTemplate('pricing')">تنزيل قالب المناطق والتسعير</button></label>
+  </div>
+  <p class="muted">مهم: اترك الخانة فارغة إذا كانت المعلومة غير متاحة. لا تضع تقديرًا غير مؤكد في خانة التحصيل أو السعر.</p>
+ </div>
  <div class="panel hidden" id="mappingPanel"><h2>مطابقة أعمدة الملف مع بيانات النظام</h2><p class="muted">تم اقتراح المطابقة تلقائياً. راجعها وعدّلها قبل المعاينة.</p><div id="mappingGrid" class="formgrid"></div><div class="actions"><button class="primary" onclick="buildImportPreview()">إنشاء المعاينة والتحقق</button></div></div>
  <div class="panel hidden" id="previewPanel"><h2>مراجعة الشحنات قبل الاعتماد</h2><div id="importReport"></div><div class="actions"><button class="success" onclick="commitImport()">اعتماد الشحنات السليمة فقط</button><button class="light" onclick="downloadImportErrors()">تنزيل تقرير الأخطاء</button></div><div class="tablewrap" id="importPreview"></div></div>
 </section>
@@ -1038,6 +1049,24 @@ render=function(){priorRenderFlexible();renderFlexibleModules()};
 addPageNavigation();
 render();
 
+
+// ===== Air Logistic Excel template center =====
+function downloadAirTemplate(kind){
+ if(!window.XLSX){alert('مكتبة Excel غير متاحة الآن. تأكد من اتصال الإنترنت ثم أعد المحاولة.');return}
+ const templates={
+  shipments:{file:'Air_Logistic_Shipments_Template.xlsx',sheets:{
+   'الشحنات':[['رقم الشحنة','تاريخ التسجيل','اسم العميل','رقم الهاتف','من','جهة الوصول / العنوان','المحتويات','عدد القطع','الوزن','نوع الخدمة','شركة النقل','التاجر','المندوب','الحالة','موعد التسليم','رسوم الشحن','تحصيل COD','المحصل','المنطقة','الفرع','ملاحظات'],[]],
+   'تعليمات':[['الحقل','التوضيح'],['رقم الشحنة','رقم فريد لا يتكرر'],['تحصيل COD','المبلغ المطلوب تحصيله من العميل فقط'],['المندوب','اكتب الاسم كما هو مسجل في النظام'],['الحالة','اتركها فارغة ليتم تعيين الحالة الابتدائية عند الاستيراد'],['البيانات الناقصة','اتركها فارغة ولا تضع تقديرات']]}},
+  clients:{file:'Air_Logistic_Clients_Merchants_Template.xlsx',sheets:{'العملاء والتجار':[['اسم التاجر','اسم المسؤول','الهاتف','هاتف إضافي','المحافظة','المدينة','العنوان','سعر الشحن المتفق','نسبة التوصيل','رسوم المرتجع','شروط التحصيل','ملاحظات'],[]]}},
+  agents:{file:'Air_Logistic_Couriers_Agents_Template.xlsx',sheets:{'المناديب والوكلاء':[['الاسم','النوع (مندوب/وكيل)','الهاتف','المحافظة','المنطقة','نوع المركبة','العهدة الحالية','حد العهدة','السعر/النسبة','الحالة','ملاحظات'],[]]}},
+  pricing:{file:'Air_Logistic_Areas_Pricing_Template.xlsx',sheets:{'المناطق والتسعير':[['المحافظة','المدينة','المنطقة','تصنيف المنطقة','السعر الأساسي','الوزن المشمول','سعر الكيلو الإضافي','رسوم المنطقة البعيدة','رسوم المرتجع','التاجر (اختياري)','ساري من','الحالة'],[]]}}
+ };
+ const t=templates[kind];if(!t)return;
+ const wb=XLSX.utils.book_new();
+ Object.entries(t.sheets).forEach(([name,rows])=>{const ws=XLSX.utils.aoa_to_sheet(rows);ws['!cols']=(rows[0]||[]).map(h=>({wch:Math.max(16,Math.min(30,String(h).length+5))}));XLSX.utils.book_append_sheet(wb,ws,name)});
+ XLSX.writeFile(wb,t.file,{compression:true});
+ if(typeof audit==='function')audit('تنزيل قالب Excel',kind);
+}
 
 // Used by the secure Supabase authentication module.
 let activeAuthUser = null;
