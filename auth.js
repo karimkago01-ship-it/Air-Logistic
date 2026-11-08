@@ -223,6 +223,7 @@
     // queued for migration; cloud records are never overwritten during login.
     let recoveredCount = 0;
     let recoverPolicies = false;
+    const recoveredIds = Object.fromEntries(keys.map(key => [key,[]]));
     if (profile.role === 'admin' && oldSnapshot && typeof oldSnapshot === 'object') {
       for (const collection of keys) {
         const localItems = Array.isArray(oldSnapshot[collection]) ? oldSnapshot[collection] : [];
@@ -235,6 +236,7 @@
           next[collection].push(item);
           cloudIds[collection].add(recordId);
           recoveredCount++;
+          recoveredIds[collection].push(recordId);
         }
       }
       if (!cloudHasPolicies && oldSnapshot.policies && typeof oldSnapshot.policies === 'object') {
@@ -251,13 +253,35 @@
       if (!migrated) {
         if (typeof toast === 'function') toast('تم تحميل البيانات مع الاحتفاظ بنسختك المحلية؛ تعذرت مزامنة بعض السجلات.');
       } else {
-        // Keep the local snapshot as a recovery copy; never delete it automatically.
-        const verify = await client.from('app_records')
-          .select('record_id')
-          .eq('workspace_id',profile.workspace_id)
-          .limit(1);
-        if (verify.error) console.warn('Air Logistic cloud migration verification:',verify.error);
-        if (typeof toast === 'function') toast('تمت مزامنة السجلات المحلية غير الموجودة بالسحابة، مع الاحتفاظ بنسخة الاسترداد.');
+        // Verify every recovered key before reporting migration success.
+        let verified = true;
+        for (const collection of keys) {
+          const ids = recoveredIds[collection];
+          for (let i = 0; i < ids.length; i += 100) {
+            const batch = ids.slice(i,i + 100);
+            const check = await client.from('app_records')
+              .select('record_id')
+              .eq('workspace_id',profile.workspace_id)
+              .eq('collection',collection)
+              .in('record_id',batch);
+            if (check.error) { verified = false; break; }
+            const found = new Set((check.data || []).map(row => String(row.record_id)));
+            if (batch.some(id => !found.has(id))) { verified = false; break; }
+          }
+          if (!verified) break;
+        }
+        if (verified && recoverPolicies) {
+          const check = await client.from('app_records')
+            .select('record_id')
+            .eq('workspace_id',profile.workspace_id)
+            .eq('collection','policies')
+            .eq('record_id','settings')
+            .maybeSingle();
+          verified = !check.error && !!check.data;
+        }
+        if (typeof toast === 'function') toast(verified
+          ? 'تم التحقق من مزامنة السجلات المستعادة. نسخة الاسترداد المحلية محفوظة.'
+          : 'اكتملت محاولة المزامنة لكن تعذر التحقق من كل السجلات؛ نسخة الاسترداد المحلية ما زالت محفوظة.');
       }
     }
   }
