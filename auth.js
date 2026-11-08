@@ -146,6 +146,13 @@
           if (result.error) throw result.error;
         }
       }
+      if (profile.role !== 'courier' && db.policies && Object.keys(db.policies).length) {
+        const policyResult = await client.from('app_records').upsert({
+          workspace_id:profile.workspace_id, collection:'policies', record_id:'settings',
+          data:db.policies, created_by:profile.user_id, updated_by:profile.user_id
+        }, {onConflict:'workspace_id,collection,record_id'});
+        if (policyResult.error) throw policyResult.error;
+      }
       while (deleteQueue.length) {
         const item = deleteQueue[0];
         const result = await client.from('app_records').delete()
@@ -168,6 +175,7 @@
     if (result.error) throw result.error;
     const next = defaults();
     for (const row of (result.data || [])) {
+      if (row.collection === 'policies') { next.policies = row.data || {}; continue; }
       if (!keys.includes(row.collection)) continue;
       const item = row.data || {};
       if (row.collection !== 'shipments') item._cloudId = item._cloudId || row.record_id;
@@ -251,7 +259,14 @@
     realtimeChannel = client.channel('air-logistic-' + workspaceId)
       .on('postgres_changes',{event:'*',schema:'public',table:'app_records',filter:'workspace_id=eq.' + workspaceId},payload => {
         const row = payload.new || payload.old;
-        if (!row || !keys.includes(row.collection)) return;
+        if (!row) return;
+        if (row.collection === 'policies') {
+          if (payload.eventType !== 'DELETE') db.policies = payload.new.data || {};
+          else db.policies = {};
+          if (typeof render === 'function') render();
+          return;
+        }
+        if (!keys.includes(row.collection)) return;
         const collection = row.collection;
         if (!Array.isArray(db[collection])) db[collection] = [];
         const idx = db[collection].findIndex(x => collection === 'shipments'
