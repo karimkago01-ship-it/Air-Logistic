@@ -22,7 +22,7 @@
     try { return JSON.parse(localStorage.getItem('air_logistic_full_v1') || 'null'); }
     catch (_) { return null; }
   })();
-  try { localStorage.removeItem('air_logistic_full_v1'); } catch (_) {}
+  // Keep the previous local dataset until the administrator has migrated it successfully.
 
   if (!window.supabase || !window.supabase.createClient) {
     document.body.classList.add('auth-locked');
@@ -153,9 +153,11 @@
         if (result.error) throw result.error;
         deleteQueue.shift();
       }
+      return true;
     } catch (error) {
       console.error('Air Logistic cloud sync:',error);
       if (typeof toast === 'function') toast('تعذرت مزامنة بعض البيانات؛ راجع اتصال الإنترنت وصلاحيات الحساب.');
+      return false;
     } finally { syncBusy = false; }
   }
 
@@ -176,8 +178,12 @@
       for (const key of keys) if (Array.isArray(oldSnapshot[key])) next[key] = oldSnapshot[key];
       if (oldSnapshot.policies && typeof oldSnapshot.policies === 'object') next.policies = oldSnapshot.policies;
       db = next;
-      await syncDBToCloud();
-    } else db = next;
+      const migrated = await syncDBToCloud();
+      if (migrated) { try { localStorage.removeItem('air_logistic_full_v1'); } catch (_) {} }
+    } else {
+      db = next;
+      if ((result.data || []).length && profile.role === 'admin') { try { localStorage.removeItem('air_logistic_full_v1'); } catch (_) {} }
+    }
     if (typeof render === 'function') render();
   }
 
