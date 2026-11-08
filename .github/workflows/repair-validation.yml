@@ -1,0 +1,56 @@
+name: Air Logistic repair validation
+
+on:
+  push:
+    branches:
+      - repair/full-system
+  pull_request:
+    branches:
+      - main
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Check JavaScript syntax
+        run: |
+          node --check auth.js
+          node --check sw.js
+      - name: Validate HTML structure and duplicate IDs
+        run: |
+          python - <<'PY'
+          from html.parser import HTMLParser
+          from collections import Counter
+          from pathlib import Path
+
+          class Audit(HTMLParser):
+              def __init__(self):
+                  super().__init__()
+                  self.ids = []
+              def handle_starttag(self, tag, attrs):
+                  for key, value in attrs:
+                      if key == "id" and value:
+                          self.ids.append(value)
+
+          parser = Audit()
+          parser.feed(Path("index.html").read_text(encoding="utf-8"))
+          duplicates = [key for key, count in Counter(parser.ids).items() if count > 1]
+          if duplicates:
+              raise SystemExit("Duplicate HTML ids: " + ", ".join(duplicates))
+          print(f"HTML ID audit passed ({len(parser.ids)} IDs).")
+          PY
+      - name: Check recovery safety and PWA cache scope
+        run: |
+          ! grep -q "localStorage.removeItem('air_logistic_full_v1')" auth.js
+          grep -q 'air-logistic-pwa-v12' sw.js
+          grep -q 'key.startsWith(CACHE_PREFIX)' sw.js
+          grep -q '"theme_color": "#102746"' manifest.webmanifest
