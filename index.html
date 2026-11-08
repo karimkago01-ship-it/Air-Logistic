@@ -899,7 +899,21 @@ function editImportRow(index){
 function commitImport(){let good=importPreviewRows.filter(x=>!x.errors.length);if(!good.length)return alert('لا توجد صفوف سليمة للاعتماد');if(!confirm(`سيتم إضافة ${good.length} شحنة. هل تريد المتابعة؟`))return;good.forEach(x=>db.shipments.push(x.data));db.imports=db.imports||[];db.imports.unshift({at:new Date().toISOString(),count:good.length,skipped:importPreviewRows.length-good.length});audit('استيراد Excel',`${good.length} شحنة`);save();toast(`تم استيراد ${good.length} شحنة`);clearImport()}
 function downloadImportErrors(){let bad=importPreviewRows.filter(x=>x.errors.length);if(!bad.length)return alert('لا توجد أخطاء');let rows=[['صف الملف','رقم الشحنة','الأخطاء'],...bad.map(x=>[x.row,x.data.id,x.errors.join('؛ ')])];download('\ufeff'+rows.map(r=>r.map(v=>'"'+String(v).replace(/"/g,'""')+'"').join(',')).join('\r\n'),'air-logistic-import-errors.csv','text/csv;charset=utf-8')}
 function clearImport(){importWorkbook=null;importRows=[];importPreviewRows=[];document.getElementById('excelFile').value='';document.getElementById('mappingPanel').classList.add('hidden');document.getElementById('previewPanel').classList.add('hidden');document.getElementById('sheetPickerWrap').classList.add('hidden');document.getElementById('importStatus').textContent='اختر ملفاً لبدء القراءة.'}
-function renderTransfers(){let rows=(db.transfers||[]).map(t=>[t.shipmentId,t.fromAgent||'—',t.toAgent,t.reason,new Date(t.at).toLocaleString('ar-EG')]);document.getElementById('transferTable').innerHTML=table(['رقم الشحنة','من مندوب','إلى مندوب','السبب','التاريخ والوقت'],rows)}
+function renderTransfers(){
+ const list=db.transfers||[];
+ if(!list.length){document.getElementById('transferTable').innerHTML='<p class="muted">لا توجد تحويلات مسجلة.</p>';return}
+ document.getElementById('transferTable').innerHTML='<table><thead><tr><th>رقم الشحنة</th><th>من مندوب</th><th>إلى مندوب</th><th>السبب</th><th>التاريخ والوقت</th><th>إجراء</th></tr></thead><tbody>'+list.map((t,i)=>`<tr><td>${esc(t.shipmentId)}</td><td>${esc(t.fromAgent||'—')}</td><td>${esc(t.toAgent)}</td><td>${esc(t.reason)}</td><td>${esc(new Date(t.at).toLocaleString('ar-EG'))}</td><td><button class="light" type="button" onclick="editTransfer(${i})">تعديل التوزيع</button></td></tr>`).join('')+'</tbody></table>';
+}
+function editTransfer(index){
+ const t=(db.transfers||[])[index];if(!t)return;
+ const nextAgent=prompt('اسم المندوب الجديد:',t.toAgent||'');if(nextAgent===null)return;
+ if(!db.drivers.some(d=>d.name===nextAgent.trim()&&d.status!=='غير نشط'))return alert('لازم تختار اسم مندوب مسجل ونشط بالنظام.');
+ const reason=prompt('سبب التعديل:',t.reason||'');if(reason===null)return;
+ const shipment=db.shipments.find(x=>String(x.id)===String(t.shipmentId));
+ const previous=t.toAgent;t.toAgent=nextAgent.trim();t.reason=reason.trim();t.editedAt=new Date().toISOString();
+ if(shipment&&shipment.agent===previous){shipment.agent=t.toAgent;shipment.history=shipment.history||[];shipment.history.unshift({at:t.editedAt,event:'تعديل توزيع المندوب',fromAgent:previous,toAgent:t.toAgent,reason:t.reason});}
+ audit('تعديل توزيع شحنة',String(t.shipmentId));save();renderTransfers();toast('تم تحديث التوزيع');
+}
 document.getElementById('transferForm').onsubmit=e=>{e.preventDefault();let v=Object.fromEntries(new FormData(e.target)),s=db.shipments.find(x=>String(x.id)===v.shipmentId.trim());if(!s)return alert('رقم الشحنة غير موجود');if(!db.drivers.some(d=>d.name===v.toAgent&&d.status!=='غير نشط'))return alert('اختر مندوباً مسجلاً ونشطاً');if(s.agent===v.toAgent)return alert('الشحنة مسندة بالفعل إلى هذا المندوب');let t={shipmentId:s.id,fromAgent:s.agent||'',toAgent:v.toAgent,reason:v.reason,at:new Date().toISOString()};db.transfers=db.transfers||[];db.transfers.unshift(t);s.history=s.history||[];s.history.unshift({at:t.at,event:'تحويل مندوب',fromAgent:t.fromAgent,toAgent:t.toAgent,reason:t.reason});s.agent=v.toAgent;audit('تحويل شحنة',`${s.id}: ${t.fromAgent} → ${t.toAgent}`);e.target.reset();save();toast('تم تحويل الشحنة وتسجيل الحركة')};
 
 
