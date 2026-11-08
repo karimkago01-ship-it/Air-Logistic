@@ -868,8 +868,27 @@ function buildImportPreview(){
  importRows.forEach((row,idx)=>{let x={};Object.keys(map).forEach(k=>{let j=map[k];x[k]=j>=0?String(row[j]??'').trim():''});x.id=x.id.trim();let errors=[];if(!x.id)errors.push('رقم الشحنة مفقود');else if(seen.has(x.id))errors.push('رقم الشحنة موجود مسبقاً');if(!x.customer)errors.push('اسم العميل مفقود');if(!x.to)errors.push('العنوان/جهة الوصول مفقود');['pieces','weight','fee','cod','collected'].forEach(k=>{if(x[k]!==''&&!Number.isFinite(Number(x[k])))errors.push('قيمة غير رقمية في '+k)});if(x.agent&&!db.drivers.some(d=>d.name===x.agent))errors.push('المندوب غير مسجل بالنظام');if(x.id)seen.add(x.id);x.pieces=x.pieces===''?'':Number(x.pieces);['weight','fee','cod','collected'].forEach(k=>x[k]=x[k]===''?'':Number(x[k]));x.status=x.status||'تم إنشاء الطلب';x.service=x.service||'عادي';x.history=[{at:new Date().toISOString(),event:'استيراد من ملف',row:idx+2}];importPreviewRows.push({data:x,errors,row:idx+2})});
  let good=importPreviewRows.filter(x=>!x.errors.length).length,bad=importPreviewRows.length-good;
  document.getElementById('importReport').innerHTML=`<p>إجمالي الصفوف: <b>${importPreviewRows.length}</b> — سليمة: <b>${good}</b> — تحتاج مراجعة: <b>${bad}</b></p><p class="muted">الصفوف التي بها أخطاء لن تُحفظ. راجع البيانات قبل الاعتماد.</p>`;
- document.getElementById('importPreview').innerHTML='<table><thead><tr><th>صف الملف</th><th>رقم الشحنة</th><th>العميل</th><th>الهاتف</th><th>العنوان</th><th>المندوب</th><th>COD</th><th>نتيجة الفحص</th></tr></thead><tbody>'+importPreviewRows.map(x=>`<tr class="${x.errors.length?'badrow':'okrow'}"><td>${x.row}</td><td>${esc(x.data.id)}</td><td>${esc(x.data.customer)}</td><td>${esc(x.data.phone)}</td><td>${esc(x.data.to)}</td><td>${esc(x.data.agent)}</td><td>${esc(x.data.cod)}</td><td>${x.errors.length?esc(x.errors.join('؛ ')):'سليم'}</td></tr>`).join('')+'</tbody></table>';
+ document.getElementById('importPreview').innerHTML='<table><thead><tr><th>صف الملف</th><th>رقم الشحنة</th><th>العميل</th><th>الهاتف</th><th>العنوان</th><th>المندوب</th><th>COD</th><th>نتيجة الفحص</th><th>تعديل</th></tr></thead><tbody>'+importPreviewRows.map((x,i)=>`<tr class="${x.errors.length?'badrow':'okrow'}"><td>${x.row}</td><td>${esc(x.data.id)}</td><td>${esc(x.data.customer)}</td><td>${esc(x.data.phone)}</td><td>${esc(x.data.to)}</td><td>${esc(x.data.agent)}</td><td>${esc(x.data.cod)}</td><td>${x.errors.length?esc(x.errors.join('؛ ')):'سليم'}</td><td><button class="light" type="button" onclick="editImportRow(${i})">تعديل البيانات</button></td></tr>`).join('')+'</tbody></table>';
  document.getElementById('previewPanel').classList.remove('hidden');
+}
+function editImportRow(index){
+ const item=importPreviewRows[index];if(!item)return;
+ const fields=[['id','رقم الشحنة'],['customer','اسم العميل'],['phone','الهاتف'],['to','العنوان / الوجهة'],['merchant','التاجر'],['agent','المندوب'],['area','المنطقة / خط السير'],['fee','رسوم الشحن'],['cod','مبلغ التحصيل'],['pieces','عدد القطع'],['weight','الوزن'],['notes','ملاحظات']];
+ for(const [key,label] of fields){
+  const value=prompt('تعديل '+label+':',item.data[key]??'');
+  if(value===null)return;
+  item.data[key]=value.trim();
+ }
+ ['fee','cod','pieces','weight'].forEach(k=>{if(item.data[k]!=='')item.data[k]=Number(item.data[k])});
+ const duplicate=db.shipments.some(x=>String(x.id)===String(item.data.id))||importPreviewRows.some((x,i)=>i!==index&&String(x.data.id)===String(item.data.id));
+ item.errors=[];
+ if(!item.data.id)item.errors.push('رقم الشحنة مفقود');
+ if(duplicate)item.errors.push('رقم الشحنة مكرر');
+ if(!item.data.customer)item.errors.push('اسم العميل مفقود');
+ if(!item.data.to)item.errors.push('العنوان/جهة الوصول مفقود');
+ ['fee','cod','pieces','weight'].forEach(k=>{if(item.data[k]!==''&&!Number.isFinite(Number(item.data[k])))item.errors.push('قيمة غير رقمية: '+k)});
+ if(item.data.agent&&!db.drivers.some(d=>d.name===item.data.agent))item.errors.push('المندوب غير مسجل بالنظام');
+ renderImportPreview();
 }
 function commitImport(){let good=importPreviewRows.filter(x=>!x.errors.length);if(!good.length)return alert('لا توجد صفوف سليمة للاعتماد');if(!confirm(`سيتم إضافة ${good.length} شحنة. هل تريد المتابعة؟`))return;good.forEach(x=>db.shipments.push(x.data));db.imports=db.imports||[];db.imports.unshift({at:new Date().toISOString(),count:good.length,skipped:importPreviewRows.length-good.length});audit('استيراد Excel',`${good.length} شحنة`);save();toast(`تم استيراد ${good.length} شحنة`);clearImport()}
 function downloadImportErrors(){let bad=importPreviewRows.filter(x=>x.errors.length);if(!bad.length)return alert('لا توجد أخطاء');let rows=[['صف الملف','رقم الشحنة','الأخطاء'],...bad.map(x=>[x.row,x.data.id,x.errors.join('؛ ')])];download('\ufeff'+rows.map(r=>r.map(v=>'"'+String(v).replace(/"/g,'""')+'"').join(',')).join('\r\n'),'air-logistic-import-errors.csv','text/csv;charset=utf-8')}
