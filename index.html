@@ -772,7 +772,44 @@ function download(data,name,type){let u=URL.createObjectURL(new Blob([data],{typ
 function backup(){download(JSON.stringify(db,null,2),'air-logistic-backup.json','application/json')}
 document.getElementById('restoreFile').onchange=e=>{let f=e.target.files[0];if(!f)return;let r=new FileReader();r.onload=()=>{try{let d=JSON.parse(r.result);['shipments','customers','drivers','vehicles','expenses','transfers','audit','imports','settlements','remits','roles'].forEach(k=>{if(Array.isArray(d[k]))db[k]=[...db[k],...d[k].filter(v=>!db[k].some(old=>(old.id&&old.id===v.id)||(old.name&&old.name===v.name)||(old.plate&&old.plate===v.plate)))];});save();toast('تم استيراد البيانات')}catch{alert('ملف النسخة الاحتياطية غير صالح')}};r.readAsText(f);e.target.value=''};
 function exportCSV(){let cols=['id','date','customer','phone','from','to','content','pieces','weight','service','carrier','driver','vehicle','status','due','fee','cod','collected','notes'];let lines=[cols.join(','),...db.shipments.map(x=>cols.map(k=>'"'+String(x[k]??'').replace(/"/g,'""')+'"').join(','))];download('\ufeff'+lines.join('\r\n'),'air-logistic-shipments.csv','text/csv;charset=utf-8')}
-async function readWaybill(){let f=document.getElementById('ocrImage').files[0];if(!f){alert('اختر صورة البوليصة أولاً');return}let p=document.getElementById('ocrProgress');try{if(!window.Tesseract)throw Error('محرك OCR لم يتم تحميله. تأكد من الإنترنت ثم أعد فتح الصفحة.');p.textContent='جاري قراءة الصورة...';let result=await Tesseract.recognize(f,'ara+eng',{logger:m=>{if(m.status)p.textContent=m.status+' '+Math.round((m.progress||0)*100)+'%'}});lastOCR=result.data.text;document.getElementById('ocrText').value=lastOCR;p.textContent='انتهت القراءة. راجع النص يدويًا.';toast('تم استخراج النص')}catch(err){p.textContent='تعذر إكمال القراءة: '+err.message}}
+async function prepareWaybillImage(file){
+ const bitmap=await createImageBitmap(file);
+ const maxSide=2600,scale=Math.min(2.2,maxSide/Math.max(bitmap.width,bitmap.height));
+ const w=Math.max(1,Math.round(bitmap.width*scale)),h=Math.max(1,Math.round(bitmap.height*scale));
+ const canvas=document.createElement('canvas');canvas.width=w;canvas.height=h;
+ const ctx=canvas.getContext('2d',{willReadFrequently:true});
+ ctx.fillStyle='#fff';ctx.fillRect(0,0,w,h);ctx.drawImage(bitmap,0,0,w,h);
+ const image=ctx.getImageData(0,0,w,h),d=image.data;
+ for(let i=0;i<d.length;i+=4){
+  const gray=0.299*d[i]+0.587*d[i+1]+0.114*d[i+2];
+  const contrast=Math.max(0,Math.min(255,(gray-128)*1.32+128));
+  const clean=contrast>245?255:contrast<22?0:contrast;
+  d[i]=d[i+1]=d[i+2]=clean;
+ }
+ ctx.putImageData(image,0,0);
+ return new Promise((resolve,reject)=>canvas.toBlob(blob=>blob?resolve(blob):reject(new Error('تعذر تجهيز الصورة')),'image/png'));
+}
+async function readWaybill(){
+ const file=document.getElementById('ocrImage').files[0];
+ if(!file){alert('اختر صورة البوليصة أولاً');return}
+ const progress=document.getElementById('ocrProgress');
+ try{
+  if(!window.Tesseract)throw Error('محرك OCR لم يتم تحميله. تأكد من الإنترنت ثم أعد فتح الصفحة.');
+  progress.textContent='جاري تحسين وضوح الصورة...';
+  const enhanced=await prepareWaybillImage(file);
+  progress.textContent='جاري قراءة البوليصة بالعربية والإنجليزية...';
+  const result=await Tesseract.recognize(enhanced,'ara+eng',{
+   logger:m=>{if(m.status)progress.textContent=m.status+' '+Math.round((m.progress||0)*100)+'%'},
+   tessedit_pageseg_mode: '11',
+   preserve_interword_spaces:'1'
+  });
+  lastOCR=(result.data.text||'').trim();
+  document.getElementById('ocrText').value=lastOCR;
+  const confidence=Number(result.data.confidence||0);
+  progress.textContent='انتهت القراءة — ثقة المحرك '+Math.round(confidence)+'%. راجع الأرقام والأسماء والعنوان قبل النقل.';
+  toast(lastOCR?'تم تحسين الصورة واستخراج النص':'لم يظهر نص واضح؛ جرّب صورة أقرب وأكثر إضاءة');
+ }catch(err){progress.textContent='تعذر إكمال القراءة: '+err.message}
+}
 function copyOCR(){let t=document.getElementById('ocrText').value;if(!t)return alert('لا يوجد نص');navigator.clipboard?.writeText(t).then(()=>toast('تم نسخ النص')).catch(()=>alert(t))}
 function fillFromOCR(){let t=document.getElementById('ocrText').value;if(!t.trim())return alert('اقرأ البوليصة أولاً');let find=(re)=>{let m=t.match(re);return m?m[1].trim():''};let vals={id:find(/(?:رقم\s*الشحنة|بوليصة\s*رقم|waybill|tracking)\s*[:：#-]?\s*([A-Z0-9-]+)/i),customer:find(/(?:اسم\s*العميل|المرسل|المستلم|customer|consignee)\s*[:：-]\s*([^\n]+)/i),phone:find(/(?:موبايل|هاتف|تليفون|phone|mobile)\s*[:：-]?\s*([+0-9 ()-]{7,})/i),to:find(/(?:جهة\s*الوصول|عنوان\s*التسليم|destination|delivery\s*address)\s*[:：-]\s*([^\n]+)/i)};document.querySelectorAll('#shipForm [name]').forEach(el=>{if(vals[el.name])el.value=vals[el.name]});document.getElementById('shipTitle').textContent='راجع بيانات البوليصة قبل الحفظ';document.querySelector('[data-page="shipments"]').click();toast('تم نقل الحقول التي أمكن التعرف عليها؛ راجعها قبل الحفظ')}
 
