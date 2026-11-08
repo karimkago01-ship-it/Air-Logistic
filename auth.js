@@ -131,7 +131,8 @@
 
   async function syncDBToCloud() {
     const profile = window.currentProfile;
-    if (!profile || !profile.active || syncBusy) return;
+    if (!profile || !profile.active) return false;
+    if (syncBusy) { syncPending = true; return false; }
     syncBusy = true;
     try {
       for (const collection of keys) {
