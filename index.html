@@ -871,6 +871,12 @@ function buildImportPreview(){
  document.getElementById('importPreview').innerHTML='<table><thead><tr><th>صف الملف</th><th>رقم الشحنة</th><th>العميل</th><th>الهاتف</th><th>العنوان</th><th>المندوب</th><th>COD</th><th>نتيجة الفحص</th><th>تعديل</th></tr></thead><tbody>'+importPreviewRows.map((x,i)=>`<tr class="${x.errors.length?'badrow':'okrow'}"><td>${x.row}</td><td>${esc(x.data.id)}</td><td>${esc(x.data.customer)}</td><td>${esc(x.data.phone)}</td><td>${esc(x.data.to)}</td><td>${esc(x.data.agent)}</td><td>${esc(x.data.cod)}</td><td>${x.errors.length?esc(x.errors.join('؛ ')):'سليم'}</td><td><button class="light" type="button" onclick="editImportRow(${i})">تعديل البيانات</button></td></tr>`).join('')+'</tbody></table>';
  document.getElementById('previewPanel').classList.remove('hidden');
 }
+function renderImportPreview(){
+ const good=importPreviewRows.filter(x=>!x.errors.length).length,bad=importPreviewRows.length-good;
+ document.getElementById('importReport').innerHTML=`<p>إجمالي الصفوف: <b>${importPreviewRows.length}</b> — سليمة: <b>${good}</b> — تحتاج مراجعة: <b>${bad}</b></p><p class="muted">الصفوف التي بها أخطاء لن تُحفظ. راجع البيانات قبل الاعتماد.</p>`;
+ document.getElementById('importPreview').innerHTML='<table><thead><tr><th>صف الملف</th><th>رقم الشحنة</th><th>العميل</th><th>الهاتف</th><th>العنوان</th><th>المندوب</th><th>COD</th><th>نتيجة الفحص</th><th>تعديل</th></tr></thead><tbody>'+importPreviewRows.map((x,i)=>`<tr class="${x.errors.length?'badrow':'okrow'}"><td>${x.row}</td><td>${esc(x.data.id)}</td><td>${esc(x.data.customer)}</td><td>${esc(x.data.phone)}</td><td>${esc(x.data.to)}</td><td>${esc(x.data.agent)}</td><td>${esc(x.data.cod)}</td><td>${x.errors.length?esc(x.errors.join('؛ ')):'سليم'}</td><td><button class="light" type="button" onclick="editImportRow(${i})">تعديل البيانات</button></td></tr>`).join('')+'</tbody></table>';
+ document.getElementById('previewPanel').classList.remove('hidden');
+}
 function editImportRow(index){
  const item=importPreviewRows[index];if(!item)return;
  const fields=[['id','رقم الشحنة'],['customer','اسم العميل'],['phone','الهاتف'],['to','العنوان / الوجهة'],['merchant','التاجر'],['agent','المندوب'],['area','المنطقة / خط السير'],['fee','رسوم الشحن'],['cod','مبلغ التحصيل'],['pieces','عدد القطع'],['weight','الوزن'],['notes','ملاحظات']];
