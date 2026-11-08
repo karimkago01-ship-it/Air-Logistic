@@ -238,31 +238,70 @@
       .select('user_id,full_name,role,active,created_at')
       .eq('workspace_id',window.currentProfile.workspace_id)
       .order('created_at',{ascending:true});
-    if (result.error) { pendingBox.textContent = 'تعذر تحميل طلبات الحسابات.'; return; }
+    if (result.error) {
+      pendingBox.textContent = 'تعذر تحميل حسابات الموظفين.';
+      approvedBox.textContent = '';
+      return;
+    }
     const users = result.data || [];
     const pending = users.filter(x => !x.active);
-    const approved = users.filter(x => x.active && x.user_id !== window.currentProfile.user_id);
+    const registered = users;
+    const roleOptions = role => [
+      ['admin','مدير النظام'],['manager','مدير'],['employee','موظف'],['courier','مندوب']
+    ].map(([value,label]) => '<option value="' + value + '"' + (role === value ? ' selected' : '') + '>' + label + '</option>').join('');
     pendingBox.innerHTML = pending.length
-      ? '<div class="tablewrap"><table><thead><tr><th>الاسم</th><th>الدور المطلوب</th><th>تاريخ الطلب</th><th>القرار</th></tr></thead><tbody>' +
-        pending.map(x => '<tr><td>' + esc(x.full_name) + '</td><td><select id="role-' + x.user_id + '"><option value="employee">موظف</option><option value="manager">مدير</option><option value="courier">مندوب</option></select></td><td>' + new Date(x.created_at).toLocaleString('ar-EG') + '</td><td><button class="success" onclick="setAirEmployeeAccess(\'' + x.user_id + '\',true)">اعتماد</button> <button class="danger" onclick="setAirEmployeeAccess(\'' + x.user_id + '\',false)">رفض</button></td></tr>').join('') +
-        '</tbody></table></div>' : '<p class="muted">لا توجد طلبات معلقة.</p>';
-    approvedBox.innerHTML = approved.length
-      ? '<div class="tablewrap"><table><thead><tr><th>الاسم</th><th>الدور</th><th>الحالة</th><th>الإجراء</th></tr></thead><tbody>' +
-        approved.map(x => '<tr><td>' + esc(x.full_name) + '</td><td>' + roleName(x.role) + '</td><td>معتمد</td><td><button class="danger" onclick="setAirEmployeeAccess(\'' + x.user_id + '\',false)">إيقاف الحساب</button></td></tr>').join('') +
-        '</tbody></table></div>' : '<p class="muted">لا توجد حسابات أخرى.</p>';
+      ? '<div class="tablewrap"><table><thead><tr><th>اسم الحساب</th><th>الدور</th><th>تاريخ التسجيل</th><th>الإجراء</th></tr></thead><tbody>' +
+        pending.map(x => '<tr><td>' + esc(x.full_name) + '</td><td><select id="pending-role-' + x.user_id + '">' + roleOptions(x.role) + '</select></td><td>' + new Date(x.created_at).toLocaleString('ar-EG') + '</td><td><button class="success" onclick="setAirEmployeeAccess(\'' + x.user_id + '\',true)">تفعيل الحساب</button></td></tr>').join('') +
+        '</tbody></table></div>' : '<p class="muted">لا توجد طلبات حسابات معلقة.</p>';
+    approvedBox.innerHTML = registered.length
+      ? '<div class="tablewrap"><table><thead><tr><th>اسم الموظف / المدير</th><th>الدور الحالي</th><th>حالة التشغيل</th><th>حفظ التعديل</th></tr></thead><tbody>' +
+        registered.map(x => '<tr><td>' + esc(x.full_name) + (x.user_id === window.currentProfile.user_id ? ' <b>(حسابك)</b>' : '') + '</td><td><select id="managed-role-' + x.user_id + '">' + roleOptions(x.role) + '</select></td><td><select id="managed-active-' + x.user_id + '"><option value="true"' + (x.active ? ' selected' : '') + '>تشغيل على النظام</option><option value="false"' + (!x.active ? ' selected' : '') + '>إيقاف / انقطاع</option></select></td><td><button class="primary" onclick="updateAirEmployeeProfile(\'' + x.user_id + '\')">حفظ</button></td></tr>').join('') +
+        '</tbody></table></div>' : '<p class="muted">لا توجد حسابات مسجلة حتى الآن.</p>';
   }
   window.renderAccountRequests = renderAccountRequests;
 
   window.setAirEmployeeAccess = async function(userId,active) {
-    if (window.currentProfile?.role !== 'admin') return alert('مدير النظام فقط يمكنه اعتماد الحسابات.');
-    const role = $('role-' + userId)?.value || 'employee';
+    if (window.currentProfile?.role !== 'admin') return alert('مدير النظام فقط يمكنه إدارة الحسابات.');
+    if (userId === window.currentProfile.user_id && !active) return alert('لا يمكن إيقاف حساب المدير الذي تستخدمه حاليًا.');
+    const role = $('pending-role-' + userId)?.value || 'employee';
     const result = await client.from('profiles').update({active,role})
       .eq('user_id',userId).eq('workspace_id',window.currentProfile.workspace_id);
     if (result.error) return alert('تعذر تحديث الحساب. تأكد من صلاحيات المدير.');
     await renderAccountRequests();
-    if (typeof toast === 'function') toast(active ? 'تم اعتماد الحساب' : 'تم إيقاف الحساب');
+    if (typeof toast === 'function') toast(active ? 'تم تفعيل الحساب بالدور المحدد' : 'تم إيقاف الحساب');
   };
 
+  window.updateAirEmployeeProfile = async function(userId) {
+    if (window.currentProfile?.role !== 'admin') return alert('مدير النظام فقط يمكنه إدارة الحسابات.');
+    if (userId === window.currentProfile.user_id) return alert('لا يمكن تعديل دور أو حالة حساب المدير الذي تستخدمه حاليًا من هذه الشاشة.');
+    const role = $('managed-role-' + userId)?.value;
+    const active = $('managed-active-' + userId)?.value === 'true';
+    if (!['admin','manager','employee','courier'].includes(role)) return alert('الدور المحدد غير صحيح.');
+    const result = await client.from('profiles').update({active,role})
+      .eq('user_id',userId).eq('workspace_id',window.currentProfile.workspace_id);
+    if (result.error) return alert('تعذر حفظ التعديلات. راجع اتصال الإنترنت وصلاحيات المدير.');
+    await renderAccountRequests();
+    if (typeof toast === 'function') toast('تم حفظ الدور وحالة التشغيل بنجاح');
+  };
+
+  function installPasswordVisibility() {
+    ['loginPassword','signupPassword','signupConfirm'].forEach(id => {
+      const input = $(id);
+      if (!input || input.dataset.visibilityReady === '1') return;
+      input.dataset.visibilityReady = '1';
+      const toggle = document.createElement('label');
+      toggle.style.cssText = 'display:flex;align-items:center;gap:8px;margin:6px 0 12px;font-size:13px;cursor:pointer;';
+      const check = document.createElement('input');
+      check.type = 'checkbox';
+      check.style.cssText = 'width:16px;height:16px;';
+      check.addEventListener('change', () => { input.type = check.checked ? 'text' : 'password'; });
+      const caption = document.createElement('span');
+      caption.textContent = 'إظهار كلمة المرور';
+      toggle.append(check,caption);
+      input.insertAdjacentElement('afterend',toggle);
+    });
+  }
+  installPasswordVisibility();
   function subscribeRealtime() {
     if (realtimeChannel) client.removeChannel(realtimeChannel);
     const workspaceId = window.currentProfile.workspace_id;
