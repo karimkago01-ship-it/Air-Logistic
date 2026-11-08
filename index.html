@@ -252,7 +252,8 @@ tr:hover td{background:#f7fbff}
 .wrap{max-width:100%;padding:12px clamp(10px,1.5vw,24px)}
 .app-layout{display:grid;grid-template-columns:252px minmax(0,1fr);gap:16px;direction:rtl;align-items:start}
 .air-sidebar{
- position:sticky;top:12px;align-self:start;max-height:calc(100vh - 24px);overflow-y:auto;
+ position:sticky;top:12px;align-self:start;height:calc(100vh - 24px);height:calc(100dvh - 24px);
+ min-height:420px;max-height:none;overflow:hidden;display:flex;flex-direction:column;
  background:linear-gradient(180deg,#123b68 0%,#0b294b 100%);border:1px solid #1d5687;
  border-radius:17px;padding:13px 10px;color:#fff;box-shadow:0 8px 25px #123b6824;
  scrollbar-width:thin;scrollbar-color:#557b9e transparent
@@ -260,8 +261,8 @@ tr:hover td{background:#f7fbff}
 .sidebar-brand{display:flex;align-items:center;gap:10px;padding:7px 9px 14px;margin-bottom:10px;border-bottom:1px solid #ffffff24}
 .sidebar-mark{width:42px;height:42px;border-radius:12px;background:#fff;color:#123b68;display:grid;place-items:center;font-size:24px}
 .sidebar-brand b{display:block;font-size:15px;color:#fff}.sidebar-brand small{display:block;color:#b9d2e9;font-size:10px;margin-top:3px}
-#nav{position:static;display:flex;flex-direction:column;flex-wrap:nowrap;gap:4px;overflow:visible;
- padding:0;margin:0;background:transparent;border:0;border-radius:0;box-shadow:none}
+#nav{position:static;display:flex;flex:1 1 auto;min-height:0;flex-direction:column;flex-wrap:nowrap;gap:4px;overflow-y:auto;overflow-x:hidden;
+ padding:0;margin:0;background:transparent;border:0;border-radius:0;box-shadow:none;scrollbar-width:thin;scrollbar-color:#557b9e transparent}
 #nav:before{display:none}
 #nav button{width:100%;min-width:0;flex:0 0 auto;display:flex;align-items:center;justify-content:flex-start;
  gap:10px;text-align:right;white-space:normal;padding:11px 12px;border:1px solid transparent;
@@ -303,7 +304,7 @@ tr:hover td{background:#f7fbff}
 @media(max-width:650px){
  .wrap{padding:8px}
  .app-layout{grid-template-columns:116px minmax(0,1fr);gap:7px}
- .air-sidebar{top:7px;max-height:calc(100vh - 14px);padding:8px 5px;border-radius:12px}
+ .air-sidebar{top:7px;height:calc(100vh - 14px);height:calc(100dvh - 14px);min-height:360px;max-height:none;padding:8px 5px;border-radius:12px}
  .sidebar-brand{gap:5px;padding:4px 2px 9px;flex-direction:column;text-align:center}
  .sidebar-mark{width:32px;height:32px;font-size:18px}
  .sidebar-brand b{font-size:11px}.sidebar-brand small{font-size:9px}
