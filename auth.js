@@ -188,29 +188,78 @@
 
   async function loadCloudData() {
     const profile = window.currentProfile;
-    const result = await client.from('app_records').select('collection,record_id,data,created_by')
-      .eq('workspace_id',profile.workspace_id);
-    if (result.error) throw result.error;
+    const pageSize = 500;
+    const cloudRows = [];
+    for (let offset = 0; ; offset += pageSize) {
+      const result = await client.from('app_records')
+        .select('collection,record_id,data,created_by')
+        .eq('workspace_id',profile.workspace_id)
+        .order('id',{ascending:true})
+        .range(offset,offset + pageSize - 1);
+      if (result.error) throw result.error;
+      const batch = result.data || [];
+      cloudRows.push(...batch);
+      if (batch.length < pageSize) break;
+    }
+
     const next = defaults();
-    for (const row of (result.data || [])) {
-      if (row.collection === 'policies') { next.policies = row.data || {}; continue; }
+    const cloudIds = Object.fromEntries(keys.map(key => [key,new Set()]));
+    let cloudHasPolicies = false;
+    for (const row of cloudRows) {
+      if (row.collection === 'policies') {
+        next.policies = row.data || {};
+        cloudHasPolicies = true;
+        continue;
+      }
       if (!keys.includes(row.collection)) continue;
-      const item = row.data || {};
+      const item = row.data && typeof row.data === 'object' ? {...row.data} : {};
       if (row.collection !== 'shipments') item._cloudId = item._cloudId || row.record_id;
       item._createdBy = item._createdBy || row.created_by || null;
       next[row.collection].push(item);
+      cloudIds[row.collection].add(String(row.record_id));
     }
-    if (!(result.data || []).length && profile.role === 'admin' && oldSnapshot) {
-      for (const key of keys) if (Array.isArray(oldSnapshot[key])) next[key] = oldSnapshot[key];
-      if (oldSnapshot.policies && typeof oldSnapshot.policies === 'object') next.policies = oldSnapshot.policies;
-      db = next;
-      const migrated = await syncDBToCloud();
-      if (migrated) { try { localStorage.removeItem('air_logistic_full_v1'); } catch (_) {} }
-    } else {
-      db = next;
-      if ((result.data || []).length && profile.role === 'admin') { try { localStorage.removeItem('air_logistic_full_v1'); } catch (_) {} }
+
+    // Preserve local recovery data. Only local records absent from the cloud are
+    // queued for migration; cloud records are never overwritten during login.
+    let recoveredCount = 0;
+    let recoverPolicies = false;
+    if (profile.role === 'admin' && oldSnapshot && typeof oldSnapshot === 'object') {
+      for (const collection of keys) {
+        const localItems = Array.isArray(oldSnapshot[collection]) ? oldSnapshot[collection] : [];
+        for (const source of localItems) {
+          if (!source || typeof source !== 'object') continue;
+          const item = {...source};
+          if (collection !== 'shipments') item._cloudId = item._cloudId || crypto.randomUUID();
+          const recordId = collection === 'shipments' ? String(item.id || '') : String(item._cloudId || '');
+          if (!recordId || cloudIds[collection].has(recordId)) continue;
+          next[collection].push(item);
+          cloudIds[collection].add(recordId);
+          recoveredCount++;
+        }
+      }
+      if (!cloudHasPolicies && oldSnapshot.policies && typeof oldSnapshot.policies === 'object') {
+        next.policies = oldSnapshot.policies;
+        recoverPolicies = Object.keys(oldSnapshot.policies).length > 0;
+      }
     }
+
+    db = next;
     if (typeof render === 'function') render();
+
+    if (profile.role === 'admin' && (recoveredCount > 0 || recoverPolicies)) {
+      const migrated = await syncDBToCloud();
+      if (!migrated) {
+        if (typeof toast === 'function') toast('تم تحميل البيانات مع الاحتفاظ بنسختك المحلية؛ تعذرت مزامنة بعض السجلات.');
+      } else {
+        // Keep the local snapshot as a recovery copy; never delete it automatically.
+        const verify = await client.from('app_records')
+          .select('record_id')
+          .eq('workspace_id',profile.workspace_id)
+          .limit(1);
+        if (verify.error) console.warn('Air Logistic cloud migration verification:',verify.error);
+        if (typeof toast === 'function') toast('تمت مزامنة السجلات المحلية غير الموجودة بالسحابة، مع الاحتفاظ بنسخة الاسترداد.');
+      }
+    }
   }
 
   window.save = function() {
