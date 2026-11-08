@@ -198,6 +198,7 @@
     deleteQueue.push({collection,record_id:String(record_id)});
   };
   window.deleteShip = function(id) {
+    if (!['admin','manager'].includes(window.currentProfile?.role)) return alert('حذف الشحنات متاح لمدير النظام أو المدير فقط.');
     const key = decodeURIComponent(String(id));
     if (!confirm('هل تريد حذف الشحنة ' + key + '؟')) return;
     deleteQueue.push({collection:'shipments',record_id:key});
