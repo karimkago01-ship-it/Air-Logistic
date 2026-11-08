@@ -42,7 +42,7 @@
   function lockApp() { document.body.classList.add('auth-locked'); $('authGate')?.classList.remove('hidden'); }
   function unlockApp() { document.body.classList.remove('auth-locked'); $('authGate')?.classList.add('hidden'); }
   function roleName(role) {
-    return ({admin:'مدير النظام',manager:'مدير',employee:'موظف',courier:'مندوب'})[role] || 'مستخدم';
+    return ({admin:'مدير النظام',manager:'مدير',employee:'مدير التسليمات',courier:'مندوب'})[role] || 'مستخدم';
   }
   function showMode(mode) {
     $('loginForm')?.classList.toggle('hidden', mode !== 'login');
@@ -327,7 +327,7 @@
       .eq('workspace_id',window.currentProfile.workspace_id)
       .order('created_at',{ascending:true});
     if (result.error) {
-      pendingBox.textContent = 'تعذر تحميل حسابات الموظفين.';
+      pendingBox.textContent = 'تعذر تحميل حسابات مديري التسليمات.';
       approvedBox.textContent = '';
       return;
     }
@@ -335,14 +335,14 @@
     const pending = users.filter(x => !x.active);
     const registered = users;
     const roleOptions = role => [
-      ['admin','مدير النظام'],['manager','مدير'],['employee','موظف'],['courier','مندوب']
+      ['admin','مدير النظام'],['manager','مدير'],['employee','مدير التسليمات'],['courier','مندوب']
     ].map(([value,label]) => '<option value="' + value + '"' + (role === value ? ' selected' : '') + '>' + label + '</option>').join('');
     pendingBox.innerHTML = pending.length
       ? '<div class="tablewrap"><table><thead><tr><th>اسم الحساب</th><th>الدور</th><th>تاريخ التسجيل</th><th>الإجراء</th></tr></thead><tbody>' +
         pending.map(x => '<tr><td>' + esc(x.full_name) + '</td><td><select id="pending-role-' + x.user_id + '">' + roleOptions(x.role) + '</select></td><td>' + new Date(x.created_at).toLocaleString('ar-EG') + '</td><td><button class="success" onclick="setAirEmployeeAccess(\'' + x.user_id + '\',true)">تفعيل الحساب</button></td></tr>').join('') +
         '</tbody></table></div>' : '<p class="muted">لا توجد طلبات حسابات معلقة.</p>';
     approvedBox.innerHTML = registered.length
-      ? '<div class="tablewrap"><table><thead><tr><th>اسم الموظف / المدير</th><th>الدور الحالي</th><th>حالة التشغيل</th><th>حفظ التعديل</th></tr></thead><tbody>' +
+      ? '<div class="tablewrap"><table><thead><tr><th>اسم مدير التسليمات / المدير</th><th>الدور الحالي</th><th>حالة التشغيل</th><th>حفظ التعديل</th></tr></thead><tbody>' +
         registered.map(x => '<tr><td>' + esc(x.full_name) + (x.user_id === window.currentProfile.user_id ? ' <b>(حسابك)</b>' : '') + '</td><td><select id="managed-role-' + x.user_id + '">' + roleOptions(x.role) + '</select></td><td><select id="managed-active-' + x.user_id + '"><option value="true"' + (x.active ? ' selected' : '') + '>تشغيل على النظام</option><option value="false"' + (!x.active ? ' selected' : '') + '>إيقاف / انقطاع</option></select></td><td><button class="primary" onclick="updateAirEmployeeProfile(\'' + x.user_id + '\')">حفظ</button></td></tr>').join('') +
         '</tbody></table></div>' : '<p class="muted">لا توجد حسابات مسجلة حتى الآن.</p>';
   }
