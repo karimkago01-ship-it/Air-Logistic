@@ -36,7 +36,7 @@
   window.airLogisticSupabase = client;
   window.currentProfile = null;
   activeAuthUser = null;
-  let syncTimer = null, realtimeChannel = null, syncBusy = false;
+  let syncTimer = null, realtimeChannel = null, syncBusy = false, syncPending = false;
   const deleteQueue = [];
 
   function lockApp() { document.body.classList.add('auth-locked'); $('authGate')?.classList.remove('hidden'); }
@@ -175,7 +175,14 @@
       console.error('Air Logistic cloud sync:',error);
       if (typeof toast === 'function') toast('تعذرت مزامنة بعض البيانات؛ راجع اتصال الإنترنت وصلاحيات الحساب.');
       return false;
-    } finally { syncBusy = false; }
+    } finally {
+      syncBusy = false;
+      if (syncPending) {
+        syncPending = false;
+        clearTimeout(syncTimer);
+        syncTimer = setTimeout(syncDBToCloud, 120);
+      }
+    }
   }
 
   async function loadCloudData() {
@@ -206,6 +213,13 @@
   }
 
   window.save = function() {
+    // Keep a local recovery snapshot before attempting cloud sync.
+    try {
+      localStorage.setItem('air_logistic_full_v1', JSON.stringify(db));
+    } catch (error) {
+      console.warn('Air Logistic local recovery snapshot:', error);
+      if (typeof toast === 'function') toast('تعذر حفظ نسخة محلية؛ تحقق من مساحة الهاتف.');
+    }
     if (typeof render === 'function') render();
     if (!window.currentProfile?.active) return;
     clearTimeout(syncTimer);
