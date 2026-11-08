@@ -1,231 +1,903 @@
-
-<!DOCTYPE html>
+<!doctype html>
 <html lang="ar" dir="rtl">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Air Logistic | إدارة الشحن</title>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#102b35">
+<title>Air Logistic | نظام إدارة الشحن</title>
 <style>
+:root{--navy:#102b35;--teal:#087f86;--bg:#f2f5f9;--card:#fff;--ink:#1c2933;--muted:#71808d;--line:#e4eaf0;--red:#c83d50;--green:#18865d;--amber:#b7791f}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font-family:Tahoma,Arial,sans-serif}
+header{width:100%;min-height:170px;background:linear-gradient(110deg,#071d35 0%,#0b3157 55%,#102b35 100%);color:white;padding:14px clamp(14px,3vw,48px);display:flex;justify-content:space-between;align-items:center;gap:22px;flex-wrap:nowrap;border-bottom:5px solid #f07818;box-shadow:0 5px 18px #102b3526}
+header h1{font-size:clamp(28px,3vw,42px);margin:0 0 8px;color:#fff;letter-spacing:.3px}.brand{display:flex;align-items:center;gap:22px;min-width:0;flex:1}.brand-logo{width:clamp(150px,21vw,270px);height:138px;object-fit:contain;background:#fff;border-radius:14px;padding:5px;flex:0 0 auto}.brand-copy{min-width:0}header p{margin:0;color:#d7e8f6;font-size:clamp(14px,1.4vw,19px)}header>.row{justify-content:flex-end;flex:0 0 auto}
+.wrap{max-width:1400px;margin:auto;padding:18px}
+.notice{background:#fff8e8;border:1px solid #f0d8a8;color:#775318;border-radius:12px;padding:12px 14px;font-size:13px;line-height:1.8;margin-bottom:15px}
+nav{display:flex;gap:8px;overflow:auto;padding:4px 0 14px}
+nav button{white-space:nowrap;background:#fff;color:#45535e;border:1px solid var(--line);padding:11px 15px;border-radius:10px;font-weight:bold}
+nav button.active{background:var(--navy);color:white;border-color:var(--navy)}
+button{cursor:pointer;border:0;border-radius:9px;padding:10px 14px;font:inherit;font-weight:bold}
+.primary{background:var(--teal);color:white}.secondary{background:#687989;color:white}.danger{background:var(--red);color:white}.success{background:var(--green);color:white}.light{background:#edf3f6;color:#34434d}
+.grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;margin-bottom:16px}
+.kpi,.panel{background:var(--card);border:1px solid var(--line);border-radius:15px;padding:16px;box-shadow:0 3px 12px #102b3509}
+.kpi small{color:var(--muted)}.kpi strong{display:block;color:var(--teal);font-size:29px;margin-top:9px}
+.panel{margin-bottom:15px}.panel h2{font-size:18px;margin:0 0 15px}
+.formgrid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:11px}
+label{display:block;color:#52616c;font-size:13px}input,select,textarea{width:100%;margin-top:6px;padding:11px;border:1px solid #d6dfe6;border-radius:9px;background:white;color:#17232b;font:inherit;min-width:0}
+textarea{min-height:85px;resize:vertical}.span2{grid-column:span 2}.span4{grid-column:span 4}.actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:13px}
+.tablewrap{overflow:auto}table{width:100%;border-collapse:collapse;min-width:850px;font-size:13px}th,td{padding:11px 9px;border-bottom:1px solid var(--line);text-align:right;white-space:nowrap}th{background:#f5f8fa;color:#52616c}
+.tag{display:inline-block;padding:5px 9px;border-radius:20px;background:#e8f3f7;color:#176477;font-size:12px}
+.hidden{display:none!important}.muted{color:var(--muted);font-size:12px}.row{display:flex;gap:9px;align-items:center;flex-wrap:wrap}.row input{max-width:330px}
+.cards2{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}
+#toast{position:fixed;bottom:18px;left:18px;background:#172d36;color:white;padding:12px 16px;border-radius:10px;display:none;z-index:9}
+@media(max-width:850px){.grid{grid-template-columns:repeat(2,minmax(0,1fr))}.formgrid{grid-template-columns:repeat(2,minmax(0,1fr))}.span4{grid-column:span 2}}
+@media(max-width:650px){header{min-height:0;padding:12px;gap:10px;align-items:center;flex-wrap:wrap}.brand{gap:10px;width:100%;flex:1 1 100%}.brand-logo{width:112px;height:92px}.brand-copy h1{font-size:25px}.brand-copy p{font-size:12px}header>.row{width:100%;justify-content:space-between}.wrap{padding:12px}.grid{gap:8px}.kpi{padding:12px}.kpi strong{font-size:24px}.formgrid{gap:9px}.panel{padding:12px}}
+.scan-frame{border:3px solid var(--teal);border-radius:14px}.scan-actions button{min-width:130px}.okrow{background:#f0faf5}.badrow{background:#fff4f3}.warnrow{background:#fff9e9}.mapping-item{padding:8px;border:1px solid var(--line);border-radius:9px;background:#fafcfd}.pill{display:inline-block;border-radius:20px;padding:4px 8px;font-size:12px;background:#edf3f6;margin:2px}
+</style><style>
+
+/* ===== Air Logistic full dashboard redesign ===== */
+:root{
+ --navy:#102746;--navy2:#173b63;--blue:#2374bd;--teal:#0d8b91;
+ --orange:#f28b28;--bg:#f3f6fb;--card:#fff;--ink:#1b2b40;
+ --muted:#718096;--line:#e5ebf2;--red:#d84d5b;--green:#15966b;--amber:#d18a20;
+}
 *{box-sizing:border-box}
-body{margin:0;background:#f1f5f9;color:#172033;font-family:Arial,sans-serif}
-header{background:#102c35;color:white;padding:22px}
-header h1{margin:0 0 8px;font-size:25px}
-header p{margin:0;color:#b9d4d8}
-.container{max-width:1100px;margin:auto;padding:18px}
-.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}
-.card{background:white;border-radius:13px;padding:18px;box-shadow:0 2px 9px #0000000b}
-.stat b{display:block;font-size:27px;color:#087e8b;margin-top:10px}
-.stat span{color:#64748b;font-size:14px}
-h2{font-size:19px;margin:0 0 15px}
-.panel{margin-top:18px}
-input,select,button{font:inherit;border-radius:8px;padding:12px;border:1px solid #dbe2ea}
-input,select{background:white;min-width:0;width:100%}
-button{cursor:pointer;border:0;background:#087e8b;color:white;font-weight:bold}
-button:hover{opacity:.88}
-.form{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
-.actions{display:flex;gap:8px;margin-top:12px;flex-wrap:wrap}
-.secondary{background:#64748b}
-.danger{background:#dc3545}
-.search{margin:15px 0}
-.tablewrap{overflow-x:auto}
-table{width:100%;border-collapse:collapse;min-width:650px}
-th,td{padding:13px;text-align:right;border-bottom:1px solid #edf0f4;font-size:14px}
-th{background:#f8fafc;color:#526174}
-.status{padding:5px 9px;border-radius:20px;font-size:12px;background:#e0f2fe;color:#0369a1}
-.empty{text-align:center;padding:30px;color:#8793a3}
-footer{text-align:center;color:#82909e;padding:25px;font-size:12px}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:"Tahoma","Arial",sans-serif}
+header{
+ min-height:190px;padding:22px clamp(16px,4vw,58px);
+ background:radial-gradient(circle at 12% 20%,#28547e 0,transparent 30%),linear-gradient(115deg,#0b1e36,#123b65 62%,#0d5261);
+ color:#fff;display:flex;align-items:center;justify-content:space-between;gap:24px;
+ border-bottom:6px solid var(--orange);box-shadow:0 8px 28px #0b23451c;
+}
+.brand{display:flex;align-items:center;gap:25px;min-width:0;flex:1}
+.brand-logo{width:clamp(145px,18vw,225px);height:145px;object-fit:contain;background:#fff;border-radius:20px;padding:8px;box-shadow:0 8px 25px #0003}
+header h1{font-size:clamp(30px,3.4vw,48px);margin:0 0 10px;color:#fff;letter-spacing:.4px}
+header p{margin:0;color:#dceafa;font-size:clamp(14px,1.3vw,18px)}
+header>.row{justify-content:flex-end;flex:0 0 auto}
+header button{background:#fff;color:var(--navy);border-radius:12px;padding:12px 17px}
+.wrap{
+ max-width:none;width:100%;margin:0;padding:22px clamp(12px,2vw,28px);
+ display:grid;grid-template-columns:245px minmax(0,1fr);grid-auto-flow:row;gap:0 22px;align-items:start;
+}
+.notice{grid-column:1/-1;background:#fff8e9;border:1px solid #f0d8a8;color:#79541a;border-radius:13px;padding:11px 15px;font-size:12px;line-height:1.8;margin:0 0 18px}
+#nav{
+ grid-column:1;grid-row:2 / span 30;position:sticky;top:16px;align-self:start;
+ display:flex;flex-direction:column;gap:7px;overflow:visible;padding:13px;
+ background:#fff;border:1px solid var(--line);border-radius:19px;box-shadow:0 8px 28px #1736530b;
+}
+#nav:before{content:"القائمة الرئيسية";font-weight:800;color:#9aa8b8;font-size:11px;padding:4px 12px 9px}
+#nav button{
+ width:100%;text-align:right;white-space:normal;background:transparent;color:#536477;
+ border:1px solid transparent;padding:13px 14px;border-radius:11px;font-size:13px;
+ transition:.18s ease;display:flex;align-items:center;gap:10px
+}
+#nav button:before{content:"";width:7px;height:7px;border-radius:50%;background:#b9c7d6;flex:0 0 7px}
+#nav button:hover{background:#f1f6fb;color:var(--navy);transform:translateX(-2px)}
+#nav button.active{background:linear-gradient(110deg,#102746,#1b4e7a);color:#fff;border-color:#1b4e7a;box-shadow:0 5px 14px #10274626}
+#nav button.active:before{background:var(--orange);box-shadow:0 0 0 4px #f28b2825}
+.page{grid-column:2;grid-row:auto;min-width:0;animation:pageIn .22s ease}
+@keyframes pageIn{from{opacity:.55;transform:translateY(4px)}to{opacity:1;transform:none}}
+.grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:15px;margin-bottom:18px}
+.kpi,.panel{background:var(--card);border:1px solid var(--line);border-radius:17px;padding:19px;box-shadow:0 5px 20px #193b5b0a}
+.kpi{position:relative;overflow:hidden;min-height:116px}
+.kpi:after{content:"";position:absolute;inset:auto -22px -34px auto;width:95px;height:95px;border-radius:50%;background:#eaf3fb}
+.kpi small{color:var(--muted);font-size:12px;position:relative;z-index:1}
+.kpi strong{display:block;color:var(--blue);font-size:30px;margin-top:12px;position:relative;z-index:1}
+.panel{margin-bottom:17px}
+.panel h2{font-size:17px;margin:0 0 17px;color:var(--navy);display:flex;align-items:center;gap:9px}
+.panel h2:before{content:"";width:4px;height:19px;background:var(--orange);border-radius:5px}
+.formgrid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:13px}
+label{display:block;color:#536477;font-size:12px;font-weight:700}
+input,select,textarea{width:100%;margin-top:7px;padding:12px 13px;border:1px solid #dce5ee;border-radius:10px;background:#fbfcfe;color:#172b40;font:inherit;font-size:13px;min-width:0;outline:none;transition:.15s}
+input:focus,select:focus,textarea:focus{border-color:#5b9bd5;box-shadow:0 0 0 3px #2374bd18;background:#fff}
+textarea{min-height:90px;resize:vertical}.span2{grid-column:span 2}.span4{grid-column:span 4}
+.actions{display:flex;gap:9px;flex-wrap:wrap;margin-top:15px}
+button{cursor:pointer;border:0;border-radius:10px;padding:11px 15px;font:inherit;font-size:13px;font-weight:700;transition:.16s}
+button:hover{filter:brightness(.97);transform:translateY(-1px)}
+.primary{background:var(--blue);color:#fff}.secondary{background:#64758a;color:#fff}
+.danger{background:var(--red);color:#fff}.success{background:var(--green);color:#fff}
+.light{background:#edf3f9;color:#334b63;border:1px solid #e1e9f1}
+.tablewrap{overflow:auto;border:1px solid var(--line);border-radius:12px}
+table{width:100%;border-collapse:collapse;min-width:850px;font-size:12px;background:#fff}
+th,td{padding:13px 11px;border-bottom:1px solid var(--line);text-align:right;white-space:nowrap}
+th{background:#f4f7fb;color:#52657a;font-weight:800;position:sticky;top:0}
+tr:hover td{background:#fafcff}
+.tag{display:inline-block;padding:5px 10px;border-radius:20px;background:#e9f3fb;color:#17618c;font-size:11px;font-weight:700}
+.hidden{display:none!important}.muted{color:var(--muted);font-size:12px}
+.row{display:flex;gap:9px;align-items:center;flex-wrap:wrap}.row input{max-width:330px}
+.cards2{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px}
+#toast{position:fixed;bottom:18px;left:18px;background:#142b45;color:#fff;padding:13px 17px;border-radius:12px;display:none;z-index:99;box-shadow:0 8px 24px #0003}
+.scan-frame{border:3px solid var(--teal);border-radius:14px}.scan-actions button{min-width:130px}
+.okrow{background:#effaf5}.badrow{background:#fff4f3}.warnrow{background:#fff9e9}
+.mapping-item{padding:9px;border:1px solid var(--line);border-radius:10px;background:#fafcfe}
+.pill{display:inline-block;border-radius:20px;padding:5px 9px;font-size:11px;background:#edf3f8;margin:2px}
+#home .cards2 .panel{min-height:230px}
+@media(max-width:1050px){
+ .wrap{grid-template-columns:205px minmax(0,1fr);gap:0 14px;padding:16px 12px}
+ .grid{grid-template-columns:repeat(2,minmax(0,1fr))}
+ .formgrid{grid-template-columns:repeat(2,minmax(0,1fr))}
+}
+@media(max-width:720px){
+ header{min-height:0;padding:14px;gap:12px;align-items:center;flex-wrap:wrap}
+ .brand{gap:12px;width:100%;flex:1 1 100%}
+ .brand-logo{width:92px;height:86px;border-radius:13px}
+ .brand-copy h1{font-size:25px;margin-bottom:6px}.brand-copy p{font-size:11px}
+ header>.row{width:100%;justify-content:flex-start}
+ .wrap{display:flex;flex-direction:column;padding:12px;width:100%}
+ .notice{order:0;width:100%;margin-bottom:12px}
+ #nav{position:relative;top:auto;width:100%;display:flex;flex-direction:row;overflow-x:auto;gap:6px;padding:9px;margin-bottom:14px;border-radius:13px}
+ #nav:before{display:none}
+ #nav button{width:auto;flex:0 0 auto;padding:10px 12px;font-size:12px}
+ #nav button:before{display:none}
+ .page{width:100%}
+ .grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:9px}
+ .kpi{padding:13px;min-height:95px}.kpi strong{font-size:23px;margin-top:8px}
+ .cards2{grid-template-columns:1fr;gap:10px}
+ .panel{padding:13px;border-radius:14px}
+ .formgrid{grid-template-columns:repeat(2,minmax(0,1fr));gap:9px}
+ .span4{grid-column:span 2}
+ .row input{max-width:none;flex:1 1 100%}
+}
+@media(max-width:390px){.brand-logo{width:76px;height:76px}.brand-copy h1{font-size:21px}.grid{gap:7px}.kpi strong{font-size:21px}}
+
+
+.timeline{border-right:3px solid #dce7f1;margin:14px 8px;padding-right:15px}
+.timeline-item{position:relative;padding:7px 0 10px}
+.timeline-item:before{content:"";position:absolute;right:-23px;top:13px;width:10px;height:10px;border-radius:50%;background:var(--orange);border:2px solid white;box-shadow:0 0 0 1px #dce7f1}
+.status-actions{display:flex;gap:6px;flex-wrap:wrap}
+.status-actions button{padding:7px 10px;font-size:11px}
+@media(max-width:720px){.timeline{margin-right:7px}.status-actions button{flex:1 1 auto}}
+
+.module-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:10px}
+.notice{background:#eef5fb;border:1px solid #d7e5f2;border-radius:10px;padding:12px;margin:10px 0}
+#nav button{white-space:normal}
+@media(max-width:720px){#nav button{min-width:130px}.formgrid{grid-template-columns:1fr}.span2,.span4{grid-column:span 1}}
+</style>
+
+<style id="air-light-horizontal-redesign">
+:root{
+ --navy:#123b68;--navy2:#1b568b;--blue:#1674d1;--teal:#078b91;
+ --orange:#f28a16;--bg:#f3f7fc;--card:#fff;--ink:#142d4d;
+ --muted:#71839a;--line:#dce7f3;--red:#dc3f4b;--green:#079b68;--amber:#dc8b18;
+}
+html{scroll-behavior:smooth}
+body{background:linear-gradient(180deg,#f7faff 0,#eef4fb 100%);color:var(--ink);font-family:"Tahoma","Arial",sans-serif}
+header{
+ min-height:94px;padding:10px clamp(14px,2.5vw,36px);
+ background:rgba(255,255,255,.97);color:var(--ink);border:0;border-bottom:1px solid #dce7f3;
+ box-shadow:0 4px 18px #173b6310;display:flex;align-items:center;gap:18px
+}
+.brand{display:flex;align-items:center;gap:14px;flex:1;min-width:0}
+.brand-logo{width:clamp(76px,9vw,112px);height:72px;object-fit:contain;background:#fff;border-radius:12px;padding:3px;box-shadow:none}
+header h1{font-size:clamp(23px,2.5vw,34px);margin:0 0 4px;color:#123b68;font-weight:900}
+header p{font-size:12px;color:#71839a;margin:0}
+header>.row{gap:8px}
+header button{background:#edf4fc;color:#123b68;border:1px solid #dce7f3}
+.wrap{display:block;width:100%;max-width:1600px;margin:0 auto;padding:14px clamp(12px,1.7vw,26px)}
+.notice{background:#fff9ec;border:1px solid #f5dfb6;color:#79551b;border-radius:12px;padding:9px 13px;margin:0 0 12px;font-size:12px}
+#nav{
+ position:sticky;top:0;z-index:20;display:flex;flex-direction:row;flex-wrap:nowrap;
+ gap:5px;overflow-x:auto;overflow-y:hidden;padding:8px;margin:0 0 14px;
+ background:linear-gradient(100deg,#10375f,#164d7d);border:1px solid #1d5687;
+ border-radius:14px;box-shadow:0 6px 18px #123b6820;scrollbar-width:thin
+}
+#nav:before{display:none}
+#nav button{
+ flex:0 0 auto;width:auto;min-width:max-content;white-space:nowrap;text-align:center;
+ color:#eaf3fc;background:transparent;border:1px solid transparent;
+ padding:11px 16px;border-radius:9px;font-size:13px;display:inline-flex;align-items:center;gap:7px
+}
+#nav button:before{display:none}
+#nav button:hover{background:#ffffff18;color:#fff;transform:translateY(-1px)}
+#nav button.active{background:var(--orange);color:#fff;border-color:#ffad48;box-shadow:0 3px 10px #f28a1640}
+.page{display:block;min-width:0;grid-column:auto;grid-row:auto;animation:pageIn .2s ease}
+.page.hidden{display:none!important}
+.air-hero{
+ position:relative;overflow:hidden;display:flex;align-items:center;justify-content:space-between;gap:18px;
+ min-height:128px;margin:0 0 16px;padding:20px 25px;border:1px solid #d7e6f7;border-radius:17px;
+ background:linear-gradient(105deg,#d9eafa 0%,#f7fbff 48%,#dceafa 100%);
+ box-shadow:0 5px 16px #123b6810
+}
+.air-hero:after{content:"";position:absolute;inset:auto 0 0;height:5px;background:linear-gradient(90deg,#f28a16,#1674d1,#0b9b83)}
+.air-hero-copy{position:relative;z-index:1}
+.air-eyebrow{font-size:10px;font-weight:900;letter-spacing:1.5px;color:#e17b10}
+.air-hero h2{font-size:clamp(18px,2vw,27px);margin:7px 0;color:#123b68}
+.air-hero p{margin:0;color:#526b87;font-size:13px}
+.air-hero-art{display:flex;align-items:center;gap:14px;font-size:38px;opacity:.9;transform:skewX(-8deg)}
+.air-hero-art span{font-size:43px;color:#2679bb}.air-hero-art strong{font-size:49px}.air-hero-art i{font-style:normal;font-size:34px}
+.air-hero-chip{display:flex;flex-direction:column;align-items:center;gap:3px;padding:11px 17px;border-radius:12px;background:#123b68;color:#fff;white-space:nowrap}
+.air-hero-chip b{font-size:15px}.air-hero-chip small{font-size:9px;color:#d8e9f9}
+.grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:13px;margin-bottom:16px}
+.kpi,.panel{background:#fff;border:1px solid var(--line);border-radius:15px;padding:17px;box-shadow:0 4px 15px #173b630c}
+.kpi{position:relative;overflow:hidden;min-height:105px}
+.kpi:after{content:"";position:absolute;inset:auto -18px -35px auto;width:90px;height:90px;border-radius:50%;background:#edf5fd}
+.kpi small{color:#70839a;font-size:12px;position:relative;z-index:1}
+.kpi strong{display:block;color:#1674d1;font-size:29px;margin-top:9px;position:relative;z-index:1}
+.panel{margin-bottom:15px}
+.panel h2{color:#123b68;font-size:17px;margin:0 0 15px;padding-bottom:10px;border-bottom:1px solid #e7eef6}
+.panel h2:before{content:"";display:inline-block;width:4px;height:17px;background:#f28a16;border-radius:5px;margin-left:9px;vertical-align:-3px}
+.formgrid{gap:12px}
+label{color:#526b87;font-size:12px;font-weight:700}
+input,select,textarea{background:#fbfdff;border:1px solid #d9e4ef;border-radius:9px;padding:11px 12px;color:#183653;font-size:13px}
+input:focus,select:focus,textarea:focus{border-color:#4b95d4;box-shadow:0 0 0 3px #1674d11a;background:#fff}
+button{border-radius:9px;font-size:13px}
+.primary{background:#1674d1;color:#fff}.secondary{background:#71839a;color:#fff}
+.tablewrap{border:1px solid #dce7f3;border-radius:11px;overflow:auto}
+table{background:#fff;font-size:12px}
+th{background:#edf4fb;color:#284b70;font-weight:800}
+td,th{padding:11px 10px;border-bottom:1px solid #e7eef6}
+tr:hover td{background:#f7fbff}
+.tag{background:#e7f2ff;color:#1764a0;font-weight:700}
+#toast{background:#123b68;box-shadow:0 8px 25px #123b6830}
+.air-hero~.page{min-width:0}
+@media(max-width:900px){.grid{grid-template-columns:repeat(2,minmax(0,1fr))}.air-hero-art{font-size:29px}.air-hero-chip{display:none}}
 @media(max-width:650px){
-.stats{grid-template-columns:repeat(2,1fr)}
-.form{grid-template-columns:1fr}
-.container{padding:12px}
-header{padding:18px}
+ header{min-height:0;padding:8px 12px;flex-wrap:nowrap}
+ .brand{gap:8px}.brand-logo{width:65px;height:55px}.brand-copy h1{font-size:21px}.brand-copy p{font-size:10px}
+ header>.row{width:auto;justify-content:flex-end}
+ .wrap{padding:10px}
+ #nav{position:sticky;top:0;border-radius:11px;padding:6px;gap:4px;margin-bottom:10px}
+ #nav button{padding:10px 12px;font-size:12px}
+ .air-hero{min-height:110px;padding:15px;border-radius:13px}
+ .air-hero h2{font-size:17px}.air-hero p{font-size:11px}.air-hero-art{gap:4px;font-size:23px}.air-hero-art span{font-size:28px}.air-hero-art strong{font-size:32px}.air-hero-art i{font-size:22px}
+ .grid{gap:8px}.kpi{padding:12px;min-height:88px}.kpi strong{font-size:23px}
+ .panel{padding:12px}.formgrid{grid-template-columns:repeat(2,minmax(0,1fr));gap:9px}
+ .span4{grid-column:span 2}
 }
 </style>
-</head>
+
+
+<style id="air-sidebar-final">
+/* Sidebar redesign based on the latest expanded Air Logistic build */
+.wrap{max-width:100%;padding:12px clamp(10px,1.5vw,24px)}
+.app-layout{display:grid;grid-template-columns:252px minmax(0,1fr);gap:16px;direction:rtl;align-items:start}
+.air-sidebar{
+ position:sticky;top:12px;align-self:start;max-height:calc(100vh - 24px);overflow-y:auto;
+ background:linear-gradient(180deg,#123b68 0%,#0b294b 100%);border:1px solid #1d5687;
+ border-radius:17px;padding:13px 10px;color:#fff;box-shadow:0 8px 25px #123b6824;
+ scrollbar-width:thin;scrollbar-color:#557b9e transparent
+}
+.sidebar-brand{display:flex;align-items:center;gap:10px;padding:7px 9px 14px;margin-bottom:10px;border-bottom:1px solid #ffffff24}
+.sidebar-mark{width:42px;height:42px;border-radius:12px;background:#fff;color:#123b68;display:grid;place-items:center;font-size:24px}
+.sidebar-brand b{display:block;font-size:15px;color:#fff}.sidebar-brand small{display:block;color:#b9d2e9;font-size:10px;margin-top:3px}
+#nav{position:static;display:flex;flex-direction:column;flex-wrap:nowrap;gap:4px;overflow:visible;
+ padding:0;margin:0;background:transparent;border:0;border-radius:0;box-shadow:none}
+#nav:before{display:none}
+#nav button{width:100%;min-width:0;flex:0 0 auto;display:flex;align-items:center;justify-content:flex-start;
+ gap:10px;text-align:right;white-space:normal;padding:11px 12px;border:1px solid transparent;
+ border-radius:10px;background:transparent;color:#e8f2fc;font-size:13px;line-height:1.35}
+#nav button:before{display:inline-flex;content:"";width:21px;min-width:21px;justify-content:center;font-size:16px}
+#nav button:nth-child(1):before{content:"⌂"}
+#nav button:nth-child(2):before{content:"📦"}
+#nav button:nth-child(3):before{content:"👥"}
+#nav button:nth-child(4):before{content:"🚚"}
+#nav button:nth-child(5):before{content:"🚐"}
+#nav button:nth-child(6):before{content:"💰"}
+#nav button:nth-child(7):before{content:"🧾"}
+#nav button:nth-child(8):before{content:"📊"}
+#nav button:nth-child(9):before{content:"📷"}
+#nav button:nth-child(10):before{content:"🔁"}
+#nav button:nth-child(11):before{content:"🏪"}
+#nav button:nth-child(12):before{content:"🛵"}
+#nav button:nth-child(13):before{content:"🔎"}
+#nav button:nth-child(14):before{content:"💳"}
+#nav button:nth-child(15):before{content:"📜"}
+#nav button:nth-child(16):before{content:"🧭"}
+#nav button:nth-child(17):before{content:"🌍"}
+#nav button:nth-child(18):before{content:"⚖️"}
+#nav button:nth-child(19):before{content:"📒"}
+#nav button:nth-child(20):before{content:"🗂️"}
+#nav button:hover{background:#ffffff16;color:#fff;transform:translateX(-2px)}
+#nav button.active{background:linear-gradient(90deg,#f28a16,#ff9e25);color:#fff;border-color:#ffb45d;box-shadow:0 4px 12px #f28a1640;font-weight:800}
+.sidebar-foot{text-align:center;color:#a9c5df;font-size:10px;padding:14px 4px 4px;margin-top:10px;border-top:1px solid #ffffff24}
+.air-content{min-width:0}
+.air-hero{margin-top:0}
+.air-content>.page{min-width:0}
+.air-content footer{margin-top:16px}
+@media(max-width:900px){
+ .app-layout{grid-template-columns:205px minmax(0,1fr);gap:10px}
+ .air-sidebar{padding:10px 7px}
+ #nav button{font-size:12px;padding:10px 8px;gap:7px}
+ .sidebar-brand b{font-size:13px}
+}
+@media(max-width:650px){
+ .wrap{padding:8px}
+ .app-layout{grid-template-columns:116px minmax(0,1fr);gap:7px}
+ .air-sidebar{top:7px;max-height:calc(100vh - 14px);padding:8px 5px;border-radius:12px}
+ .sidebar-brand{gap:5px;padding:4px 2px 9px;flex-direction:column;text-align:center}
+ .sidebar-mark{width:32px;height:32px;font-size:18px}
+ .sidebar-brand b{font-size:11px}.sidebar-brand small{font-size:9px}
+ #nav{gap:3px}
+ #nav button{font-size:10px;padding:9px 5px;gap:4px;line-height:1.25;border-radius:8px}
+ #nav button:before{width:17px;min-width:17px;font-size:13px}
+ .sidebar-foot{font-size:8px;line-height:1.3}
+ .air-content .air-hero{padding:10px;min-height:90px}
+ .air-content .air-hero h2{font-size:14px}
+ .air-content .air-hero p{font-size:10px}
+ .air-content .air-hero-art{display:none}
+ .air-content .air-hero-chip{display:none}
+ .air-content .grid{grid-template-columns:1fr}
+ .air-content .formgrid{grid-template-columns:1fr}
+ .air-content .span2,.air-content .span4{grid-column:span 1}
+}
+</style>
+
+<style id="air-auth-style">
+.auth-gate{position:fixed;inset:0;z-index:99999;display:flex;align-items:center;justify-content:center;padding:18px;background:linear-gradient(135deg,#eaf3fc,#dceafa 55%,#f7fbff);overflow:auto}
+.auth-card{width:min(100%,440px);background:#fff;border:1px solid #dce7f3;border-radius:20px;padding:25px;box-shadow:0 18px 55px #123b6828;color:#183653}
+.auth-brand{display:flex;align-items:center;gap:12px;padding-bottom:18px;border-bottom:1px solid #e8eef5}
+.auth-logo{width:52px;height:52px;border-radius:15px;background:#123b68;color:white;display:grid;place-items:center;font-size:28px}
+.auth-brand b{font-size:22px;color:#123b68;display:block}.auth-brand small{font-size:11px;color:#71839a}
+.auth-tabs{display:grid;grid-template-columns:1fr 1fr;gap:7px;margin:18px 0}
+.auth-tabs button{border:1px solid #dce7f3;background:#f3f7fc;color:#45627f;padding:11px;border-radius:9px}
+.auth-tabs button.active{background:#123b68;color:#fff;border-color:#123b68}
+.auth-form h2{font-size:21px;color:#123b68;margin:8px 0}.auth-form p{font-size:12px;color:#71839a;margin:0 0 15px}
+.auth-form label{display:block;margin:10px 0;font-size:12px;color:#526b87}
+.auth-form input,.auth-form select{display:block;width:100%;margin-top:5px;box-sizing:border-box;padding:12px;border:1px solid #d9e4ef;border-radius:9px;background:#fbfdff}
+.auth-submit{width:100%;padding:13px;margin-top:10px;background:#f28a16;color:#fff;border:0;border-radius:10px;font-weight:800}
+.auth-msg{font-size:12px;margin-top:10px;color:#b42318;min-height:18px}.auth-hint{display:block;margin-top:15px;color:#8a6b35;font-size:10px;text-align:center}
+.auth-bottom{text-align:center;color:#9aabba;font-size:10px;margin-top:18px}
+.account-action{border:0;border-radius:7px;padding:7px 10px;margin:2px;cursor:pointer}
+.account-approve{background:#e2f7ed;color:#08734b}.account-reject{background:#ffebeb;color:#b42318}
+@media(max-width:480px){.auth-card{padding:18px}.auth-brand b{font-size:19px}}
+</style>
+<style>#authGate{display:none!important}.app-layout,header{visibility:visible!important}</style></head>
 <body>
-<header>
-<h1>✈ Air Logistic</h1>
-<p>نظام إدارة ومتابعة الشحن والخدمات اللوجستية</p>
-</header>
+<header><div class="brand"><img class="brand-logo" src="data:image/jpeg;base64,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" alt="Air Logistic logo"><div class="brand-copy"><h1>Air Logistic</h1><p>نظام إدارة الشحن والخدمات اللوجستية</p></div></div><div class="row"><span id="today"></span><button class="light" onclick="backup()">نسخة احتياطية</button></div></header>
+<main class="wrap">
+<div class="notice"><b>تنبيه تشغيل:</b> هذه النسخة جاهزة للاستخدام والتجربة على جهاز واحد وتحفظ البيانات في المتصفح. مشاركة البيانات بين الموظفين من أجهزة مختلفة تحتاج ربط قاعدة بيانات سحابية وإعداد حسابات وصلاحيات؛ لا تضع بيانات عملاء حقيقية قبل إعداد ذلك.</div>
+<div class="app-layout">
+<aside class="air-sidebar">
+<div class="sidebar-brand"><span class="sidebar-mark">📦</span><div><b>Air Logistic</b><small>القائمة الرئيسية</small></div></div>
+<nav id="nav"><button data-page="accountRequests">طلبات الحسابات</button>
+<button class="active" data-page="home">الرئيسية</button><button data-page="shipments">الشحنات</button><button data-page="customers">العملاء</button><button data-page="drivers">السائقون</button><button data-page="vehicles">السيارات</button><button data-page="finance">الحسابات</button><button data-page="ocr">قراءة البوليصة OCR</button><button data-page="importer">استيراد Excel</button><button data-page="scanner">ماسح الموبايل</button><button data-page="transfers">التحويلات</button><button data-page="merchantPortal">بوابة التاجر</button><button data-page="courierPortal">لوحة المندوب</button><button data-page="tracking">تتبع العميل</button><button data-page="settlements">التسويات المالية</button><button data-page="policies">الشروط والسياسات</button><button data-page="workflow">دورة الشحنة (48 حالة)</button><button data-page="agents">الوكلاء الخارجيون</button><button data-page="pricing">مناطق وأسعار الشحن</button><button data-page="roles">الصلاحيات والأدوار</button><button data-page="finance">دفتر الحركة المالية</button><button data-page="tools">النسخ والاستيراد</button>
+</nav>
+<div class="sidebar-foot">Fast • Safe • Everywhere</div>
+</aside>
+<div class="air-content">
 
-<main class="container">
-<section class="stats">
-<div class="card stat"><span>إجمالي الشحنات</span><b id="total">0</b></div>
-<div class="card stat"><span>قيد التنفيذ</span><b id="active">0</b></div>
-<div class="card stat"><span>تم التسليم</span><b id="done">0</b></div>
-<div class="card stat"><span>متأخرة</span><b id="late">0</b></div>
+<div class="air-hero">
+ <div class="air-hero-copy"><span class="air-eyebrow">AIR LOGISTIC • SMART SHIPPING</span><h2>إدارة شحناتك… بكل سهولة واحترافية</h2><p>من الاستلام إلى التسليم، كل عملياتك في مكان واحد.</p></div>
+ <div class="air-hero-art" aria-hidden="true"><span>✈</span><strong>🚚</strong><i>📦</i></div>
+ <div class="air-hero-chip"><b>Air Logistic</b><small>Fast • Safe • Everywhere</small></div>
+</div>
+
+<section id="home" class="page">
+<div class="grid" id="kpis"></div>
+<div class="cards2"><div class="panel"><h2>آخر الشحنات</h2><div id="recent"></div></div><div class="panel"><h2>ملخص الحسابات</h2><div id="finSummary"></div></div></div>
+</section>
+<section id="shipments" class="page hidden">
+<div class="panel"><h2 id="shipTitle">تسجيل شحنة جديدة</h2><form id="shipForm"><div class="formgrid">
+<label>رقم الشحنة *<input name="id" required></label><label>تاريخ التسجيل<input name="date" type="date"></label>
+<label>اسم العميل *<input name="customer" required></label><label>رقم الهاتف<input name="phone" inputmode="tel"></label>
+<label>من<input name="from"></label><label>جهة الوصول *<input name="to" required></label>
+<label>محتويات الشحنة<input name="content"></label><label>عدد القطع<input name="pieces" type="number" min="0"></label>
+<label>الوزن (كجم)<input name="weight" type="number" min="0" step=".01"></label><label>نوع الخدمة<select name="service"><option>عادي</option><option>سريع</option><option>مستعجل</option></select></label>
+<label>شركة النقل<input name="carrier"></label><label>المندوب المسؤول<select name="agent"><option value="">— اختر المندوب —</option></select></label><label>السائق<input name="driver"></label>
+<label>السيارة / اللوحة<input name="vehicle"></label><label>الحالة<select name="status"><option>تم إنشاء الطلب</option><option>تم الاستلام من التاجر</option><option>في المخزن / مركز التوزيع</option><option>خرجت للتوصيل</option><option>تم التسليم</option><option>مؤجل / لم يتم الرد</option><option>مرتجع</option><option>ملغاة</option></select></label>
+<label>موعد التسليم المتوقع<input name="due" type="date"></label><label>رسوم الشحن (جنيه)<input name="fee" type="number" min="0" step=".01"></label>
+<label>تحصيل من العميل (COD)<input name="cod" type="number" min="0" step=".01"></label><label>المبلغ المحصل<input name="collected" type="number" min="0" step=".01"></label><label>التاجر / صاحب الشحنة<input name="merchant"></label><label>رسوم المرتجع<input name="returnFee" type="number" min="0" step=".01"></label><label>عدد محاولات التوصيل<input name="attempts" type="number" min="0" step="1" value="0"></label><label>موعد المحاولة القادمة<input name="nextAttempt" type="date"></label><label class="span2">سبب التأجيل / فشل التوصيل<input name="failureReason"></label>
+<label class="span4">ملاحظات<textarea name="notes"></textarea></label></div><div class="actions"><button class="primary" type="submit" id="shipSave">حفظ الشحنة</button><button class="secondary" type="button" onclick="resetShip()">إلغاء</button></div></form></div>
+<div class="panel"><h2>سجل الشحنات</h2><div class="row"><input id="shipSearch" placeholder="ابحث برقم الشحنة أو العميل أو الهاتف أو الوجهة"><select id="statusFilter"><option value="">كل الحالات</option><option>تم إنشاء الطلب</option><option>تم الاستلام من التاجر</option><option>في المخزن / مركز التوزيع</option><option>خرجت للتوصيل</option><option>تم التسليم</option><option>مؤجل / لم يتم الرد</option><option>مرتجع</option><option>ملغاة</option></select><button class="light" onclick="exportCSV()">تصدير CSV</button></div><div class="tablewrap" id="shipTable"></div></div>
+</section>
+<section id="customers" class="page hidden"><div class="panel"><h2>إضافة عميل</h2><form id="customerForm" class="formgrid"><label>اسم العميل<input name="name" required></label><label>الهاتف<input name="phone"></label><label>المحافظة / المدينة<input name="city"></label><label>سعر الشحن المتفق عليه<input name="shippingRate" type="number" min="0" step=".01"></label><label>نسبة التوصيل %<input name="deliveryPercent" type="number" min="0" max="100" step=".01"></label><label>رسوم المرتجع<input name="returnPolicy" type="number" min="0" step=".01"></label><label>دورة التسوية<select name="settlementCycle"><option>كل 3 أيام</option><option>أسبوعي</option><option>شهري</option></select></label><label class="span2">العنوان<input name="address"></label><div class="span4"><button class="primary">حفظ العميل</button></div></form></div><div class="panel"><h2>دليل العملاء</h2><div class="tablewrap" id="customerTable"></div></div></section>
+<section id="drivers" class="page hidden"><div class="panel"><h2>إضافة سائق</h2><form id="driverForm" class="formgrid"><label>اسم السائق<input name="name" required></label><label>الهاتف<input name="phone"></label><label>رقم الهوية<input name="code"></label><label>نوع المركبة<input name="vehicleType" placeholder="موتوسيكل / سيارة"></label><label>العهدة المالية<input name="cashCustody" type="number" min="0" step=".01"></label><label>الحد الائتماني<input name="creditLimit" type="number" min="0" step=".01"></label><label>عمولة لكل شحنة<input name="commission" type="number" min="0" step=".01"></label><label>الحالة<select name="status"><option>نشط</option><option>غير نشط</option></select></label><div class="span4"><button class="primary">حفظ السائق</button></div></form></div><div class="panel"><h2>السائقون</h2><div class="tablewrap" id="driverTable"></div></div></section>
+<section id="vehicles" class="page hidden"><div class="panel"><h2>إضافة سيارة</h2><form id="vehicleForm" class="formgrid"><label>رقم اللوحة<input name="plate" required></label><label>الموديل<input name="model"></label><label>السائق المسؤول<input name="driver"></label><label>الصيانة القادمة<input name="service" type="date"></label><div class="span4"><button class="primary">حفظ السيارة</button></div></form></div><div class="panel"><h2>السيارات</h2><div class="tablewrap" id="vehicleTable"></div></div></section>
+<section id="finance" class="page hidden"><div class="panel"><h2>تسجيل مصروف</h2><form id="expenseForm" class="formgrid"><label>التاريخ<input name="date" type="date"></label><label>نوع المصروف<select name="type"><option>وقود</option><option>صيانة</option><option>رواتب</option><option>إيجار</option><option>تغليف</option><option>اتصالات</option><option>أخرى</option></select></label><label>البيان<input name="desc" required></label><label>القيمة (جنيه)<input name="amount" type="number" min="0" step=".01" required></label><div class="span4"><button class="primary">حفظ المصروف</button></div></form></div><div class="panel"><h2>سجل المصروفات والتحصيل</h2><div id="expenseTable" class="tablewrap"></div></div></section>
+<section id="ocr" class="page hidden"><div class="panel"><h2>قراءة بوليصة الشحن من صورة</h2><p class="muted">اختر صورة واضحة. القراءة الآلية مساعدة فقط؛ راجع البيانات قبل اعتماد الشحنة.</p><label>صورة البوليصة<input id="ocrImage" type="file" accept="image/*"></label><div class="actions"><button class="primary" onclick="readWaybill()">ابدأ قراءة البوليصة</button></div><p id="ocrProgress" class="muted"></p><label>النص المستخرج<textarea id="ocrText" rows="8"></textarea></label><div class="actions"><button class="secondary" onclick="copyOCR()">نسخ النص</button><button class="light" onclick="fillFromOCR()">نقل البيانات التي تم التعرف عليها إلى نموذج الشحنة</button></div></div></section>
+<section id="tools" class="page hidden"><div class="panel"><h2>النسخ الاحتياطي والاستيراد</h2><p>احفظ نسخة JSON تشمل الشحنات والعملاء والسائقين والسيارات والمصروفات والتحويلات وسجل التدقيق. احتفظ بها في مكان آمن.</p><div class="actions"><button class="primary" onclick="backup()">تنزيل نسخة احتياطية JSON</button><label class="light" style="padding:10px 14px;border-radius:9px">استيراد نسخة JSON<input id="restoreFile" type="file" accept=".json,application/json"></label><button class="secondary" onclick="exportCSV()">تصدير الشحنات CSV</button></div><p class="muted">الاستيراد يضيف السجلات الجديدة ولا يكرر أرقام الشحنات الموجودة.</p></div></section>
+
+<section id="importer" class="page hidden">
+ <div class="panel"><h2>الاستيراد الذكي من Excel / CSV</h2>
+ <p class="muted">ارفع ملف XLSX أو XLS أو CSV. ستتم معاينة البيانات وربط الأعمدة قبل الحفظ. لا يتم اعتماد أي شحنة تلقائياً.</p>
+ <label>اختيار ملف الشحنات<input id="excelFile" type="file" accept=".xlsx,.xls,.csv,text/csv,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"></label>
+ <div class="actions"><button class="primary" type="button" onclick="readExcelFile()">قراءة الملف ومعاينته</button><button class="secondary" type="button" onclick="clearImport()">مسح المعاينة</button></div>
+ <p id="importStatus" class="muted">يدعم النظام قراءة الورقة الأولى افتراضياً، مع إمكانية اختيار ورقة أخرى بعد القراءة.</p>
+ <div id="sheetPickerWrap" class="hidden"><label>ورقة العمل<select id="sheetPicker" onchange="changeImportSheet()"></select></label></div>
+ </div>
+ <div class="panel hidden" id="mappingPanel"><h2>مطابقة أعمدة الملف مع بيانات النظام</h2><p class="muted">تم اقتراح المطابقة تلقائياً. راجعها وعدّلها قبل المعاينة.</p><div id="mappingGrid" class="formgrid"></div><div class="actions"><button class="primary" onclick="buildImportPreview()">إنشاء المعاينة والتحقق</button></div></div>
+ <div class="panel hidden" id="previewPanel"><h2>مراجعة الشحنات قبل الاعتماد</h2><div id="importReport"></div><div class="actions"><button class="success" onclick="commitImport()">اعتماد الشحنات السليمة فقط</button><button class="light" onclick="downloadImportErrors()">تنزيل تقرير الأخطاء</button></div><div class="tablewrap" id="importPreview"></div></div>
 </section>
 
-<section class="card panel">
-<h2>＋ تسجيل شحنة جديدة</h2>
-<form id="shipmentForm">
-<div class="form">
-<input id="code" placeholder="رقم الشحنة" required>
-<input id="customer" placeholder="اسم العميل" required>
-<input id="destination" placeholder="جهة الوصول" required>
-<input id="carrier" placeholder="شركة النقل">
-<select id="status">
-<option value="جديدة">جديدة</option>
-<option value="قيد التنفيذ">قيد التنفيذ</option>
-<option value="تم الشحن">تم الشحن</option>
-<option value="تم التسليم">تم التسليم</option>
-<option value="متأخرة">متأخرة</option>
-</select>
-<input id="date" type="date">
-</div>
-<div class="actions">
-<button type="submit" id="saveBtn">حفظ الشحنة</button>
-<button type="button" class="secondary" onclick="resetForm()">إلغاء</button>
-</div>
-</form>
+<section id="scanner" class="page hidden">
+ <div class="panel">
+  <h2>ماسح الباركود للموبايل</h2>
+  <p class="muted">وجّه كاميرا الهاتف إلى الباركود أو QR الموجود على بوليصة الشحن. يتطلب استخدام الكاميرا فتح الصفحة عبر HTTPS أو localhost ومنح إذن الكاميرا.</p>
+  <div class="actions">
+   <button class="primary" type="button" onclick="startMobileScanner()">تشغيل الكاميرا</button>
+   <button class="secondary" type="button" onclick="stopMobileScanner()">إيقاف الكاميرا</button>
+  </div>
+  <div id="scannerVideoWrap" class="hidden" style="margin-top:12px;max-width:620px">
+   <video id="scannerVideo" playsinline muted style="width:100%;border-radius:14px;background:#101820;min-height:220px;object-fit:cover"></video>
+   <p id="scannerStatus" class="muted">جاري تجهيز الكاميرا...</p>
+  </div>
+  <label>أو أدخل رقم البوليصة يدوياً<input id="scanManual" inputmode="numeric" autocomplete="off" placeholder="امسح الباركود أو اكتب رقم الشحنة"></label>
+  <div class="actions"><button class="success" type="button" onclick="lookupScannedShipment()">بحث عن الشحنة</button></div>
+ </div>
+ <div class="panel hidden" id="scanResult"><h2>نتيجة المسح</h2><div id="scanResultBody"></div><div class="actions" id="scanActions"></div></div>
 </section>
 
-<section class="card panel">
-<h2>📦 سجل الشحنات</h2>
-<input class="search" id="search" placeholder="ابحث برقم الشحنة أو العميل أو الوجهة...">
-<div class="tablewrap">
-<table>
-<thead>
-<tr>
-<th>رقم الشحنة</th>
-<th>العميل</th>
-<th>الوجهة</th>
-<th>شركة النقل</th>
-<th>الحالة</th>
-<th>التاريخ</th>
-<th>الإجراءات</th>
-</tr>
-</thead>
-<tbody id="rows"></tbody>
-</table>
-</div>
-<div id="empty" class="empty">لا توجد شحنات مسجلة حتى الآن</div>
-<div class="actions">
-<button onclick="exportCSV()">تصدير Excel / CSV</button>
-<button class="secondary" onclick="window.print()">طباعة التقرير</button>
-</div>
+<section id="transfers" class="page hidden">
+ <div class="panel"><h2>تحويل شحنة بين المندوبين</h2><form id="transferForm" class="formgrid">
+ <label>رقم الشحنة<input name="shipmentId" required></label><label>المندوب الجديد<select name="toAgent" id="transferAgent" required><option value="">اختر المندوب</option></select></label>
+ <label class="span2">سبب التحويل<input name="reason" required placeholder="مثال: تغيير منطقة التغطية"></label>
+ <div class="span4"><button class="primary">تسجيل التحويل</button></div></form></div>
+ <div class="panel"><h2>سجل التحويلات وحركة الشحنات</h2><div class="tablewrap" id="transferTable"></div></div>
 </section>
-</main>
-<footer>Air Logistic Management System © 2026</footer>
 
+
+<section id="merchantPortal" class="page hidden">
+ <div class="panel"><h2>بوابة التاجر — إدخال ومتابعة الشحنات</h2>
+ <p class="muted">هذه واجهة تشغيل محلية للتاجر داخل نفس الجهاز. لا يوجد تسجيل دخول منفصل أو مزامنة بين الأجهزة دون خادم.</p>
+ <div class="formgrid">
+  <label>اختيار التاجر<select id="merchantPicker"></select></label>
+  <label>المحافظة / المدينة<input id="merchantCity" placeholder="مثال: الإسكندرية"></label>
+  <label>الوزن بالكيلو<input id="merchantWeight" type="number" min="0" step=".01" value="1"></label>
+  <label>تكلفة الشحن التقديرية<input id="merchantQuote" readonly></label>
+ </div>
+ <div class="actions"><button class="primary" onclick="quoteMerchant()">احسب تكلفة الشحن</button><button class="secondary" onclick="newMerchantShipment()">إنشاء شحنة لهذا التاجر</button></div>
+ <div id="merchantShipments"></div>
+ </div>
+</section>
+<section id="courierPortal" class="page hidden">
+ <div class="panel"><h2>لوحة المندوب — منفست اليوم</h2>
+ <label>اختيار المندوب<select id="courierPicker" onchange="renderCourierPortal()"></select></label>
+ <div id="courierManifest"></div>
+ </div>
+ <div class="panel"><h2>توريد عهدة التحصيل</h2>
+ <form id="courierRemitForm" class="formgrid">
+  <label>المندوب<input name="courier" required></label><label>المبلغ المورد<input name="amount" type="number" min="0" step=".01" required></label>
+  <label>التاريخ<input name="date" type="date"></label><label>ملاحظات<input name="notes"></label>
+  <div class="span4"><button class="primary">تسجيل التوريد</button></div>
+ </form>
+ <div id="courierRemits"></div>
+ </div>
+</section>
+<section id="tracking" class="page hidden">
+ <div class="panel"><h2>صفحة تتبع العميل</h2>
+ <p class="muted">أدخل رقم الشحنة لعرض الحالة وسجل الحركة. يمكن نسخ ملخص التتبع وإرساله للعميل يدويًا.</p>
+ <div class="row"><input id="trackingNumber" placeholder="رقم الشحنة"><button class="primary" onclick="trackShipment()">تتبع الشحنة</button></div>
+ <div id="trackingResult"></div>
+ </div>
+</section>
+<section id="settlements" class="page hidden">
+ <div class="panel"><h2>تسوية مستحقات التاجر</h2>
+ <form id="settlementForm" class="formgrid">
+  <label>التاجر<select name="merchant" id="settlementMerchant" required></select></label>
+  <label>من تاريخ<input name="fromDate" type="date"></label><label>إلى تاريخ<input name="toDate" type="date"></label>
+  <label>مبلغ إضافي / خصم<input name="adjustment" type="number" step=".01" value="0"></label>
+  <label class="span2">ملاحظات<input name="notes"></label>
+  <div class="span4"><button class="primary">احتساب وتسجيل التسوية</button></div>
+ </form>
+ <div id="merchantSettlementSummary"></div>
+ </div>
+ <div class="panel"><h2>تسويات التجار وسجل توريدات المناديب</h2><div id="settlementTable"></div></div>
+</section>
+<section id="policies" class="page hidden">
+ <div class="panel"><h2>شروط الخدمة والسياسات التشغيلية</h2>
+ <form id="policyForm" class="formgrid">
+  <label class="span2">الأصناف الممنوعة<textarea name="prohibited" rows="3">الأدوية غير المرخصة، المواد الخطرة أو المخالفة للقانون، والسوائل أو القابلة للكسر دون تغليف مناسب.</textarea></label>
+  <label class="span2">مسؤولية التلف أو الفقد<textarea name="damage" rows="3">يتم تحديد التعويض وفق قيمة المنتج المثبتة بفاتورة شراء أو الحد الأقصى المتفق عليه كتابةً مع التاجر.</textarea></label>
+  <label>الحد الأقصى للتعويض (جنيه)<input name="compensationCap" type="number" min="0" step=".01"></label>
+  <label>عدد محاولات التوصيل<input name="maxAttempts" type="number" min="1" value="3"></label>
+  <label>مدة المحاولات بالساعات<input name="attemptHours" type="number" min="1" value="72"></label>
+  <label>رسوم المرتجع الافتراضية<input name="defaultReturnFee" type="number" min="0" step=".01" value="0"></label>
+  <label class="span4">شروط إضافية<textarea name="extra" rows="3"></textarea></label>
+  <div class="span4"><button class="primary">حفظ السياسات محليًا</button></div>
+ </form>
+ <div id="policyPreview" class="notice"></div>
+ </div>
+</section>
+
+
+<section id="workflow" class="page hidden">
+ <div class="panel"><h2>إدارة دورة حياة الشحنة — 48 حالة قابلة للتعديل</h2>
+ <p class="muted">اختر الشحنة والحالة وسجل سبب الحركة. كل تغيير يُحفظ في سجل الشحنة مع التاريخ والوقت.</p>
+ <div class="formgrid">
+  <label>رقم الشحنة<select id="wfShipment"></select></label>
+  <label>الحالة الجديدة<select id="wfStatus"></select></label>
+  <label class="span2">ملاحظات / سبب الحركة<input id="wfReason" placeholder="مثال: العميل طلب التأجيل إلى الغد"></label>
+  <div class="span4"><button class="primary" onclick="applyWorkflowStatus()">حفظ تحديث الحالة</button></div>
+ </div>
+ <div id="wfCurrent" class="notice"></div><div id="wfHistory"></div>
+ </div>
+ <div class="panel"><h3>قاموس الحالات</h3><div id="wfStatusList"></div></div>
+</section>
+<section id="agents" class="page hidden">
+ <div class="panel"><h2>الوكلاء الخارجيون وفروع المحافظات</h2>
+ <form id="agentForm" class="formgrid">
+  <label>اسم الوكيل / الفرع<input name="name" required></label><label>المحافظة / المنطقة<input name="area" required></label>
+  <label>مسؤول التواصل<input name="contact"></label><label>رقم الهاتف<input name="phone"></label>
+  <label>نوع الاتفاق<select name="contract"><option>سعر لكل شحنة</option><option>نسبة من الشحن</option><option>اتفاق شهري</option></select></label>
+  <label>سعر الخدمة / النسبة<input name="rate" type="number" min="0" step=".01"></label>
+  <label>حد العهدة الائتماني<input name="creditLimit" type="number" min="0" step=".01"></label>
+  <label>الحالة<select name="active"><option>نشط</option><option>موقوف</option></select></label>
+  <label class="span2">ملاحظات<input name="notes"></label><div class="span4"><button class="primary">إضافة وكيل</button></div>
+ </form></div><div class="panel"><h3>سجل الوكلاء</h3><div id="agentTable"></div></div>
+</section>
+<section id="pricing" class="page hidden">
+ <div class="panel"><h2>مصفوفة أسعار الشحن حسب المحافظة والوزن</h2>
+ <form id="priceForm" class="formgrid">
+  <label>المحافظة / المنطقة<input name="area" required></label><label>التاجر (اختياري)<select name="merchant" id="priceMerchant"></select></label>
+  <label>سعر الشريحة الأولى<input name="base" type="number" min="0" step=".01" required></label>
+  <label>وزن الشريحة الأولى (كجم)<input name="includedWeight" type="number" min=".1" step=".1" value="5"></label>
+  <label>سعر كل كيلو إضافي<input name="extraKg" type="number" min="0" step=".01" value="0"></label>
+  <label>رسوم المنطقة النائية<input name="remoteFee" type="number" min="0" step=".01" value="0"></label>
+  <label>رسوم المرتجع<input name="returnFee" type="number" min="0" step=".01" value="0"></label>
+  <label>الحالة<select name="active"><option>نشط</option><option>موقوف</option></select></label>
+  <div class="span4"><button class="primary">حفظ شريحة السعر</button></div>
+ </form>
+ <hr><h3>حاسبة السعر</h3><div class="formgrid">
+  <label>المنطقة<select id="calcArea"></select></label><label>الوزن بالكيلو<input id="calcWeight" type="number" min=".1" step=".1" value="1"></label>
+  <label>رسوم المنطقة النائية؟<select id="calcRemote"><option value="0">لا</option><option value="1">نعم</option></select></label>
+  <label>السعر المتوقع<input id="calcResult" readonly></label>
+  <div class="span4"><button type="button" class="secondary" onclick="calculateShippingPrice()">احسب السعر</button></div>
+ </div></div>
+ <div class="panel"><h3>جدول الأسعار</h3><div id="priceTable"></div></div>
+</section>
+<section id="roles" class="page hidden">
+ <div class="panel"><h2>الأدوار والصلاحيات</h2>
+ <p class="muted">هذه النسخة تعمل محليًا على جهاز واحد؛ شاشة الأدوار تنظّم الصلاحيات المقترحة ولا توفر تسجيل دخول آمن متعدد المستخدمين دون خادم.</p>
+ <form id="roleForm" class="formgrid">
+  <label>اسم المستخدم<input name="user" required></label><label>الدور<select name="role"><option>مدير النظام</option><option>خدمة العملاء</option><option>مسؤول المخزن والفرز</option><option>مندوب التوصيل</option><option>التاجر</option><option>محاسب</option><option>مشرف فرع / وكيل</option></select></label>
+  <label>ربط بحساب / اسم<input name="linked"></label><label>الحالة<select name="active"><option>نشط</option><option>موقوف</option></select></label>
+  <div class="span4"><button class="primary">إضافة سجل مستخدم</button></div>
+ </form><div id="roleTable"></div>
+ </div>
+ <div class="panel"><h3>مصفوفة الصلاحيات المقترحة</h3><div id="permissionMatrix"></div></div>
+</section>
+<section id="finance" class="page hidden">
+ <div class="panel"><h2>دفتر الحركة المالية</h2>
+ <p class="muted">سجل المقبوضات والمدفوعات والتسويات والتوريدات في دفتر واحد. لا تُسجّل قيودًا محاسبية تلقائيًا من أحداث الشحن إلا بعد مراجعتها واعتمادها.</p>
+ <form id="ledgerForm" class="formgrid">
+  <label>نوع الحركة<select name="type"><option>تحصيل COD</option><option>توريد مندوب</option><option>سداد تاجر</option><option>مصروف تشغيلي</option><option>عمولة مندوب</option><option>رسوم شحن</option><option>رسوم مرتجع</option><option>تسوية وكيل</option><option>تسوية أخرى</option></select></label>
+  <label>الطرف / الحساب<input name="party" required></label><label>رقم الشحنة / المرجع<input name="reference"></label>
+  <label>المبلغ<input name="amount" type="number" min="0" step=".01" required></label><label>التاريخ<input name="date" type="date"></label>
+  <label>طريقة الدفع<select name="method"><option>نقدي</option><option>تحويل بنكي</option><option>محفظة إلكترونية</option><option>أخرى</option></select></label>
+  <label class="span2">ملاحظات<input name="notes"></label><div class="span4"><button class="primary">تسجيل الحركة</button></div>
+ </form><div id="ledgerTotals" class="notice"></div><div id="ledgerTable"></div>
+ </div>
+</section>
+
+
+</div>
+</div>
+<section id="accountRequests" class="page hidden">
+ <div class="panel"><h2>طلبات إنشاء الحسابات</h2>
+ <p class="muted">لن يتمكن أي مستخدم جديد من الدخول قبل موافقة المدير.</p>
+ <div id="pendingAccounts"></div>
+ </div>
+ <div class="panel"><h2>الحسابات المعتمدة</h2><div id="approvedAccounts"></div></div>
+</section>
+<footer class="muted" style="text-align:center;padding:18px">Air Logistic Management System © 2026</footer>
+</main><div id="toast"></div>
+<script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 <script>
-let shipments=JSON.parse(localStorage.getItem("airShipments")||"[]");
-let editing=null;
+const KEY='air_logistic_full_v1';
+let db=loadDB(),editingId=null,lastOCR='';
+function loadDB(){try{return Object.assign({shipments:[],customers:[],drivers:[],vehicles:[],expenses:[],transfers:[],audit:[],imports:[],settlements:[],remits:[],policies:{},roles:[],agents:[],priceRules:[],ledger:[]},JSON.parse(localStorage.getItem(KEY)||'{}'))}catch{return{shipments:[],customers:[],drivers:[],vehicles:[],expenses:[],transfers:[],audit:[],imports:[],settlements:[],remits:[],policies:{},roles:[],agents:[],priceRules:[],ledger:[]}}}
+function save(){localStorage.setItem(KEY,JSON.stringify(db));render()}
+function audit(action,details){db.audit=db.audit||[];db.audit.unshift({at:new Date().toISOString(),action,details});if(db.audit.length>5000)db.audit.length=5000}
+function agentOptions(selected=''){return '<option value="">— بدون تعيين —</option>'+db.drivers.filter(d=>d.status!=='غير نشط').map(d=>`<option value="${esc(d.name)}" ${d.name===selected?'selected':''}>${esc(d.name)}</option>`).join('')}
+function esc(s){return String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
+function money(n){return (+n||0).toLocaleString('ar-EG',{maximumFractionDigits:2})+' ج.م'}
+function toast(s){let t=document.getElementById('toast');t.textContent=s;t.style.display='block';setTimeout(()=>t.style.display='none',2400)}
+document.getElementById('today').textContent=new Date().toLocaleDateString('ar-EG');
+document.querySelectorAll('#nav button').forEach(b=>b.onclick=()=>{document.querySelectorAll('#nav button').forEach(x=>x.classList.remove('active'));b.classList.add('active');document.querySelectorAll('.page').forEach(x=>x.classList.add('hidden'));document.getElementById(b.dataset.page).classList.remove('hidden');if(b.dataset.page==='accountRequests'&&typeof renderAccountRequests==='function')renderAccountRequests();if(b.dataset.page!=='scanner')stopMobileScanner();render()});
+function stats(){let s=db.shipments,today=new Date().toISOString().slice(0,10);return{total:s.length,active:s.filter(x=>['تم الاستلام','تم الاستلام من التاجر','في المخزن','في المخزن / مركز التوزيع','خرجت للتوصيل','مؤجل / لم يتم الرد','تم إنشاء الطلب'].includes(x.status)).length,del:s.filter(x=>x.status==='تم التسليم').length,late:s.filter(x=>x.due&&x.due<today&&!['تم التسليم','ملغاة','مرتجع','مرتجعة'].includes(x.status)).length,fees:s.reduce((a,x)=>a+(+x.fee||0),0),cod:s.reduce((a,x)=>a+(+x.cod||0),0),col:s.reduce((a,x)=>a+(+x.collected||0),0),exp:db.expenses.reduce((a,x)=>a+(+x.amount||0),0)}}
+function render(){let a=stats();document.getElementById('kpis').innerHTML=[['إجمالي الشحنات',a.total],['قيد التنفيذ',a.active],['تم التسليم',a.del],['متأخرة',a.late],['رسوم الشحن',money(a.fees)],['تحصيل COD',money(a.cod)],['المحصل فعليًا',money(a.col)],['المصروفات',money(a.exp)]].map(x=>`<div class="kpi"><small>${x[0]}</small><strong>${x[1]}</strong></div>`).join('');
+document.getElementById('recent').innerHTML=table(['رقم الشحنة','العميل','الوجهة','الحالة'],db.shipments.slice(-6).reverse().map(x=>[x.id,x.customer,x.to,x.status]));
+document.getElementById('finSummary').innerHTML=`<p>إجمالي رسوم الشحن: <b>${money(a.fees)}</b></p><p>إجمالي المطلوب تحصيله COD: <b>${money(a.cod)}</b></p><p>المحصل: <b>${money(a.col)}</b></p><p>المصروفات المسجلة: <b>${money(a.exp)}</b></p><p>المتبقي من COD: <b>${money(Math.max(0,a.cod-a.col))}</b></p>`;
+renderShip();let ag=document.querySelector('#shipForm [name=agent]');if(ag){let v=ag.value;ag.innerHTML=agentOptions(v)}let ta=document.getElementById('transferAgent');if(ta){let v=ta.value;ta.innerHTML='<option value="">اختر المندوب</option>'+db.drivers.filter(d=>d.status!=='غير نشط').map(d=>`<option value="${esc(d.name)}">${esc(d.name)}</option>`).join('');ta.value=v}renderTransfers();document.getElementById('customerTable').innerHTML=table(['الاسم','الهاتف','العنوان'],db.customers.map(x=>[x.name,x.phone,x.address]));
+document.getElementById('driverTable').innerHTML=table(['الاسم','الهاتف','الكود','الحالة'],db.drivers.map(x=>[x.name,x.phone,x.code,x.status]));
+document.getElementById('vehicleTable').innerHTML=table(['اللوحة','الموديل','السائق','الصيانة القادمة'],db.vehicles.map(x=>[x.plate,x.model,x.driver,x.service]));
+document.getElementById('expenseTable').innerHTML=table(['التاريخ','النوع','البيان','القيمة'],db.expenses.map(x=>[x.date,x.type,x.desc,money(x.amount)]))}
+function table(head,rows){if(!rows.length)return'<p class="muted">لا توجد بيانات مسجلة حتى الآن.</p>';return'<div class="tablewrap"><table><thead><tr>'+head.map(x=>`<th>${x}</th>`).join('')+'</tr></thead><tbody>'+rows.map(r=>'<tr>'+r.map(x=>`<td>${esc(x)}</td>`).join('')+'</tr>').join('')+'</tbody></table></div>'}
+function renderShip(){let q=(document.getElementById('shipSearch')?.value||'').toLowerCase(),st=document.getElementById('statusFilter')?.value||'';let arr=db.shipments.filter(x=>(!st||x.status===st)&&[x.id,x.customer,x.phone,x.to,x.carrier].join(' ').toLowerCase().includes(q)).slice().reverse();let h=['رقم الشحنة','العميل','الهاتف','الوجهة','المندوب','شركة النقل','الحالة','موعد التسليم','الإجراءات'];let rows=arr.map(x=>`<tr><td>${esc(x.id)}</td><td>${esc(x.customer)}</td><td>${esc(x.phone)}</td><td>${esc(x.to)}</td><td>${esc(x.agent||'غير معين')}</td><td>${esc(x.carrier)}</td><td><span class="tag">${esc(x.status)}</span></td><td>${esc(x.due)}</td><td><button class="light" onclick="editShip('${encodeURIComponent(x.id)}')">تعديل</button> <button class="danger" onclick="deleteShip('${encodeURIComponent(x.id)}')">حذف</button></td></tr>`).join('');document.getElementById('shipTable').innerHTML=arr.length?`<table><thead><tr>${h.map(x=>`<th>${x}</th>`).join('')}</tr></thead><tbody>${rows}</tbody></table>`:'<p class="muted">لا توجد شحنات مطابقة.</p>'}
+document.getElementById('shipSearch').oninput=renderShip;document.getElementById('statusFilter').onchange=renderShip;
+function resetShip(){editingId=null;document.getElementById('shipForm').reset();document.getElementById('shipTitle').textContent='تسجيل شحنة جديدة';document.getElementById('shipSave').textContent='حفظ الشحنة'}
+function editShip(id){let x=db.shipments.find(s=>s.id===decodeURIComponent(id));if(!x)return;editingId=x.id;let f=document.getElementById('shipForm');Object.keys(x).forEach(k=>{if(f.elements[k])f.elements[k].value=x[k]??''});document.getElementById('shipTitle').textContent='تعديل الشحنة '+x.id;document.getElementById('shipSave').textContent='حفظ التعديلات';window.scrollTo({top:0,behavior:'smooth'})}
+function deleteShip(id){id=decodeURIComponent(id);if(!confirm('هل تريد حذف الشحنة '+id+'؟'))return;audit('حذف شحنة',id);db.shipments=db.shipments.filter(x=>x.id!==id);save();toast('تم حذف الشحنة')}
+document.getElementById('shipForm').onsubmit=e=>{e.preventDefault();let x=Object.fromEntries(new FormData(e.target));if(!editingId&&db.shipments.some(s=>s.id===x.id)){alert('رقم الشحنة موجود بالفعل');return}if(editingId){let i=db.shipments.findIndex(s=>s.id===editingId);let old=db.shipments[i];x.history=old.history||[];if(old.status!==x.status||old.agent!==x.agent)x.history.unshift({at:new Date().toISOString(),event:'تعديل الحالة أو المندوب',fromAgent:old.agent||'',toAgent:x.agent||'',fromStatus:old.status||'',toStatus:x.status||''});db.shipments[i]=x;audit('تعديل شحنة',x.id);toast('تم تحديث الشحنة')}else{x.history=[{at:new Date().toISOString(),event:'إنشاء الشحنة'}];db.shipments.push(x);audit('إضافة شحنة',x.id);toast('تم حفظ الشحنة')}resetShip();save()};
+function addForm(id,key){document.getElementById(id).onsubmit=e=>{e.preventDefault();db[key].push(Object.fromEntries(new FormData(e.target)));e.target.reset();save();toast('تم الحفظ بنجاح')}}
+addForm('customerForm','customers');addForm('driverForm','drivers');addForm('vehicleForm','vehicles');addForm('expenseForm','expenses');
+function download(data,name,type){let u=URL.createObjectURL(new Blob([data],{type})),a=document.createElement('a');a.href=u;a.download=name;a.click();setTimeout(()=>URL.revokeObjectURL(u),1500)}
+function backup(){download(JSON.stringify(db,null,2),'air-logistic-backup.json','application/json')}
+document.getElementById('restoreFile').onchange=e=>{let f=e.target.files[0];if(!f)return;let r=new FileReader();r.onload=()=>{try{let d=JSON.parse(r.result);['shipments','customers','drivers','vehicles','expenses','transfers','audit','imports','settlements','remits','roles'].forEach(k=>{if(Array.isArray(d[k]))db[k]=[...db[k],...d[k].filter(v=>!db[k].some(old=>(old.id&&old.id===v.id)||(old.name&&old.name===v.name)||(old.plate&&old.plate===v.plate)))];});save();toast('تم استيراد البيانات')}catch{alert('ملف النسخة الاحتياطية غير صالح')}};r.readAsText(f);e.target.value=''};
+function exportCSV(){let cols=['id','date','customer','phone','from','to','content','pieces','weight','service','carrier','driver','vehicle','status','due','fee','cod','collected','notes'];let lines=[cols.join(','),...db.shipments.map(x=>cols.map(k=>'"'+String(x[k]??'').replace(/"/g,'""')+'"').join(','))];download('\ufeff'+lines.join('\r\n'),'air-logistic-shipments.csv','text/csv;charset=utf-8')}
+async function readWaybill(){let f=document.getElementById('ocrImage').files[0];if(!f){alert('اختر صورة البوليصة أولاً');return}let p=document.getElementById('ocrProgress');try{if(!window.Tesseract)throw Error('محرك OCR لم يتم تحميله. تأكد من الإنترنت ثم أعد فتح الصفحة.');p.textContent='جاري قراءة الصورة...';let result=await Tesseract.recognize(f,'ara+eng',{logger:m=>{if(m.status)p.textContent=m.status+' '+Math.round((m.progress||0)*100)+'%'}});lastOCR=result.data.text;document.getElementById('ocrText').value=lastOCR;p.textContent='انتهت القراءة. راجع النص يدويًا.';toast('تم استخراج النص')}catch(err){p.textContent='تعذر إكمال القراءة: '+err.message}}
+function copyOCR(){let t=document.getElementById('ocrText').value;if(!t)return alert('لا يوجد نص');navigator.clipboard?.writeText(t).then(()=>toast('تم نسخ النص')).catch(()=>alert(t))}
+function fillFromOCR(){let t=document.getElementById('ocrText').value;if(!t.trim())return alert('اقرأ البوليصة أولاً');let find=(re)=>{let m=t.match(re);return m?m[1].trim():''};let vals={id:find(/(?:رقم\s*الشحنة|بوليصة\s*رقم|waybill|tracking)\s*[:：#-]?\s*([A-Z0-9-]+)/i),customer:find(/(?:اسم\s*العميل|المرسل|المستلم|customer|consignee)\s*[:：-]\s*([^\n]+)/i),phone:find(/(?:موبايل|هاتف|تليفون|phone|mobile)\s*[:：-]?\s*([+0-9 ()-]{7,})/i),to:find(/(?:جهة\s*الوصول|عنوان\s*التسليم|destination|delivery\s*address)\s*[:：-]\s*([^\n]+)/i)};document.querySelectorAll('#shipForm [name]').forEach(el=>{if(vals[el.name])el.value=vals[el.name]});document.getElementById('shipTitle').textContent='راجع بيانات البوليصة قبل الحفظ';document.querySelector('[data-page="shipments"]').click();toast('تم نقل الحقول التي أمكن التعرف عليها؛ راجعها قبل الحفظ')}
 
-const $=id=>document.getElementById(id);
 
-function saveData(){
-localStorage.setItem("airShipments",JSON.stringify(shipments));
-render();
+// ===== Mobile barcode / QR scanner =====
+let scannerStream=null, scannerTimer=null, scannerDetector=null, lastScannedCode='';
+async function startMobileScanner(){
+ const video=document.getElementById('scannerVideo'),wrap=document.getElementById('scannerVideoWrap'),status=document.getElementById('scannerStatus');
+ if(!navigator.mediaDevices?.getUserMedia){status.textContent='هذا المتصفح لا يدعم تشغيل الكاميرا. استخدم الإدخال اليدوي.';wrap.classList.remove('hidden');return}
+ if(!('BarcodeDetector' in window)){status.textContent='قارئ الباركود الأصلي غير مدعوم في هذا المتصفح. استخدم الإدخال اليدوي أو جرّب Chrome على Android.';wrap.classList.remove('hidden');return}
+ try{
+  let supported=await BarcodeDetector.getSupportedFormats();
+  let formats=['qr_code','code_128','code_39','ean_13','ean_8','upc_a','upc_e','itf','codabar','data_matrix','pdf417'].filter(x=>supported.includes(x));
+  scannerDetector=new BarcodeDetector({formats});
+  scannerStream=await navigator.mediaDevices.getUserMedia({audio:false,video:{facingMode:{ideal:'environment'},width:{ideal:1280},height:{ideal:720}}});
+  video.srcObject=scannerStream;await video.play();wrap.classList.remove('hidden');status.textContent='الكاميرا تعمل. وجّهها إلى الباركود بوضوح.';
+  scanFrameLoop();
+ }catch(err){status.textContent='تعذر تشغيل الكاميرا: '+err.message+'. تأكد من إذن الكاميرا وأن الصفحة تعمل عبر HTTPS.';wrap.classList.remove('hidden')}
+}
+async function scanFrameLoop(){
+ if(!scannerStream||!scannerDetector)return;
+ const video=document.getElementById('scannerVideo');
+ try{
+  if(video.readyState>=2){
+   const codes=await scannerDetector.detect(video);
+   if(codes.length&&codes[0].rawValue){lastScannedCode=codes[0].rawValue.trim();document.getElementById('scanManual').value=lastScannedCode;document.getElementById('scannerStatus').textContent='تمت قراءة: '+lastScannedCode;stopMobileScanner();lookupScannedShipment();return}
+  }
+ }catch(e){}
+ scannerTimer=setTimeout(scanFrameLoop,250);
+}
+function stopMobileScanner(){
+ if(scannerTimer)clearTimeout(scannerTimer);scannerTimer=null;
+ if(scannerStream){scannerStream.getTracks().forEach(t=>t.stop());scannerStream=null}
+ const v=document.getElementById('scannerVideo');if(v)v.srcObject=null;
+}
+function lookupScannedShipment(){
+ const code=document.getElementById('scanManual').value.trim();if(!code)return alert('امسح الباركود أو أدخل رقم البوليصة');
+ const s=db.shipments.find(x=>String(x.id).trim()===code);
+ const panel=document.getElementById('scanResult'),body=document.getElementById('scanResultBody'),actions=document.getElementById('scanActions');
+ panel.classList.remove('hidden');
+ if(!s){body.innerHTML=`<p class="tag">لم يتم العثور على شحنة بهذا الرقم</p><p>رقم القراءة: <b>${esc(code)}</b></p>`;actions.innerHTML='';return}
+ body.innerHTML=`<p><b>رقم الشحنة:</b> ${esc(s.id)}</p><p><b>العميل:</b> ${esc(s.customer)}</p><p><b>الهاتف:</b> ${esc(s.phone)}</p><p><b>العنوان:</b> ${esc(s.to)}</p><p><b>المندوب:</b> ${esc(s.agent||'غير معين')}</p><p><b>الحالة الحالية:</b> <span class="tag">${esc(s.status)}</span></p>`;
+ actions.innerHTML=`<button class="light" onclick="openScannedShipment('${encodeURIComponent(s.id)}')">فتح وتعديل الشحنة</button><button class="success" onclick="setScannedStatus('${encodeURIComponent(s.id)}','تم الاستلام')">تسجيل الاستلام</button><button class="primary" onclick="setScannedStatus('${encodeURIComponent(s.id)}','تم التسليم')">تسجيل التسليم</button>`;
+}
+function openScannedShipment(id){stopMobileScanner();document.querySelector('[data-page="shipments"]').click();editShip(id)}
+function setScannedStatus(id,status){
+ const s=db.shipments.find(x=>x.id===decodeURIComponent(id));if(!s)return;
+ if(status==='تم التسليم'&&!confirm('تأكيد تسجيل تسليم الشحنة '+s.id+'؟'))return;
+ const old=s.status;s.status=status;s.history=s.history||[];s.history.unshift({at:new Date().toISOString(),event:'تغيير الحالة عن طريق ماسح الموبايل',fromStatus:old,toStatus:status});audit('تحديث حالة عبر الماسح',`${s.id}: ${old} → ${status}`);save();lookupScannedShipment();toast('تم تحديث حالة الشحنة');
 }
 
-function resetForm(){
-$("shipmentForm").reset();
-editing=null;
-$("saveBtn").textContent="حفظ الشحنة";
+// ===== Smart spreadsheet import (review-first) =====
+let importWorkbook=null, importRows=[], importHeaders=[], importPreviewRows=[], importErrors=[];
+const importFields=[
+ ['id','رقم الشحنة / البوليصة',['id','رقم الشحنة','رقم البوليصة','البوليصة','waybill','tracking','awb']],
+ ['date','تاريخ التسجيل',['date','التاريخ','تاريخ التسجيل','shipment date']],
+ ['customer','اسم العميل',['customer','اسم العميل','العميل','المستلم','consignee']],
+ ['phone','الهاتف',['phone','الهاتف','الموبايل','رقم الهاتف','mobile']],
+ ['from','من',['from','من','المرسل','origin']],
+ ['to','جهة الوصول / العنوان',['to','جهة الوصول','العنوان','عنوان التسليم','destination','address']],
+ ['content','المحتويات',['content','المحتويات','المنتج','الوصف','description']],
+ ['pieces','عدد القطع',['pieces','عدد القطع','الكمية','quantity','qty']],
+ ['weight','الوزن',['weight','الوزن']],
+ ['service','نوع الخدمة',['service','نوع الخدمة','الخدمة']],
+ ['carrier','شركة النقل',['carrier','شركة النقل','الشركة']],
+ ['agent','المندوب',['agent','المندوب','اسم المندوب','driver','السائق']],
+ ['status','الحالة',['status','الحالة','حالة الشحنة']],
+ ['due','موعد التسليم',['due','موعد التسليم','تاريخ التسليم']],
+ ['fee','رسوم الشحن',['fee','رسوم الشحن','مصاريف الشحن','shipping fee']],
+ ['cod','تحصيل COD',['cod','تحصيل','مبلغ التحصيل','المطلوب تحصيله']],
+ ['collected','المبلغ المحصل',['collected','المبلغ المحصل','المحصل']]
+];
+function normHead(s){return String(s??'').trim().toLowerCase().replace(/[أإآ]/g,'ا').replace(/[ى]/g,'ي').replace(/[\s_\-ـ]/g,'')}
+function readExcelFile(){
+ const f=document.getElementById('excelFile').files[0];if(!f)return alert('اختر ملف Excel أو CSV أولاً');
+ if(!window.XLSX)return alert('مكتبة قراءة Excel لم تُحمّل. افتح الصفحة مع اتصال بالإنترنت ثم حاول مجدداً.');
+ const r=new FileReader();document.getElementById('importStatus').textContent='جاري قراءة الملف...';
+ r.onload=ev=>{try{importWorkbook=XLSX.read(ev.target.result,{type:'array',cellDates:true});let sel=document.getElementById('sheetPicker');sel.innerHTML=importWorkbook.SheetNames.map((n,i)=>`<option value="${i}">${esc(n)}</option>`).join('');document.getElementById('sheetPickerWrap').classList.remove('hidden');loadImportSheet(0);document.getElementById('mappingPanel').classList.remove('hidden');document.getElementById('previewPanel').classList.add('hidden');document.getElementById('importStatus').textContent=`تم فتح الملف: ${f.name} — ${importWorkbook.SheetNames.length} ورقة عمل.`}catch(e){document.getElementById('importStatus').textContent='تعذر قراءة الملف: '+e.message}};
+ r.readAsArrayBuffer(f);
 }
+function changeImportSheet(){loadImportSheet(+document.getElementById('sheetPicker').value)}
+function loadImportSheet(i){let ws=importWorkbook.Sheets[importWorkbook.SheetNames[i]];let data=XLSX.utils.sheet_to_json(ws,{header:1,defval:'',raw:false});let nonempty=data.filter(row=>row.some(c=>String(c).trim()!==''));importHeaders=(nonempty.shift()||[]).map((h,i)=>String(h||`عمود ${i+1}`).trim());importRows=nonempty;renderMapping()}
+function renderMapping(){
+ let box=document.getElementById('mappingGrid');box.innerHTML=importFields.map(([key,label,aliases])=>{let match=importHeaders.findIndex(h=>aliases.some(a=>normHead(a)===normHead(h)||normHead(h).includes(normHead(a))));return `<label class="mapping-item">${label}<select data-map="${key}"><option value="-1">— غير موجود —</option>${importHeaders.map((h,i)=>`<option value="${i}" ${i===match?'selected':''}>${esc(h)}</option>`).join('')}</select></label>`}).join('');
+}
+function buildImportPreview(){
+ let map={};document.querySelectorAll('[data-map]').forEach(s=>map[s.dataset.map]=+s.value);
+ importPreviewRows=[];importErrors=[];let seen=new Set(db.shipments.map(s=>String(s.id).trim()));
+ importRows.forEach((row,idx)=>{let x={};Object.keys(map).forEach(k=>{let j=map[k];x[k]=j>=0?String(row[j]??'').trim():''});x.id=x.id.trim();let errors=[];if(!x.id)errors.push('رقم الشحنة مفقود');else if(seen.has(x.id))errors.push('رقم الشحنة موجود مسبقاً');if(!x.customer)errors.push('اسم العميل مفقود');if(!x.to)errors.push('العنوان/جهة الوصول مفقود');['pieces','weight','fee','cod','collected'].forEach(k=>{if(x[k]!==''&&!Number.isFinite(Number(x[k])))errors.push('قيمة غير رقمية في '+k)});if(x.agent&&!db.drivers.some(d=>d.name===x.agent))errors.push('المندوب غير مسجل بالنظام');if(x.id)seen.add(x.id);x.pieces=x.pieces===''?'':Number(x.pieces);['weight','fee','cod','collected'].forEach(k=>x[k]=x[k]===''?'':Number(x[k]));x.status=x.status||'تم إنشاء الطلب';x.service=x.service||'عادي';x.history=[{at:new Date().toISOString(),event:'استيراد من ملف',row:idx+2}];importPreviewRows.push({data:x,errors,row:idx+2})});
+ let good=importPreviewRows.filter(x=>!x.errors.length).length,bad=importPreviewRows.length-good;
+ document.getElementById('importReport').innerHTML=`<p>إجمالي الصفوف: <b>${importPreviewRows.length}</b> — سليمة: <b>${good}</b> — تحتاج مراجعة: <b>${bad}</b></p><p class="muted">الصفوف التي بها أخطاء لن تُحفظ. راجع البيانات قبل الاعتماد.</p>`;
+ document.getElementById('importPreview').innerHTML='<table><thead><tr><th>صف الملف</th><th>رقم الشحنة</th><th>العميل</th><th>الهاتف</th><th>العنوان</th><th>المندوب</th><th>COD</th><th>نتيجة الفحص</th></tr></thead><tbody>'+importPreviewRows.map(x=>`<tr class="${x.errors.length?'badrow':'okrow'}"><td>${x.row}</td><td>${esc(x.data.id)}</td><td>${esc(x.data.customer)}</td><td>${esc(x.data.phone)}</td><td>${esc(x.data.to)}</td><td>${esc(x.data.agent)}</td><td>${esc(x.data.cod)}</td><td>${x.errors.length?esc(x.errors.join('؛ ')):'سليم'}</td></tr>`).join('')+'</tbody></table>';
+ document.getElementById('previewPanel').classList.remove('hidden');
+}
+function commitImport(){let good=importPreviewRows.filter(x=>!x.errors.length);if(!good.length)return alert('لا توجد صفوف سليمة للاعتماد');if(!confirm(`سيتم إضافة ${good.length} شحنة. هل تريد المتابعة؟`))return;good.forEach(x=>db.shipments.push(x.data));db.imports=db.imports||[];db.imports.unshift({at:new Date().toISOString(),count:good.length,skipped:importPreviewRows.length-good.length});audit('استيراد Excel',`${good.length} شحنة`);save();toast(`تم استيراد ${good.length} شحنة`);clearImport()}
+function downloadImportErrors(){let bad=importPreviewRows.filter(x=>x.errors.length);if(!bad.length)return alert('لا توجد أخطاء');let rows=[['صف الملف','رقم الشحنة','الأخطاء'],...bad.map(x=>[x.row,x.data.id,x.errors.join('؛ ')])];download('\ufeff'+rows.map(r=>r.map(v=>'"'+String(v).replace(/"/g,'""')+'"').join(',')).join('\r\n'),'air-logistic-import-errors.csv','text/csv;charset=utf-8')}
+function clearImport(){importWorkbook=null;importRows=[];importPreviewRows=[];document.getElementById('excelFile').value='';document.getElementById('mappingPanel').classList.add('hidden');document.getElementById('previewPanel').classList.add('hidden');document.getElementById('sheetPickerWrap').classList.add('hidden');document.getElementById('importStatus').textContent='اختر ملفاً لبدء القراءة.'}
+function renderTransfers(){let rows=(db.transfers||[]).map(t=>[t.shipmentId,t.fromAgent||'—',t.toAgent,t.reason,new Date(t.at).toLocaleString('ar-EG')]);document.getElementById('transferTable').innerHTML=table(['رقم الشحنة','من مندوب','إلى مندوب','السبب','التاريخ والوقت'],rows)}
+document.getElementById('transferForm').onsubmit=e=>{e.preventDefault();let v=Object.fromEntries(new FormData(e.target)),s=db.shipments.find(x=>String(x.id)===v.shipmentId.trim());if(!s)return alert('رقم الشحنة غير موجود');if(!db.drivers.some(d=>d.name===v.toAgent&&d.status!=='غير نشط'))return alert('اختر مندوباً مسجلاً ونشطاً');if(s.agent===v.toAgent)return alert('الشحنة مسندة بالفعل إلى هذا المندوب');let t={shipmentId:s.id,fromAgent:s.agent||'',toAgent:v.toAgent,reason:v.reason,at:new Date().toISOString()};db.transfers=db.transfers||[];db.transfers.unshift(t);s.history=s.history||[];s.history.unshift({at:t.at,event:'تحويل مندوب',fromAgent:t.fromAgent,toAgent:t.toAgent,reason:t.reason});s.agent=v.toAgent;audit('تحويل شحنة',`${s.id}: ${t.fromAgent} → ${t.toAgent}`);e.target.reset();save();toast('تم تحويل الشحنة وتسجيل الحركة')};
 
-$("shipmentForm").addEventListener("submit",function(e){
-e.preventDefault();
 
-const item={
-code:$("code").value.trim(),
-customer:$("customer").value.trim(),
-destination:$("destination").value.trim(),
-carrier:$("carrier").value.trim(),
-status:$("status").value,
-date:$("date").value
+// ===== Expanded operations: portals, shipment timeline, settlements and policies =====
+const SHIPMENT_STATES=['تم إنشاء الطلب','تم الاستلام من التاجر','في المخزن / مركز التوزيع','خرجت للتوصيل','تم التسليم','مؤجل / لم يتم الرد','مرتجع'];
+function safeArr(k){if(!Array.isArray(db[k]))db[k]=[];return db[k]}
+function getPolicy(){return db.policies||{}}
+function updateShipmentStatus(id,status,reason=''){
+ id=decodeURIComponent(String(id));
+ const s=db.shipments.find(x=>String(x.id)===String(id));if(!s)return;
+ const old=s.status||'';
+ s.status=status;s.history=s.history||[];
+ const now=new Date().toISOString();
+ if(status==='مؤجل / لم يتم الرد'){s.attempts=(+s.attempts||0)+1;s.failureReason=reason||s.failureReason||'لم يتم الرد';}
+ if(status==='مرتجع'){s.returnFee=+s.returnFee||+getPolicy().defaultReturnFee||0;}
+ s.history.unshift({at:now,event:'تحديث حالة الشحنة',fromStatus:old,toStatus:status,reason});
+ audit('تحديث حالة الشحنة',`${s.id}: ${old} ← ${status}`);
+ save();toast('تم تحديث حالة الشحنة');
+}
+function statusButtons(s){
+ return `<div class="status-actions">
+ <button class="light" onclick="updateShipmentStatus('${encodeURIComponent(s.id)}','تم الاستلام من التاجر')">استلام من التاجر</button>
+ <button class="light" onclick="updateShipmentStatus('${encodeURIComponent(s.id)}','في المخزن / مركز التوزيع')">دخول المخزن</button>
+ <button class="light" onclick="updateShipmentStatus('${encodeURIComponent(s.id)}','خرجت للتوصيل')">خرجت للتوصيل</button>
+ <button class="success" onclick="updateShipmentStatus('${encodeURIComponent(s.id)}','تم التسليم')">تم التسليم</button>
+ <button class="secondary" onclick="postponeShipment('${encodeURIComponent(s.id)}')">تأجيل / لا يرد</button>
+ <button class="danger" onclick="updateShipmentStatus('${encodeURIComponent(s.id)}','مرتجع','تعذر التسليم نهائيًا')">مرتجع</button></div>`;
+}
+function postponeShipment(id){
+ const reason=prompt('سبب التأجيل أو عدم الرد:','لم يتم الرد');if(reason===null)return;
+ updateShipmentStatus(decodeURIComponent(id),'مؤجل / لم يتم الرد',reason);
+}
+function fillSelect(id,placeholder,selected=''){
+ const el=document.getElementById(id);if(!el)return;
+ const items=(db.customers||[]).map(x=>x.name).filter(Boolean);
+ el.innerHTML=`<option value="">${placeholder}</option>`+items.map(x=>`<option ${x===selected?'selected':''}>${esc(x)}</option>`).join('');
+}
+function renderMerchantPortal(){
+ const p=document.getElementById('merchantPicker');if(!p)return;
+ const old=p.value;p.innerHTML='<option value="">اختر التاجر</option>'+(db.customers||[]).map(x=>`<option>${esc(x.name)}</option>`).join('');p.value=old;
+ const m=p.value;document.getElementById('merchantShipments').innerHTML=table(['رقم الشحنة','العميل','الوجهة','الحالة','COD','صافي التاجر'],db.shipments.filter(s=>s.merchant===m||(!s.merchant&&s.customer===m)).map(s=>[s.id,s.customer,s.to,s.status,money(s.cod),money((+s.cod||0)-(+s.fee||0)-(+s.returnFee||0))]));
+}
+function quoteMerchant(){
+ const name=document.getElementById('merchantPicker').value;
+ const m=db.customers.find(x=>x.name===name);const weight=+document.getElementById('merchantWeight').value||0;
+ const rate=+(m?.shippingRate||0);const quote=rate+(Math.max(0,weight-1)*2);
+ document.getElementById('merchantQuote').value=money(quote);
+}
+function newMerchantShipment(){
+ const m=document.getElementById('merchantPicker').value;if(!m)return alert('اختر التاجر أولاً');
+ document.querySelector('[data-page="shipments"]').click();
+ const form=document.getElementById('shipForm');form.elements.merchant.value=m;form.elements.customer.value=m;
+ if(form.elements.fee)form.elements.fee.value=+(db.customers.find(x=>x.name===m)?.shippingRate||0);
+}
+function renderCourierPortal(){
+ const p=document.getElementById('courierPicker');if(!p)return;
+ const old=p.value;p.innerHTML='<option value="">اختر المندوب</option>'+(db.drivers||[]).filter(d=>d.status!=='غير نشط').map(x=>`<option>${esc(x.name)}</option>`).join('');p.value=old;
+ const name=p.value;const items=db.shipments.filter(s=>s.agent===name&&!['تم التسليم','مرتجع','ملغاة'].includes(s.status));
+ document.getElementById('courierManifest').innerHTML=items.length?items.map(s=>`<div class="panel"><b>${esc(s.id)} — ${esc(s.customer)}</b><p>${esc(s.to)} | ${esc(s.phone)} | COD: ${money(s.cod)}</p><p>الحالة: <span class="tag">${esc(s.status)}</span></p>${statusButtons(s)}</div>`).join(''):'<p class="muted">لا توجد شحنات مسندة لهذا المندوب.</p>';
+}
+function trackShipment(){
+ const id=document.getElementById('trackingNumber').value.trim();const s=db.shipments.find(x=>String(x.id)===id);const out=document.getElementById('trackingResult');
+ if(!s){out.innerHTML='<p class="tag">لم يتم العثور على الشحنة</p>';return}
+ const history=s.history||[];
+ out.innerHTML=`<div class="panel"><h3>الشحنة ${esc(s.id)}</h3><p>الحالة الحالية: <span class="tag">${esc(s.status)}</span></p><p>الوجهة: ${esc(s.to)}</p><p>المندوب: ${esc(s.agent||'لم يحدد بعد')}</p><div class="timeline">${history.map(h=>`<div class="timeline-item"><b>${esc(h.event||h.toStatus||'تحديث')}</b><div class="muted">${new Date(h.at).toLocaleString('ar-EG')} ${h.reason?' — '+esc(h.reason):''}</div></div>`).join('')}</div><button class="light" onclick="GenCopyTracking('${encodeURIComponent(s.id)}')">نسخ ملخص التتبع</button></div>`;
+}
+function GenCopyTracking(id){
+ const s=db.shipments.find(x=>x.id===decodeURIComponent(id));if(!s)return;
+ const msg=`Air Logistic\\nرقم الشحنة: ${s.id}\\nالحالة: ${s.status}\\nالوجهة: ${s.to}`;
+ if(navigator.clipboard?.writeText)navigator.clipboard.writeText(msg).then(()=>toast('تم نسخ ملخص التتبع')).catch(()=>alert(msg));else alert(msg);
+}
+function merchantNet(s){return (+s.cod||0)-(+s.fee||0)-(+s.returnFee||0)}
+document.getElementById('settlementForm').onsubmit=e=>{
+ e.preventDefault();const v=Object.fromEntries(new FormData(e.target));const merchant=v.merchant;
+ const shipments=db.shipments.filter(s=>(s.merchant===merchant||(!s.merchant&&s.customer===merchant))&&s.status==='تم التسليم'&&(!v.fromDate||!s.date||s.date>=v.fromDate)&&(!v.toDate||!s.date||s.date<=v.toDate));
+ const gross=shipments.reduce((a,s)=>a+(+s.cod||0),0),fees=shipments.reduce((a,s)=>a+(+s.fee||0),0),returns=shipments.reduce((a,s)=>a+(+s.returnFee||0),0);
+ const net=gross-fees-returns+(+v.adjustment||0);
+ safeArr('settlements').unshift({merchant,fromDate:v.fromDate,toDate:v.toDate,gross,fees,returns,adjustment:+v.adjustment||0,net,notes:v.notes,at:new Date().toISOString(),count:shipments.length});
+ audit('تسوية تاجر',`${merchant}: ${net}`);save();toast('تم تسجيل التسوية');e.target.reset();
 };
-
-if(editing===null && shipments.some(x=>x.code===item.code)){
-alert("رقم الشحنة مسجل بالفعل");
-return;
+document.getElementById('courierRemitForm').onsubmit=e=>{
+ e.preventDefault();const v=Object.fromEntries(new FormData(e.target));safeArr('remits').unshift({...v,amount:+v.amount,at:new Date().toISOString()});
+ audit('توريد مندوب',`${v.courier}: ${v.amount}`);save();e.target.reset();toast('تم تسجيل التوريد');
+};
+document.getElementById('policyForm').onsubmit=e=>{
+ e.preventDefault();db.policies=Object.fromEntries(new FormData(e.target));audit('تحديث السياسات','تم تحديث شروط الخدمة');save();renderPolicy();toast('تم حفظ السياسات');
+};
+function renderPolicy(){
+ const p=getPolicy();const f=document.getElementById('policyForm');if(f&&Object.keys(p).length)Object.keys(p).forEach(k=>{if(f.elements[k])f.elements[k].value=p[k]});
+ const el=document.getElementById('policyPreview');if(el)el.innerHTML=`<b>ملخص السياسة الحالية:</b><br>عدد محاولات التوصيل: ${esc(p.maxAttempts||3)} — المدة: ${esc(p.attemptHours||72)} ساعة — رسوم المرتجع الافتراضية: ${money(p.defaultReturnFee||0)}<br>حد التعويض: ${money(p.compensationCap||0)}`;
+}
+function renderNewModules(){
+ renderMerchantPortal();renderCourierPortal();renderPolicy();
+ const sm=document.getElementById('settlementMerchant');if(sm){const v=sm.value;sm.innerHTML='<option value="">اختر التاجر</option>'+(db.customers||[]).map(x=>`<option>${esc(x.name)}</option>`).join('');sm.value=v}
+ const ss=document.getElementById('settlementTable');if(ss)ss.innerHTML=table(['التاجر','عدد الشحنات','إجمالي التحصيل','رسوم الشحن','رسوم المرتجع','التعديل','صافي المستحق','التاريخ'],safeArr('settlements').map(x=>[x.merchant,x.count,money(x.gross),money(x.fees),money(x.returns),money(x.adjustment),money(x.net),new Date(x.at).toLocaleString('ar-EG')]));
+ const cr=document.getElementById('courierRemits');if(cr)cr.innerHTML=table(['المندوب','المبلغ المورد','التاريخ','ملاحظات'],safeArr('remits').map(x=>[x.courier,money(x.amount),x.date,x.notes]));
+ const picker=document.getElementById('courierPicker');if(picker&&picker.value)renderCourierPortal();
 }
 
-if(editing!==null){
-shipments[editing]=item;
-}else{
-shipments.push(item);
-}
-
-saveData();
-resetForm();
-});
-
-function editItem(i){
-const x=shipments[i];
-editing=i;
-$("code").value=x.code;
-$("customer").value=x.customer;
-$("destination").value=x.destination;
-$("carrier").value=x.carrier;
-$("status").value=x.status;
-$("date").value=x.date;
-$("saveBtn").textContent="حفظ التعديلات";
-window.scrollTo({top:0,behavior:"smooth"});
-}
-
-function deleteItem(i){
-if(confirm("هل تريد حذف هذه الشحنة؟")){
-shipments.splice(i,1);
-saveData();
-}
-}
-
-function render(){
-$("total").textContent=shipments.length;
-$("active").textContent=shipments.filter(x=>["جديدة","قيد التنفيذ","تم الشحن"].includes(x.status)).length;
-$("done").textContent=shipments.filter(x=>x.status==="تم التسليم").length;
-$("late").textContent=shipments.filter(x=>x.status==="متأخرة").length;
-
-const q=$("search").value.toLowerCase();
-const filtered=shipments.map((x,i)=>({...x,index:i})).filter(x=>
-[x.code,x.customer,x.destination,x.carrier].join(" ").toLowerCase().includes(q)
-);
-
-$("rows").innerHTML=filtered.map(x=>`
-<tr>
-<td>${escapeHTML(x.code)}</td>
-<td>${escapeHTML(x.customer)}</td>
-<td>${escapeHTML(x.destination)}</td>
-<td>${escapeHTML(x.carrier)}</td>
-<td><span class="status">${escapeHTML(x.status)}</span></td>
-<td>${escapeHTML(x.date)}</td>
-<td>
-<button onclick="editItem(${x.index})">تعديل</button>
-<button class="danger" onclick="deleteItem(${x.index})">حذف</button>
-</td>
-</tr>`).join("");
-
-$("empty").style.display=filtered.length?"none":"block";
-}
-
-function escapeHTML(s){
-return String(s||"").replace(/[&<>"']/g,c=>({
-"&":"&amp;","<":"&lt;",">":"&gt;",
-'"':"&quot;","'":"&#39;"
-})[c]);
-}
-
-$("search").addEventListener("input",render);
-
-function exportCSV(){
-const headers=["رقم الشحنة","العميل","الوجهة","شركة النقل","الحالة","التاريخ"];
-const data=shipments.map(x=>[
-x.code,x.customer,x.destination,x.carrier,x.status,x.date
-]);
-const csv="\uFEFF"+[headers,...data].map(row=>
-row.map(v=>'"'+String(v||"").replace(/"/g,'""')+'"').join(",")
-).join("\n");
-
-const a=document.createElement("a");
-a.href=URL.createObjectURL(new Blob([csv],{type:"text/csv;charset=utf-8"}));
-a.download="Air_Logistic_Shipments.csv";
-a.click();
-URL.revokeObjectURL(a.href);
-}
-
+const originalRender=render;
+render=function(){originalRender();renderNewModules()};
 render();
-</script>
-</body>
-</html>
+
+// ===== Flexible workflow framework extensions =====
+const AIR_STATUSES = ["تم إنشاء الطلب", "تم تأكيد بيانات الطلب", "بانتظار مراجعة الطلب", "تم اعتماد البوليصة", "تم طباعة البوليصة", "قيد تحديد موعد الاستلام", "تم تحديد موعد الاستلام", "قيد الاستلام من التاجر", "تم إسناد مندوب الاستلام", "المندوب في الطريق للتاجر", "وصل المندوب للتاجر", "تم الاستلام من التاجر", "تعذر الاستلام من التاجر", "تم إلغاء طلب الاستلام", "في طريقها إلى المخزن", "وصلت إلى المخزن الرئيسي", "تم تسجيل دخول المخزن", "قيد الفحص والفرز", "تم الفرز", "بانتظار التحويل", "تم تجهيز التحويل", "خرجت في تحويل بين الفروع", "وصلت إلى فرع الوجهة", "تم استلامها بفرع الوجهة", "قيد تحديد مندوب التوصيل", "تم إسناد مندوب التوصيل", "المندوب في الطريق للعميل", "خرجت للتوصيل", "وصل المندوب للعميل", "تم التواصل مع العميل", "العميل طلب التأجيل", "تأجيل إلى موعد محدد", "لم يتم الرد - المحاولة الأولى", "لم يتم الرد - المحاولة الثانية", "لم يتم الرد - المحاولة الثالثة", "العميل طلب إعادة الاتصال", "العميل غير متاح", "العنوان غير واضح", "العنوان خارج نطاق التغطية", "العميل رفض الاستلام", "رفض جزئي", "تم التسليم الجزئي", "تم التسليم بالكامل", "تم تحصيل مبلغ COD", "تعذر التسليم - إعادة للمخزن", "مرتجع في الطريق للتاجر", "تم تسليم المرتجع للتاجر", "ملغي نهائيًا"];
+function ensureArray(k){if(!Array.isArray(db[k]))db[k]=[];return db[k]}
+function addPageNavigation(){
+ document.querySelectorAll('#nav button[data-page]').forEach(b=>{
+  if(b.dataset.boundExtra)return;b.dataset.boundExtra='1';
+  b.addEventListener('click',()=>{
+   document.querySelectorAll('#nav button').forEach(x=>x.classList.remove('active'));b.classList.add('active');
+   document.querySelectorAll('.page').forEach(x=>x.classList.add('hidden'));
+   const target=document.getElementById(b.dataset.page);if(target)target.classList.remove('hidden');
+   if(b.dataset.page!=='scanner'&&typeof stopMobileScanner==='function')stopMobileScanner();
+   renderFlexibleModules();
+  });
+ });
+}
+function fillWorkflowControls(){
+ const sh=document.getElementById('wfShipment'),st=document.getElementById('wfStatus');if(!sh||!st)return;
+ const old=sh.value;sh.innerHTML='<option value="">اختر الشحنة</option>'+db.shipments.map(x=>`<option value="${esc(x.id)}">${esc(x.id)} — ${esc(x.customer||'')}</option>`).join('');sh.value=old;
+ st.innerHTML=AIR_STATUSES.map(x=>`<option>${esc(x)}</option>`).join('');
+ const f=document.getElementById('statusFilter');if(f){const v=f.value;f.innerHTML='<option value="">كل الحالات</option>'+AIR_STATUSES.map(x=>`<option>${esc(x)}</option>`).join('');f.value=v}
+ const s=db.shipments.find(x=>String(x.id)===String(sh.value));
+ document.getElementById('wfCurrent').textContent=s?`الحالة الحالية: ${s.status||'غير محددة'} | المندوب: ${s.agent||'غير معين'} | عدد المحاولات: ${s.attempts||0}`:'اختر شحنة لعرض حالتها الحالية';
+ document.getElementById('wfHistory').innerHTML=s?`<h3>سجل الحركة</h3><div class="timeline">${(s.history||[]).map(h=>`<div class="timeline-item"><b>${esc(h.toStatus||h.event||'حركة')}</b><div>${esc(h.reason||'')}</div><small>${h.at?new Date(h.at).toLocaleString('ar-EG'):''}</small></div>`).join('')}</div>`:'';
+ document.getElementById('wfStatusList').innerHTML=table(['#','الحالة'],AIR_STATUSES.map((x,i)=>[i+1,x]));
+}
+function applyWorkflowStatus(){
+ const id=document.getElementById('wfShipment').value,status=document.getElementById('wfStatus').value,reason=document.getElementById('wfReason').value;
+ if(!id)return alert('اختر الشحنة أولاً');
+ const s=db.shipments.find(x=>String(x.id)===String(id));if(!s)return;
+ const previous=s.status||'';
+ s.status=status;s.history=s.history||[];
+ if(status.includes('لم يتم الرد')||status.includes('تأجيل')||status.includes('تأجيل'))s.attempts=(+s.attempts||0)+1;
+ if(status.includes('مرتجع'))s.returnFee=+s.returnFee||+db.policies?.defaultReturnFee||0;
+ s.history.unshift({at:new Date().toISOString(),event:'تحديث حالة الشحنة',fromStatus:previous,toStatus:status,reason});
+ audit('تحديث دورة الشحنة',`${id}: ${previous} ← ${status} ${reason}`);
+ save();toast('تم تحديث الحالة');
+}
+document.getElementById('wfShipment')?.addEventListener('change',fillWorkflowControls);
+document.getElementById('agentForm')?.addEventListener('submit',e=>{
+ e.preventDefault();const x=Object.fromEntries(new FormData(e.target));x.rate=+x.rate||0;x.creditLimit=+x.creditLimit||0;ensureArray('agents').unshift(x);audit('إضافة وكيل',x.name);save();e.target.reset();toast('تمت إضافة الوكيل');
+});
+document.getElementById('priceForm')?.addEventListener('submit',e=>{
+ e.preventDefault();const x=Object.fromEntries(new FormData(e.target));['base','includedWeight','extraKg','remoteFee','returnFee'].forEach(k=>x[k]=+x[k]||0);ensureArray('priceRules').unshift(x);audit('تحديث تسعير',x.area);save();e.target.reset();toast('تم حفظ شريحة السعر');
+});
+document.getElementById('roleForm')?.addEventListener('submit',e=>{
+ e.preventDefault();ensureArray('roles').unshift(Object.fromEntries(new FormData(e.target)));audit('إضافة مستخدم/دور',e.target.elements.user.value);save();e.target.reset();toast('تم تسجيل الدور');
+});
+document.getElementById('ledgerForm')?.addEventListener('submit',e=>{
+ e.preventDefault();const x=Object.fromEntries(new FormData(e.target));x.amount=+x.amount||0;ensureArray('ledger').unshift({...x,at:new Date().toISOString()});audit('قيد مالي',`${x.type}: ${x.amount}`);save();e.target.reset();toast('تم تسجيل الحركة المالية');
+});
+function calculateShippingPrice(){
+ const area=document.getElementById('calcArea').value,weight=+document.getElementById('calcWeight').value||0,remote=document.getElementById('calcRemote').value==='1';
+ const rule=ensureArray('priceRules').find(x=>x.area===area&&x.active==='نشط');
+ if(!rule){document.getElementById('calcResult').value='لا توجد شريحة سعر نشطة';return}
+ const total=rule.base+Math.max(0,weight-rule.includedWeight)*rule.extraKg+(remote?rule.remoteFee:0);
+ document.getElementById('calcResult').value=money(total);
+}
+function renderFlexibleModules(){
+ addPageNavigation();fillWorkflowControls();
+ const agentRows=ensureArray('agents').map(x=>[x.name,x.area,x.contact,x.phone,x.contract,money(x.rate),money(x.creditLimit),x.active]);
+ const at=document.getElementById('agentTable');if(at)at.innerHTML=table(['الوكيل','المنطقة','المسؤول','الهاتف','الاتفاق','السعر/النسبة','حد العهدة','الحالة'],agentRows);
+ const pt=document.getElementById('priceTable');if(pt)pt.innerHTML=table(['المنطقة','التاجر','الشريحة الأولى','حتى كجم','لكل كجم إضافي','منطقة نائية','مرتجع','الحالة'],ensureArray('priceRules').map(x=>[x.area,x.merchant,money(x.base),x.includedWeight,money(x.extraKg),money(x.remoteFee),money(x.returnFee),x.active]));
+ const cm=document.getElementById('calcArea');if(cm){const v=cm.value;cm.innerHTML=[...new Set(ensureArray('priceRules').filter(x=>x.active==='نشط').map(x=>x.area))].map(x=>`<option>${esc(x)}</option>`).join('');cm.value=v}
+ const pm=document.getElementById('priceMerchant');if(pm){const v=pm.value;pm.innerHTML='<option value="">كل التجار</option>'+db.customers.map(x=>`<option>${esc(x.name)}</option>`).join('');pm.value=v}
+ const rt=document.getElementById('roleTable');if(rt)rt.innerHTML=table(['المستخدم','الدور','الحساب المرتبط','الحالة'],ensureArray('roles').map(x=>[x.user,x.role,x.linked,x.active]));
+ const matrix=document.getElementById('permissionMatrix');if(matrix)matrix.innerHTML=table(['الدور','الصلاحية الأساسية'],[['مدير النظام','كل الشاشات والبيانات والتقارير والإعدادات'],['خدمة العملاء','بيانات الشحنات والشكاوى والحالات المسموح بها'],['مسؤول المخزن والفرز','استلام وفرز وتحويل ودخول وخروج المخزن'],['مندوب التوصيل','الشحنات المسندة إليه وتحديث نتيجة التوصيل'],['التاجر','شحناته وتتبعها ومستحقاته فقط'],['محاسب','القيود والتوريدات والتسويات والتقارير المالية'],['مشرف فرع / وكيل','شحنات وحسابات نطاق الفرع فقط']]);
+ const led=ensureArray('ledger');const incoming=led.filter(x=>['تحصيل COD','توريد مندوب','سداد تاجر'].includes(x.type)).reduce((a,x)=>a+x.amount,0),outgoing=led.filter(x=>!['تحصيل COD','توريد مندوب','سداد تاجر'].includes(x.type)).reduce((a,x)=>a+x.amount,0);
+ const lt=document.getElementById('ledgerTotals');if(lt)lt.textContent=`إجمالي المقبوضات المسجلة: ${money(incoming)} | إجمالي المدفوعات/المصروفات: ${money(outgoing)} | صافي حركة الدفتر: ${money(incoming-outgoing)}`;
+ const ltab=document.getElementById('ledgerTable');if(ltab)ltab.innerHTML=table(['النوع','الطرف','المرجع','المبلغ','التاريخ','طريقة الدفع','ملاحظات'],led.map(x=>[x.type,x.party,x.reference,money(x.amount),x.date,x.method,x.notes]));
+}
+const priorRenderFlexible=render;
+render=function(){priorRenderFlexible();renderFlexibleModules()};
+addPageNavigation();
+render();
+
+
+// ===== تشغيل مباشر بدون شاشة تسجيل دخول =====
+const AUTH_KEY='air_logistic_auth_v1';
+let authData={users:[]},activeAuthUser={username:'admin',fullName:'مدير النظام',role:'مدير النظام'};
+function readAuth(){try{const x=JSON.parse(localStorage.getItem(AUTH_KEY)||'null');if(x&&Array.isArray(x.users))authData=x}catch(e){}}
+function saveAuth(){localStorage.setItem(AUTH_KEY,JSON.stringify(authData))}
+readAuth();
+function renderAccountRequests(){
+ const pending=authData.users.filter(x=>x.status==='pending'),approved=authData.users.filter(x=>x.status!=='pending');
+ const p=document.getElementById('pendingAccounts'),a=document.getElementById('approvedAccounts');
+ if(p)p.innerHTML=pending.length?'<div class="tablewrap"><table><thead><tr><th>الاسم</th><th>اسم المستخدم</th><th>الدور المطلوب</th><th>تاريخ الطلب</th><th>الإجراء</th></tr></thead><tbody>'+pending.map(x=>`<tr><td>${esc(x.fullName)}</td><td>${esc(x.username)}</td><td>${esc(x.role)}</td><td>${new Date(x.createdAt).toLocaleString('ar-EG')}</td><td><button class="account-action account-approve" onclick="decideAccount('${esc(x.id)}','approved')">موافقة</button><button class="account-action account-reject" onclick="decideAccount('${esc(x.id)}','rejected')">رفض</button></td></tr>`).join('')+'</tbody></table></div>':'لا توجد طلبات معلقة';
+ if(a)a.innerHTML=approved.length?'<div class="tablewrap"><table><thead><tr><th>الاسم</th><th>اسم المستخدم</th><th>الدور</th><th>الحالة</th><th>الإجراء</th></tr></thead><tbody>'+approved.map(x=>`<tr><td>${esc(x.fullName)}</td><td>${esc(x.username)}</td><td>${esc(x.role)}</td><td>${x.status==='approved'?'معتمد':x.status==='disabled'?'موقوف':'مرفوض'}</td><td>${x.role==='مدير النظام'?'—':`<button class="account-action account-reject" onclick="decideAccount('${esc(x.id)}','disabled')">إيقاف الحساب</button>`}</td></tr>`).join('')+'</tbody></table></div>':'لا توجد حسابات أخرى';
+}
+function decideAccount(id,status){
+ if(!activeAuthUser||activeAuthUser.role!=='مدير النظام'){alert('هذه الصلاحية للمدير فقط');return}
+ const u=authData.users.find(x=>x.id===id);if(!u)return;u.status=status;saveAuth();renderAccountRequests();audit('قرار حساب مستخدم',u.username+' : '+status);save();toast('تم تحديث حالة الحساب')
+}
+const nav=document.querySelector('#nav button[data-page="accountRequests"]');if(nav)nav.addEventListener('click',renderAccountRequests);
+
+</script></body></html>
