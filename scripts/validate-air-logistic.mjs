@@ -10,7 +10,7 @@ const sw = read('../sw.js');
 new vm.Script(auth, { filename: 'auth.js' });
 new vm.Script(sw, { filename: 'sw.js' });
 
-const inlineScripts = [...html.matchAll(/<script\\b[^>]*>([\\s\\S]*?)<\\/script>/gi)]
+const inlineScripts = [...html.matchAll(/<script\b[^>]*>([\s\S]*?)<\/script>/gi)]
   .map((match) => match[1])
   .filter((source) => source.trim());
 
