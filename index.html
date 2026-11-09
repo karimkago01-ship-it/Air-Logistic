@@ -632,7 +632,7 @@ img,video,canvas,svg{max-width:100%}
 <section id="drivers" class="page hidden"><div class="panel"><h2>إضافة سائق</h2><form id="driverForm" class="formgrid"><label>اسم السائق<input name="name" required></label><label>الهاتف<input name="phone"></label><label>رقم الهوية<input name="code"></label><label>نوع المركبة<input name="vehicleType" placeholder="موتوسيكل / سيارة"></label><label>العهدة المالية<input name="cashCustody" type="number" min="0" step=".01"></label><label>الحد الائتماني<input name="creditLimit" type="number" min="0" step=".01"></label><label>عمولة لكل شحنة<input name="commission" type="number" min="0" step=".01"></label><label>الحالة<select name="status"><option>نشط</option><option>غير نشط</option></select></label><div class="span4"><button class="primary">حفظ السائق</button></div></form></div><div class="panel"><h2>السائقون</h2><div class="tablewrap" id="driverTable"></div></div></section>
 <section id="vehicles" class="page hidden"><div class="panel"><h2>إضافة سيارة</h2><form id="vehicleForm" class="formgrid"><label>رقم اللوحة<input name="plate" required></label><label>الموديل<input name="model"></label><label>السائق المسؤول<input name="driver"></label><label>الصيانة القادمة<input name="service" type="date"></label><div class="span4"><button class="primary">حفظ السيارة</button></div></form></div><div class="panel"><h2>السيارات</h2><div class="tablewrap" id="vehicleTable"></div></div></section>
 <section id="finance" class="page hidden"><div class="panel"><h2>تسجيل مصروف</h2><form id="expenseForm" class="formgrid"><label>التاريخ<input name="date" type="date"></label><label>نوع المصروف<select name="type"><option>وقود</option><option>صيانة</option><option>رواتب</option><option>إيجار</option><option>تغليف</option><option>اتصالات</option><option>أخرى</option></select></label><label>البيان<input name="desc" required></label><label>القيمة (جنيه)<input name="amount" type="number" min="0" step=".01" required></label><div class="span4"><button class="primary">حفظ المصروف</button></div></form></div><div class="panel"><h2>سجل المصروفات والتحصيل</h2><div id="expenseTable" class="tablewrap"></div></div></section>
-<section id="ocr" class="page hidden"><div class="panel"><h2>قراءة بوليصة الشحن من صورة</h2><p class="muted">اختر صورة واضحة. القراءة الآلية مساعدة فقط؛ راجع البيانات قبل اعتماد الشحنة.</p><label>صورة البوليصة<input id="ocrImage" type="file" accept="image/*"></label><div class="actions"><button class="primary" onclick="readWaybill()">ابدأ قراءة البوليصة</button></div><p id="ocrProgress" class="muted"></p><label>النص المستخرج<textarea id="ocrText" rows="8"></textarea></label><div class="actions"><button class="secondary" onclick="copyOCR()">نسخ النص</button><button class="light" onclick="fillFromOCR()">نقل البيانات التي تم التعرف عليها إلى نموذج الشحنة</button></div></div></section>
+<section id="ocr" class="page hidden"><div class="panel"><h2>قراءة بوليصة الشحن من صورة</h2><p class="muted">اختر صورة واضحة. القراءة الآلية مساعدة فقط؛ راجع البيانات قبل اعتماد الشحنة.</p><label>صورة البوليصة<input id="ocrImage" type="file" accept="image/*" capture="environment"></label><div class="actions"><button class="primary" type="button" onclick="startWaybillCamera()">فتح كاميرا قراءة البوليصة</button><button class="secondary" type="button" onclick="captureWaybillFromCamera()">التقاط وقراءة بالكاميرا</button><button class="light" type="button" onclick="stopWaybillCamera()">إيقاف الكاميرا</button><button class="primary" type="button" onclick="readWaybill()">قراءة الصورة المختارة</button></div><div id="ocrCameraWrap" class="hidden" style="margin-top:12px;max-width:680px"><video id="ocrCameraVideo" playsinline muted style="width:100%;max-height:65vh;object-fit:contain;border-radius:14px;background:#101820"></video><p class="muted">ثبّت البوليصة داخل إطار الكاميرا، واجعل الإضاءة جيدة ثم اضغط «التقاط وقراءة بالكاميرا».</p></div><p id="ocrProgress" class="muted" role="status" aria-live="polite"></p><label>النص المستخرج<textarea id="ocrText" rows="8"></textarea></label><div class="actions"><button class="secondary" onclick="copyOCR()">نسخ النص</button><button class="light" onclick="fillFromOCR()">نقل البيانات التي تم التعرف عليها إلى نموذج الشحنة</button></div></div></section>
 <section id="tools" class="page hidden"><div class="panel"><h2>النسخ الاحتياطي والاستيراد</h2><p>احفظ نسخة JSON تشمل الشحنات والعملاء والسائقين والسيارات والمصروفات والتحويلات وسجل التدقيق. احتفظ بها في مكان آمن.</p><div class="actions"><button class="primary" onclick="backup()">تنزيل نسخة احتياطية JSON</button><label class="light" style="padding:10px 14px;border-radius:9px">استيراد نسخة JSON<input id="restoreFile" type="file" accept=".json,application/json"></label><button class="secondary" onclick="exportCSV()">تصدير الشحنات CSV</button></div><p class="muted">الاستيراد يضيف السجلات الجديدة ولا يكرر أرقام الشحنات الموجودة.</p></div></section>
 
 <section id="importer" class="page hidden">
@@ -910,7 +910,7 @@ function esc(s){return String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&l
 function money(n){return (+n||0).toLocaleString('ar-EG',{maximumFractionDigits:2})+' ج.م'}
 function toast(s){let t=document.getElementById('toast');t.textContent=s;t.style.display='block';setTimeout(()=>t.style.display='none',2400)}
 document.getElementById('today').textContent=new Date().toLocaleDateString('ar-EG');
-document.querySelectorAll('#nav button').forEach(b=>b.onclick=()=>{document.querySelectorAll('#nav button').forEach(x=>x.classList.remove('active'));b.classList.add('active');document.querySelectorAll('.page').forEach(x=>x.classList.add('hidden'));document.getElementById(b.dataset.page).classList.remove('hidden');if(b.dataset.page==='accountRequests'&&typeof renderAccountRequests==='function')renderAccountRequests();if(b.dataset.page==='chat'&&typeof renderAirChat==='function')renderAirChat();if(b.dataset.page==='notifications'&&typeof renderAirNotifications==='function')renderAirNotifications();if(b.dataset.page==='activityLog'&&typeof renderAirActivityLog==='function')renderAirActivityLog();if(b.dataset.page!=='scanner')stopMobileScanner();render()});
+document.querySelectorAll('#nav button').forEach(b=>b.onclick=()=>{document.querySelectorAll('#nav button').forEach(x=>x.classList.remove('active'));b.classList.add('active');document.querySelectorAll('.page').forEach(x=>x.classList.add('hidden'));document.getElementById(b.dataset.page).classList.remove('hidden');if(b.dataset.page==='accountRequests'&&typeof renderAccountRequests==='function')renderAccountRequests();if(b.dataset.page==='chat'&&typeof renderAirChat==='function')renderAirChat();if(b.dataset.page==='notifications'&&typeof renderAirNotifications==='function')renderAirNotifications();if(b.dataset.page==='activityLog'&&typeof renderAirActivityLog==='function')renderAirActivityLog();if(b.dataset.page!=='scanner')stopMobileScanner();if(b.dataset.page!=='ocr')stopWaybillCamera();render()});
 function stats(){let s=db.shipments,today=new Date().toISOString().slice(0,10);return{total:s.length,active:s.filter(x=>['تم الاستلام','تم الاستلام من التاجر','في المخزن','في المخزن / مركز التوزيع','خرجت للتوصيل','مؤجل / لم يتم الرد','تم إنشاء الطلب'].includes(x.status)).length,del:s.filter(x=>x.status==='تم التسليم').length,late:s.filter(x=>x.due&&x.due<today&&!['تم التسليم','ملغاة','مرتجع','مرتجعة'].includes(x.status)).length,fees:s.reduce((a,x)=>a+(+x.fee||0),0),cod:s.reduce((a,x)=>a+(+x.cod||0),0),col:s.reduce((a,x)=>a+(+x.collected||0),0),exp:db.expenses.reduce((a,x)=>a+(+x.amount||0),0)}}
 function render(){let a=stats();document.getElementById('kpis').innerHTML=[['إجمالي الشحنات',a.total],['قيد التنفيذ',a.active],['تم التسليم',a.del],['متأخرة',a.late],['رسوم الشحن',money(a.fees)],['تحصيل COD',money(a.cod)],['المحصل فعليًا',money(a.col)],['المصروفات',money(a.exp)]].map(x=>`<div class="kpi"><small>${x[0]}</small><strong>${x[1]}</strong></div>`).join('');
 document.getElementById('recent').innerHTML=table(['رقم الشحنة','العميل','الوجهة','الحالة'],db.shipments.slice(-6).reverse().map(x=>[x.id,x.customer,x.to,x.status]));
@@ -949,26 +949,57 @@ async function prepareWaybillImage(file){
  ctx.putImageData(image,0,0);
  return new Promise((resolve,reject)=>canvas.toBlob(blob=>blob?resolve(blob):reject(new Error('تعذر تجهيز الصورة')),'image/png'));
 }
-async function readWaybill(){
- const file=document.getElementById('ocrImage').files[0];
- if(!file){alert('اختر صورة البوليصة أولاً');return}
+let waybillCameraStream=null;
+async function startWaybillCamera(){
+ const video=document.getElementById('ocrCameraVideo'),wrap=document.getElementById('ocrCameraWrap'),progress=document.getElementById('ocrProgress');
+ if(!navigator.mediaDevices?.getUserMedia){progress.textContent='الكاميرا غير مدعومة هنا. استخدم اختيار صورة البوليصة لفتح كاميرا الهاتف.';return}
+ try{
+  stopWaybillCamera();
+  waybillCameraStream=await navigator.mediaDevices.getUserMedia({audio:false,video:{facingMode:{ideal:'environment'},width:{ideal:1600},height:{ideal:1200}}});
+  video.srcObject=waybillCameraStream;await video.play();wrap.classList.remove('hidden');
+  progress.textContent='الكاميرا جاهزة. وجّهها إلى البوليصة وثبّت الهاتف قبل الالتقاط.';
+ }catch(err){progress.textContent='تعذر فتح الكاميرا: '+err.message+'. اسمح للمتصفح باستخدام الكاميرا وافتح النظام عبر HTTPS.'}
+}
+function stopWaybillCamera(){
+ if(waybillCameraStream){waybillCameraStream.getTracks().forEach(track=>track.stop());waybillCameraStream=null}
+ const video=document.getElementById('ocrCameraVideo');if(video)video.srcObject=null;
+}
+async function captureWaybillFromCamera(){
+ const video=document.getElementById('ocrCameraVideo'),progress=document.getElementById('ocrProgress');
+ if(!waybillCameraStream||!video||video.readyState<2){progress.textContent='افتح الكاميرا وانتظر ظهور الصورة أولاً.';return}
+ try{
+  const canvas=document.createElement('canvas');
+  const scale=Math.min(1,1800/Math.max(video.videoWidth,video.videoHeight));
+  canvas.width=Math.max(1,Math.round(video.videoWidth*scale));canvas.height=Math.max(1,Math.round(video.videoHeight*scale));
+  canvas.getContext('2d',{willReadFrequently:true}).drawImage(video,0,0,canvas.width,canvas.height);
+  const blob=await new Promise((resolve,reject)=>canvas.toBlob(value=>value?resolve(value):reject(new Error('تعذر التقاط الصورة')),'image/jpeg',0.94));
+  stopWaybillCamera();
+  await readWaybillImage(blob);
+ }catch(err){progress.textContent='تعذر التقاط البوليصة: '+err.message}
+}
+async function readWaybillImage(file){
  const progress=document.getElementById('ocrProgress');
  try{
   if(!window.Tesseract)throw Error('محرك OCR لم يتم تحميله. تأكد من الإنترنت ثم أعد فتح الصفحة.');
-  progress.textContent='جاري تحسين وضوح الصورة...';
+  progress.textContent='جاري تحسين وضوح صورة البوليصة...';
   const enhanced=await prepareWaybillImage(file);
   progress.textContent='جاري قراءة البوليصة بالعربية والإنجليزية...';
   const result=await Tesseract.recognize(enhanced,'ara+eng',{
    logger:m=>{if(m.status)progress.textContent=m.status+' '+Math.round((m.progress||0)*100)+'%'},
-   tessedit_pageseg_mode: '11',
+   tessedit_pageseg_mode:'11',
    preserve_interword_spaces:'1'
   });
   lastOCR=(result.data.text||'').trim();
   document.getElementById('ocrText').value=lastOCR;
   const confidence=Number(result.data.confidence||0);
-  progress.textContent='انتهت القراءة — ثقة المحرك '+Math.round(confidence)+'%. راجع الأرقام والأسماء والعنوان قبل النقل.';
-  toast(lastOCR?'تم تحسين الصورة واستخراج النص':'لم يظهر نص واضح؛ جرّب صورة أقرب وأكثر إضاءة');
+  progress.textContent='انتهت القراءة — ثقة المحرك '+Math.round(confidence)+'%. راجع رقم الشحنة والأسماء والعنوان قبل النقل.';
+  toast(lastOCR?'تم التقاط البوليصة واستخراج النص':'لم يظهر نص واضح؛ قرّب الكاميرا وحسّن الإضاءة ثم أعد الالتقاط');
  }catch(err){progress.textContent='تعذر إكمال القراءة: '+err.message}
+}
+async function readWaybill(){
+ const file=document.getElementById('ocrImage').files[0];
+ if(!file){alert('التقط صورة بالكاميرا أو اختر صورة البوليصة أولاً');return}
+ await readWaybillImage(file);
 }
 function copyOCR(){let t=document.getElementById('ocrText').value;if(!t)return alert('لا يوجد نص');navigator.clipboard?.writeText(t).then(()=>toast('تم نسخ النص')).catch(()=>alert(t))}
 function fillFromOCR(){let t=document.getElementById('ocrText').value;if(!t.trim())return alert('اقرأ البوليصة أولاً');let find=(re)=>{let m=t.match(re);return m?m[1].trim():''};let vals={id:find(/(?:رقم\s*الشحنة|بوليصة\s*رقم|waybill|tracking)\s*[:：#-]?\s*([A-Z0-9-]+)/i),customer:find(/(?:اسم\s*العميل|المرسل|المستلم|customer|consignee)\s*[:：-]\s*([^\n]+)/i),phone:find(/(?:موبايل|هاتف|تليفون|phone|mobile)\s*[:：-]?\s*([+0-9 ()-]{7,})/i),to:find(/(?:جهة\s*الوصول|عنوان\s*التسليم|destination|delivery\s*address)\s*[:：-]\s*([^\n]+)/i)};document.querySelectorAll('#shipForm [name]').forEach(el=>{if(vals[el.name])el.value=vals[el.name]});document.getElementById('shipTitle').textContent='راجع بيانات البوليصة قبل الحفظ';document.querySelector('[data-page="shipments"]').click();toast('تم نقل الحقول التي أمكن التعرف عليها؛ راجعها قبل الحفظ')}
