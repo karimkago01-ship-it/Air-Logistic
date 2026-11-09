@@ -713,7 +713,7 @@
     const panel = document.createElement('section');
     panel.id = 'airIdentityPanel';
     panel.style.cssText = 'position:fixed;z-index:9998;right:14px;bottom:14px;width:min(440px,calc(100vw - 28px));max-height:78vh;overflow:auto;background:#fff;color:#172b45;border:1px solid #d7e0eb;border-radius:16px;box-shadow:0 12px 40px #10274633;padding:14px;display:none;font:14px/1.6 system-ui,sans-serif;direction:rtl;';
-    panel.innerHTML = '<div style="display:flex;align-items:center;justify-content:space-between;gap:8px"><b style="font-size:16px">الملف الشخصي والأوراق الرسمية</b><button type="button" id="airIdentityClose" style="border:0;background:#eef3f8;border-radius:9px;padding:6px 10px">إغلاق</button></div><p id="airIdentityIntro" style="color:#53657a;margin:8px 0">ارفع المستندات المطلوبة لمراجعتها بأمان.</p><div id="airIdentityOwn"></div><hr style="border:0;border-top:1px solid #e5ebf2;margin:12px 0"><div id="airIdentityReview" style="display:none"><b>مراجعة مستندات الحسابات</b><div id="airIdentityReviewList" style="margin-top:8px"></div></div><p id="airIdentityMessage" role="status" style="margin:8px 0;color:#176b46"></p>';
+    panel.innerHTML = '<div style="display:flex;align-items:center;justify-content:space-between;gap:8px"><b style="font-size:16px">الملف الشخصي والأوراق الرسمية</b><button type="button" id="airIdentityClose" style="border:0;background:#eef3f8;border-radius:9px;padding:6px 10px">إغلاق</button></div><p id="airIdentityIntro" style="color:#53657a;margin:8px 0">ارفع المستندات المطلوبة لمراجعتها بأمان.</p><div id="airIdentityOwn"></div><div id="airIdentityGrace" style="border:1px solid #dce6f0;border-radius:11px;padding:10px;margin-top:10px;background:#f7f9fc"><b>المستندات مش جاهزة؟</b><p id="airIdentityGraceStatus" style="margin:5px 0;color:#53657a">اطلب مهلة تشغيل مؤقتة لمدة 15 يومًا بعد موافقة الإدارة.</p><button type="button" id="airIdentityGraceRequest" style="background:#245b91;color:white;border:0;border-radius:8px;padding:9px 12px">طلب مهلة تشغيل 15 يوم</button></div><hr style="border:0;border-top:1px solid #e5ebf2;margin:12px 0"><div id="airIdentityReview" style="display:none"><b>مراجعة المستندات وطلبات المهلة</b><div id="airIdentityReviewList" style="margin-top:8px"></div></div><p id="airIdentityMessage" role="status" style="margin:8px 0;color:#176b46"></p>';
     document.body.appendChild(panel);
     const launcher = document.createElement('button');
     launcher.id = 'airIdentityLauncher';
@@ -738,6 +738,23 @@
       .eq('user_id',profile.user_id).order('created_at',{ascending:false});
     if (mineResult.error) { own.textContent='تعذر تحميل أوراقك. تحقق من الاتصال.'; return; }
     const mine = mineResult.data || [];
+    const graceResult = await client.from('identity_access_requests').select('id,status,expires_at,rejection_reason')
+      .eq('user_id',profile.user_id).order('requested_at',{ascending:false}).limit(1);
+    const grace = graceResult.data?.[0];
+    const graceStatus = document.getElementById('airIdentityGraceStatus');
+    const graceButton = document.getElementById('airIdentityGraceRequest');
+    if (graceStatus) graceStatus.textContent = grace
+      ? (grace.status==='requested' ? 'طلبك قيد مراجعة الإدارة.'
+        : grace.status==='approved' && new Date(grace.expires_at)>new Date() ? 'المهلة مفعّلة حتى '+new Date(grace.expires_at).toLocaleString('ar-EG')
+        : grace.status==='rejected' ? 'تم رفض الطلب. '+identityEscape(grace.rejection_reason || '')
+        : grace.status==='approved' ? 'انتهت مهلة التشغيل المؤقتة.' : 'يمكنك طلب مهلة جديدة.')
+      : 'المستندات مش جاهزة؟ اطلب مهلة تشغيل مؤقتة لمدة 15 يومًا، بعد موافقة الإدارة.';
+    if (graceButton) {
+      graceButton.disabled = !!(grace && (grace.status==='requested' || (grace.status==='approved' && new Date(grace.expires_at)>new Date())));
+      graceButton.textContent = grace?.status==='requested' ? 'الطلب قيد المراجعة' : grace?.status==='approved' && new Date(grace.expires_at)>new Date() ? 'المهلة مفعّلة' : 'طلب مهلة تشغيل 15 يوم';
+      graceButton.onclick = requestIdentityGrace;
+    }
+
     const allRequiredApproved = required.every(([type]) => mine.some(doc => doc.document_type === type && doc.status === 'approved'));
     if (!allRequiredApproved) {
       const panel = document.getElementById('airIdentityPanel');
@@ -762,18 +779,54 @@
         .select('id,user_id,document_type,storage_path,status,rejection_reason,created_at')
         .eq('workspace_id',profile.workspace_id).order('created_at',{ascending:false}).limit(100);
       if (allResult.error) { reviewList.textContent='تعذر تحميل قائمة المراجعة.'; return; }
+      const graceReviewResult = await client.from('identity_access_requests').select('id,user_id,status,requested_at,expires_at,rejection_reason').eq('workspace_id',profile.workspace_id).order('requested_at',{ascending:false}).limit(100);
       const profilesResult = await client.from('profiles').select('user_id,full_name,role').eq('workspace_id',profile.workspace_id);
       const names = new Map((profilesResult.data || []).map(x => [x.user_id,x.full_name || 'حساب']));
       const labels = new Map(IDENTITY_TYPES);
-      reviewList.innerHTML = (allResult.data || []).length ? allResult.data.map(doc =>
+      const graceHtml = (graceReviewResult.data || []).map(req =>
+        '<article style="border:1px solid #dce6f0;border-radius:10px;padding:9px;margin:8px 0"><b>'+identityEscape(names.get(req.user_id)||'حساب')+'</b><div>طلب مهلة 15 يوم · '+(req.status==='requested'?'بانتظار الموافقة':req.status==='approved'?'تمت الموافقة':'مرفوض')+(req.expires_at?' · حتى '+new Date(req.expires_at).toLocaleString('ar-EG'):'')+'</div>'+(req.status==='requested'?'<button type="button" data-grace-approve="'+req.id+'" style="background:#176b46;color:white;border:0;border-radius:7px;padding:7px 10px;margin:5px">موافقة 15 يوم</button><button type="button" data-grace-reject="'+req.id+'" style="background:#a83232;color:white;border:0;border-radius:7px;padding:7px 10px">رفض</button>':'')+'</article>'
+      ).join('');
+
+      reviewList.innerHTML = graceHtml + ((allResult.data || []).length ? allResult.data.map(doc =>
         '<article style="border:1px solid #e2e9f1;border-radius:10px;padding:9px;margin:8px 0"><b>'+identityEscape(names.get(doc.user_id) || 'حساب')+'</b><div>'+identityEscape(labels.get(doc.document_type) || doc.document_type)+' · '+statusLabel(doc.status)+'</div><div style="display:flex;gap:7px;flex-wrap:wrap;margin-top:7px"><button type="button" data-open-doc="'+doc.id+'" style="border:0;border-radius:7px;padding:7px 10px">عرض آمن</button>'+(doc.status==='pending' ? '<button type="button" data-approve-doc="'+doc.id+'" style="background:#176b46;color:#fff;border:0;border-radius:7px;padding:7px 10px">اعتماد</button><button type="button" data-reject-doc="'+doc.id+'" style="background:#a83232;color:#fff;border:0;border-radius:7px;padding:7px 10px">رفض</button>' : '')+(doc.rejection_reason ? '<div style="font-size:12px">سبب الرفض: '+identityEscape(doc.rejection_reason)+'</div>' : '')+'</div></article>'
-      ).join('') : '<p style="color:#53657a">لا توجد مستندات مرفوعة حتى الآن.</p>';
+      ).join('') : '<p style="color:#53657a">لا توجد مستندات مرفوعة حتى الآن.</p>');
+      reviewList.querySelectorAll('[data-grace-approve]').forEach(b => b.addEventListener('click', () => reviewIdentityGrace(b.dataset.graceApprove,'approved')));
+      reviewList.querySelectorAll('[data-grace-reject]').forEach(b => b.addEventListener('click', () => reviewIdentityGrace(b.dataset.graceReject,'rejected')));
       reviewList.querySelectorAll('[data-open-doc]').forEach(b => b.addEventListener('click', () => openIdentityDocument((allResult.data || []).find(d => d.id===b.dataset.openDoc))));
       reviewList.querySelectorAll('[data-approve-doc]').forEach(b => b.addEventListener('click', () => reviewIdentityDocument(b.dataset.approveDoc,'approved')));
       reviewList.querySelectorAll('[data-reject-doc]').forEach(b => b.addEventListener('click', () => reviewIdentityDocument(b.dataset.rejectDoc,'rejected')));
     }
     if (message) message.textContent = '';
   }
+  async function requestIdentityGrace() {
+    const profile=window.currentProfile, message=document.getElementById('airIdentityMessage');
+    if(!profile?.active) return;
+    const old=await client.from('identity_access_requests').select('id,status,expires_at')
+      .eq('user_id',profile.user_id).order('requested_at',{ascending:false}).limit(1);
+    const req=old.data?.[0];
+    if(req && (req.status==='requested' || (req.status==='approved' && new Date(req.expires_at)>new Date()))) {
+      if(message) message.textContent='لديك طلب قائم أو مهلة سارية بالفعل.'; return;
+    }
+    const saved=await client.from('identity_access_requests').insert({workspace_id:profile.workspace_id,user_id:profile.user_id,status:'requested'});
+    if(saved.error) { if(message) message.textContent='تعذر إرسال طلب المهلة. حاول مرة أخرى.'; return; }
+    if(message) message.textContent='تم إرسال طلب مهلة 15 يومًا للإدارة للموافقة.';
+    await renderIdentityPanel();
+  }
+  async function reviewIdentityGrace(id,status) {
+    const profile=window.currentProfile;
+    if(!['admin','manager'].includes(profile?.role)) return;
+    let reason=null;
+    if(status==='rejected') { reason=window.prompt('اكتب سبب رفض طلب المهلة:'); if(!reason?.trim()) return; }
+    const now=new Date();
+    const result=await client.from('identity_access_requests').update({
+      status,reviewer_id:profile.user_id,reviewed_at:now.toISOString(),
+      expires_at:status==='approved'?new Date(now.getTime()+15*86400000).toISOString():null,
+      rejection_reason:status==='rejected'?reason.trim().slice(0,500):null
+    }).eq('id',id).eq('workspace_id',profile.workspace_id).eq('status','requested');
+    if(result.error) return alert('تعذر حفظ قرار المهلة.');
+    await renderIdentityPanel();
+  }
+
   async function uploadIdentityDocument(type) {
     const profile = window.currentProfile;
     const input = document.getElementById('airIdentityFile_' + type);
