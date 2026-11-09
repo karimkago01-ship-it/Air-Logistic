@@ -140,7 +140,7 @@
         const items = Array.isArray(db[collection]) ? db[collection] : [];
         const rows = [];
         for (const item of items) {
-          if (profile.role === 'courier' && item.agent !== profile.full_name) continue;
+          if (profile.role === 'courier' && String(item.courier_user_id || '') !== String(profile.user_id)) continue;
           if (collection !== 'shipments') item._cloudId = item._cloudId || crypto.randomUUID();
           const record_id = collection === 'shipments' ? String(item.id || item._cloudId) : String(item._cloudId);
           if (!record_id || record_id === 'undefined') continue;
@@ -200,15 +200,58 @@
       item._createdBy = item._createdBy || row.created_by || null;
       next[row.collection].push(item);
     }
-    if (!(result.data || []).length && profile.role === 'admin' && oldSnapshot) {
-      for (const key of keys) if (Array.isArray(oldSnapshot[key])) next[key] = oldSnapshot[key];
-      if (oldSnapshot.policies && typeof oldSnapshot.policies === 'object') next.policies = oldSnapshot.policies;
+    // Preserve a point-in-time recovery copy before reconciling local and cloud data.
+    if (profile.role === 'admin' && oldSnapshot && typeof oldSnapshot === 'object') {
+      try {
+        if (!localStorage.getItem('air_logistic_recovery_v1')) {
+          localStorage.setItem('air_logistic_recovery_v1', JSON.stringify({
+            savedAt: new Date().toISOString(),
+            sourceKey: 'air_logistic_full_v1',
+            data: oldSnapshot
+          }));
+        }
+      } catch (error) {
+        console.warn('Air Logistic recovery archive:', error);
+      }
+    }
+
+    const cloudRows = result.data || [];
+    if (!cloudRows.length && profile.role === 'admin' && oldSnapshot) {
+      // Empty cloud: retain the complete local snapshot and attempt a non-destructive upload.
+      for (const key of keys) {
+        if (Array.isArray(oldSnapshot[key])) next[key] = oldSnapshot[key].map(item => ({...item}));
+      }
+      if (oldSnapshot.policies && typeof oldSnapshot.policies === 'object') next.policies = {...oldSnapshot.policies};
       db = next;
-      const migrated = await syncDBToCloud();
-      if (migrated) { try { localStorage.removeItem('air_logistic_full_v1'); } catch (_) {} }
+      await syncDBToCloud();
     } else {
+      // Existing cloud rows remain authoritative for matching IDs. Add local-only rows
+      // so offline-created records are not silently discarded during first reconciliation.
+      if (profile.role === 'admin' && oldSnapshot) {
+        for (const key of keys) {
+          if (!Array.isArray(oldSnapshot[key])) continue;
+          const existing = new Set(next[key].map(item =>
+            String(key === 'shipments' ? (item.id || item._cloudId || '') : (item._cloudId || ''))
+          ));
+          for (const raw of oldSnapshot[key]) {
+            const item = raw && typeof raw === 'object' ? {...raw} : null;
+            if (!item) continue;
+            if (key !== 'shipments' && !item._cloudId) item._cloudId = crypto.randomUUID();
+            const id = String(key === 'shipments' ? (item.id || item._cloudId || '') : (item._cloudId || ''));
+            if (!id || existing.has(id)) continue;
+            next[key].push(item);
+            existing.add(id);
+          }
+        }
+        const cloudHasPolicies = cloudRows.some(row => row.collection === 'policies');
+        if (!cloudHasPolicies && oldSnapshot.policies && typeof oldSnapshot.policies === 'object') {
+          next.policies = {...oldSnapshot.policies};
+        }
+      }
       db = next;
-      if ((result.data || []).length && profile.role === 'admin') { try { localStorage.removeItem('air_logistic_full_v1'); } catch (_) {} }
+      // Re-upsert the reconciled set. The recovery archive is intentionally retained;
+      // it is never deleted merely because the cloud contains one or more records.
+      if (profile.role === 'admin' && oldSnapshot) await syncDBToCloud();
     }
     if (typeof render === 'function') render();
   }
