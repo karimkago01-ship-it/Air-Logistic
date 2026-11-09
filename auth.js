@@ -389,7 +389,7 @@
     if (status) status.textContent = 'لديك '+unread+' إشعار غير مقروء من أصل '+rows.length;
     box.innerHTML = rows.length ? rows.map(row =>
       '<article class="air-notification'+(!row.read_at?' unread':'')+'"><div class="air-notification-head"><b>'+airHtml(row.title)+'</b><small>'+airHtml(airDate(row.created_at))+'</small></div><p>'+airHtml(row.body)+'</p>'+
-      (/^https?:\\/\\//i.test(String(row.link || '')) ? '<a href="'+airHtml(row.link)+'" target="_blank" rel="noopener noreferrer">فتح الرابط المرتبط</a>' : '')+
+      ((String(row.link || '').startsWith('https://') || String(row.link || '').startsWith('http://')) ? '<a href="'+airHtml(row.link)+'" target="_blank" rel="noopener noreferrer">فتح الرابط المرتبط</a>' : '')+
       (!row.read_at ? '<div class="actions"><button class="light" type="button" onclick="markAirNotificationRead(\''+row.id+'\')">تحديد كمقروء</button></div>' : '<small>تمت القراءة</small>')+
       '</article>'
     ).join('') : '<p class="muted">لا توجد إشعارات حتى الآن.</p>';
@@ -493,6 +493,7 @@
       setAuthBar(profile,session.user.email);
       unlockApp();
       subscribeRealtime();
+      window.renderAirNotifications();
       if (profile.role === 'admin') renderAccountRequests();
     } catch (error) {
       console.error(error); lockApp();
