@@ -726,6 +726,51 @@ img,video,canvas,svg{max-width:100%}
 
 </div>
 </div>
+<section id="chat" class="page hidden">
+ <div class="panel">
+  <h2>المحادثة الجماعية للفريق</h2>
+  <p class="muted">رسائل مشتركة بين الحسابات النشطة داخل نفس الفرع، وتظهر لحظيًا.</p>
+  <div id="airChatStatus" class="muted" role="status">جارٍ تحميل المحادثة...</div>
+  <div id="airChatMessages" class="air-chat-messages" aria-live="polite"></div>
+  <form id="airChatForm" class="air-chat-compose" onsubmit="sendAirChatMessage(event)">
+   <textarea id="airChatInput" maxlength="5000" rows="2" placeholder="اكتب رسالتك للفريق..." required></textarea>
+   <button class="primary" type="submit">إرسال الرسالة</button>
+  </form>
+ </div>
+</section>
+<section id="notifications" class="page hidden">
+ <div class="panel">
+  <h2>الإشعارات والتنبيهات</h2>
+  <p class="muted">الإشعارات خاصة بحسابك، ويمكنك تحديدها كمقروءة.</p>
+  <div id="airNotificationStatus" class="muted" role="status">جارٍ تحميل الإشعارات...</div>
+  <div id="airNotificationList" class="air-notification-list"></div>
+ </div>
+ <div id="airAnnouncementPanel" class="panel hidden">
+  <h2>إرسال تنبيه للفريق</h2>
+  <p class="muted">متاح لمدير النظام والمدير فقط، وسيصل إلى جميع الحسابات النشطة في الفرع.</p>
+  <form id="airAnnouncementForm" class="formgrid" onsubmit="sendAirNotification(event)">
+   <label class="span4">عنوان التنبيه<input id="airAnnouncementTitle" maxlength="160" required placeholder="مثال: اجتماع الفريق"></label>
+   <label class="span4">نص التنبيه<textarea id="airAnnouncementBody" maxlength="5000" rows="3" required placeholder="اكتب تفاصيل التنبيه..."></textarea></label>
+   <div class="actions span4"><button class="primary" type="submit">إرسال إلى الفريق</button></div>
+  </form>
+ </div>
+</section>
+<style id="air-collaboration-styles">
+.air-chat-messages{display:flex;flex-direction:column;gap:10px;max-height:55vh;min-height:180px;overflow:auto;padding:12px;background:#f4f7fb;border:1px solid var(--line);border-radius:13px;margin:12px 0}
+.air-chat-message{max-width:88%;padding:11px 13px;border-radius:13px;background:#fff;border:1px solid var(--line);box-shadow:0 2px 8px #1027460a;align-self:flex-start;overflow-wrap:anywhere}
+.air-chat-message.mine{align-self:flex-end;background:#eaf4ff;border-color:#cfe3f8}
+.air-chat-meta{display:flex;gap:9px;align-items:center;justify-content:space-between;color:#718096;font-size:11px;margin-bottom:5px}
+.air-chat-text{white-space:pre-wrap;line-height:1.65;font-size:14px}
+.air-chat-compose{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:10px;align-items:end;margin-top:12px}
+.air-chat-compose textarea{margin:0;min-height:48px}
+.air-notification-list{display:flex;flex-direction:column;gap:9px;margin-top:12px}
+.air-notification{border:1px solid var(--line);border-radius:12px;padding:13px;background:#fff}
+.air-notification.unread{background:#f0f7ff;border-color:#b8d5f1}
+.air-notification-head{display:flex;justify-content:space-between;gap:10px;align-items:center}
+.air-notification p{margin:7px 0;white-space:pre-wrap;line-height:1.7}
+.air-notification small{color:var(--muted)}
+@media(max-width:600px){.air-chat-compose{grid-template-columns:1fr}.air-chat-compose button{width:100%}.air-chat-message{max-width:96%}}
+</style>
 <section id="accountRequests" class="page hidden">
  <div class="panel"><h2>الحسابات غير النشطة وطلبات التفعيل</h2>
  <p class="muted">لن يتمكن أي مستخدم جديد من الدخول قبل موافقة المدير.</p>
@@ -1151,51 +1196,7 @@ function downloadAirTemplate(kind){
 let activeAuthUser = null;
 </script>
 
-<section id="chat" class="page hidden">
- <div class="panel">
-  <h2>المحادثة الجماعية للفريق</h2>
-  <p class="muted">رسائل مشتركة بين الحسابات النشطة داخل نفس الفرع، وتظهر لحظيًا.</p>
-  <div id="airChatStatus" class="muted" role="status">جارٍ تحميل المحادثة...</div>
-  <div id="airChatMessages" class="air-chat-messages" aria-live="polite"></div>
-  <form id="airChatForm" class="air-chat-compose" onsubmit="sendAirChatMessage(event)">
-   <textarea id="airChatInput" maxlength="5000" rows="2" placeholder="اكتب رسالتك للفريق..." required></textarea>
-   <button class="primary" type="submit">إرسال الرسالة</button>
-  </form>
- </div>
-</section>
-<section id="notifications" class="page hidden">
- <div class="panel">
-  <h2>الإشعارات والتنبيهات</h2>
-  <p class="muted">الإشعارات خاصة بحسابك، ويمكنك تحديدها كمقروءة.</p>
-  <div id="airNotificationStatus" class="muted" role="status">جارٍ تحميل الإشعارات...</div>
-  <div id="airNotificationList" class="air-notification-list"></div>
- </div>
- <div id="airAnnouncementPanel" class="panel hidden">
-  <h2>إرسال تنبيه للفريق</h2>
-  <p class="muted">متاح لمدير النظام والمدير فقط، وسيصل إلى جميع الحسابات النشطة في الفرع.</p>
-  <form id="airAnnouncementForm" class="formgrid" onsubmit="sendAirNotification(event)">
-   <label class="span4">عنوان التنبيه<input id="airAnnouncementTitle" maxlength="160" required placeholder="مثال: اجتماع الفريق"></label>
-   <label class="span4">نص التنبيه<textarea id="airAnnouncementBody" maxlength="5000" rows="3" required placeholder="اكتب تفاصيل التنبيه..."></textarea></label>
-   <div class="actions span4"><button class="primary" type="submit">إرسال إلى الفريق</button></div>
-  </form>
- </div>
-</section>
-<style id="air-collaboration-styles">
-.air-chat-messages{display:flex;flex-direction:column;gap:10px;max-height:55vh;min-height:180px;overflow:auto;padding:12px;background:#f4f7fb;border:1px solid var(--line);border-radius:13px;margin:12px 0}
-.air-chat-message{max-width:88%;padding:11px 13px;border-radius:13px;background:#fff;border:1px solid var(--line);box-shadow:0 2px 8px #1027460a;align-self:flex-start;overflow-wrap:anywhere}
-.air-chat-message.mine{align-self:flex-end;background:#eaf4ff;border-color:#cfe3f8}
-.air-chat-meta{display:flex;gap:9px;align-items:center;justify-content:space-between;color:#718096;font-size:11px;margin-bottom:5px}
-.air-chat-text{white-space:pre-wrap;line-height:1.65;font-size:14px}
-.air-chat-compose{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:10px;align-items:end;margin-top:12px}
-.air-chat-compose textarea{margin:0;min-height:48px}
-.air-notification-list{display:flex;flex-direction:column;gap:9px;margin-top:12px}
-.air-notification{border:1px solid var(--line);border-radius:12px;padding:13px;background:#fff}
-.air-notification.unread{background:#f0f7ff;border-color:#b8d5f1}
-.air-notification-head{display:flex;justify-content:space-between;gap:10px;align-items:center}
-.air-notification p{margin:7px 0;white-space:pre-wrap;line-height:1.7}
-.air-notification small{color:var(--muted)}
-@media(max-width:600px){.air-chat-compose{grid-template-columns:1fr}.air-chat-compose button{width:100%}.air-chat-message{max-width:96%}}
-</style>
+
 
 <script src="./auth.js"></script>
 <script>
