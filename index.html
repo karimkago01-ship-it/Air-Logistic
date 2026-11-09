@@ -632,7 +632,7 @@ img,video,canvas,svg{max-width:100%}
 <section id="drivers" class="page hidden"><div class="panel"><h2>إضافة سائق</h2><form id="driverForm" class="formgrid"><label>اسم السائق<input name="name" required></label><label>الهاتف<input name="phone"></label><label>رقم الهوية<input name="code"></label><label>نوع المركبة<input name="vehicleType" placeholder="موتوسيكل / سيارة"></label><label>العهدة المالية<input name="cashCustody" type="number" min="0" step=".01"></label><label>الحد الائتماني<input name="creditLimit" type="number" min="0" step=".01"></label><label>عمولة لكل شحنة<input name="commission" type="number" min="0" step=".01"></label><label>الحالة<select name="status"><option>نشط</option><option>غير نشط</option></select></label><div class="span4"><button class="primary">حفظ السائق</button></div></form></div><div class="panel"><h2>السائقون</h2><div class="tablewrap" id="driverTable"></div></div></section>
 <section id="vehicles" class="page hidden"><div class="panel"><h2>إضافة سيارة</h2><form id="vehicleForm" class="formgrid"><label>رقم اللوحة<input name="plate" required></label><label>الموديل<input name="model"></label><label>السائق المسؤول<input name="driver"></label><label>الصيانة القادمة<input name="service" type="date"></label><div class="span4"><button class="primary">حفظ السيارة</button></div></form></div><div class="panel"><h2>السيارات</h2><div class="tablewrap" id="vehicleTable"></div></div></section>
 <section id="finance" class="page hidden"><div class="panel"><h2>تسجيل مصروف</h2><form id="expenseForm" class="formgrid"><label>التاريخ<input name="date" type="date"></label><label>نوع المصروف<select name="type"><option>وقود</option><option>صيانة</option><option>رواتب</option><option>إيجار</option><option>تغليف</option><option>اتصالات</option><option>أخرى</option></select></label><label>البيان<input name="desc" required></label><label>القيمة (جنيه)<input name="amount" type="number" min="0" step=".01" required></label><div class="span4"><button class="primary">حفظ المصروف</button></div></form></div><div class="panel"><h2>سجل المصروفات والتحصيل</h2><div id="expenseTable" class="tablewrap"></div></div></section>
-<section id="ocr" class="page hidden"><div class="panel"><h2>قراءة بوليصة الشحن من صورة</h2><p class="muted">اختر صورة واضحة. القراءة الآلية مساعدة فقط؛ راجع البيانات قبل اعتماد الشحنة.</p><label>صورة البوليصة<input id="ocrImage" type="file" accept="image/*" capture="environment"></label><div class="actions"><button class="primary" type="button" onclick="startWaybillCamera()">فتح كاميرا قراءة البوليصة</button><button class="secondary" type="button" onclick="captureWaybillFromCamera()">التقاط وقراءة بالكاميرا</button><button class="light" type="button" onclick="stopWaybillCamera()">إيقاف الكاميرا</button><button class="primary" type="button" onclick="readWaybill()">قراءة الصورة المختارة</button></div><div id="ocrCameraWrap" class="hidden" style="margin-top:12px;max-width:680px"><video id="ocrCameraVideo" playsinline muted style="width:100%;max-height:65vh;object-fit:contain;border-radius:14px;background:#101820"></video><p class="muted">ثبّت البوليصة داخل إطار الكاميرا، واجعل الإضاءة جيدة ثم اضغط «التقاط وقراءة بالكاميرا».</p></div><p id="ocrProgress" class="muted" role="status" aria-live="polite"></p><label>النص المستخرج<textarea id="ocrText" rows="8"></textarea></label><div class="actions"><button class="secondary" onclick="copyOCR()">نسخ النص</button><button class="light" onclick="fillFromOCR()">نقل البيانات التي تم التعرف عليها إلى نموذج الشحنة</button></div></div></section>
+<section id="ocr" class="page hidden"><div class="panel"><h2>قراءة بوليصة الشحن من صورة</h2><p class="muted">اختر صورة واضحة. القراءة الآلية مساعدة فقط؛ راجع البيانات قبل اعتماد الشحنة.</p><label>صورة البوليصة<input id="ocrImage" type="file" accept="image/*" capture="environment"></label><div class="actions"><button class="primary" type="button" onclick="startWaybillCamera()">فتح كاميرا قراءة البوليصة</button><button class="secondary" type="button" onclick="captureWaybillFromCamera()">التقاط وقراءة بالكاميرا</button><button class="light" type="button" onclick="stopWaybillCamera()">إيقاف الكاميرا</button><button class="secondary" type="button" id="ocrTorchButton" onclick="toggleCameraTorch(waybillCameraStream,'ocrTorchButton','ocrProgress')">تشغيل الكشاف</button><button class="primary" type="button" onclick="readWaybill()">قراءة الصورة المختارة</button></div><div id="ocrCameraWrap" class="hidden" style="margin-top:12px;max-width:680px"><video id="ocrCameraVideo" playsinline muted style="width:100%;max-height:65vh;object-fit:contain;border-radius:14px;background:#101820"></video><p class="muted">ثبّت البوليصة داخل إطار الكاميرا، واجعل الإضاءة جيدة ثم اضغط «التقاط وقراءة بالكاميرا».</p></div><p id="ocrProgress" class="muted" role="status" aria-live="polite"></p><label>النص المستخرج<textarea id="ocrText" rows="8"></textarea></label><div class="actions"><button class="secondary" onclick="copyOCR()">نسخ النص</button><button class="light" onclick="fillFromOCR()">نقل البيانات التي تم التعرف عليها إلى نموذج الشحنة</button></div></div></section>
 <section id="tools" class="page hidden"><div class="panel"><h2>النسخ الاحتياطي والاستيراد</h2><p>احفظ نسخة JSON تشمل الشحنات والعملاء والسائقين والسيارات والمصروفات والتحويلات وسجل التدقيق. احتفظ بها في مكان آمن.</p><div class="actions"><button class="primary" onclick="backup()">تنزيل نسخة احتياطية JSON</button><label class="light" style="padding:10px 14px;border-radius:9px">استيراد نسخة JSON<input id="restoreFile" type="file" accept=".json,application/json"></label><button class="secondary" onclick="exportCSV()">تصدير الشحنات CSV</button></div><p class="muted">الاستيراد يضيف السجلات الجديدة ولا يكرر أرقام الشحنات الموجودة.</p></div></section>
 
 <section id="importer" class="page hidden">
@@ -664,7 +664,7 @@ img,video,canvas,svg{max-width:100%}
   <p class="muted">وجّه كاميرا الهاتف إلى الباركود أو QR الموجود على بوليصة الشحن. يتطلب استخدام الكاميرا فتح الصفحة عبر HTTPS أو localhost ومنح إذن الكاميرا.</p>
   <div class="actions">
    <button class="primary" type="button" onclick="startMobileScanner()">تشغيل الكاميرا</button>
-   <button class="secondary" type="button" onclick="stopMobileScanner()">إيقاف الكاميرا</button>
+   <button class="secondary" type="button" onclick="stopMobileScanner()">إيقاف الكاميرا</button><button class="secondary" type="button" id="scannerTorchButton" onclick="toggleCameraTorch(scannerStream,'scannerTorchButton','scannerStatus')">تشغيل الكشاف</button>
   </div>
   <div id="scannerVideoWrap" class="hidden" style="margin-top:12px;max-width:620px">
    <video id="scannerVideo" playsinline muted style="width:100%;border-radius:14px;background:#101820;min-height:220px;object-fit:cover"></video>
@@ -934,20 +934,37 @@ document.getElementById('restoreFile').onchange=e=>{let f=e.target.files[0];if(!
 function exportCSV(){let cols=['id','date','customer','phone','from','to','content','pieces','weight','service','carrier','driver','vehicle','status','due','fee','cod','collected','notes'];let lines=[cols.join(','),...db.shipments.map(x=>cols.map(k=>'"'+String(x[k]??'').replace(/"/g,'""')+'"').join(','))];download('\ufeff'+lines.join('\r\n'),'air-logistic-shipments.csv','text/csv;charset=utf-8')}
 async function prepareWaybillImage(file){
  const bitmap=await createImageBitmap(file);
- const maxSide=2600,scale=Math.min(2.2,maxSide/Math.max(bitmap.width,bitmap.height));
+ // Keep enough detail for small print while avoiding unnecessary upscaling and huge PNG files.
+ const maxSide=2000,scale=Math.min(1,maxSide/Math.max(bitmap.width,bitmap.height));
  const w=Math.max(1,Math.round(bitmap.width*scale)),h=Math.max(1,Math.round(bitmap.height*scale));
  const canvas=document.createElement('canvas');canvas.width=w;canvas.height=h;
  const ctx=canvas.getContext('2d',{willReadFrequently:true});
- ctx.fillStyle='#fff';ctx.fillRect(0,0,w,h);ctx.drawImage(bitmap,0,0,w,h);
+ ctx.fillStyle='#fff';ctx.fillRect(0,0,w,h);ctx.drawImage(bitmap,0,0,w,h);bitmap.close?.();
  const image=ctx.getImageData(0,0,w,h),d=image.data;
  for(let i=0;i<d.length;i+=4){
-  const gray=0.299*d[i]+0.587*d[i+1]+0.114*d[i+2];
-  const contrast=Math.max(0,Math.min(255,(gray-128)*1.32+128));
-  const clean=contrast>245?255:contrast<22?0:contrast;
+  const gray=(d[i]*77+d[i+1]*150+d[i+2]*29)>>8;
+  const clean=gray>246?255:gray<18?0:Math.max(0,Math.min(255,((gray-128)*1.22+128)|0));
   d[i]=d[i+1]=d[i+2]=clean;
  }
  ctx.putImageData(image,0,0);
- return new Promise((resolve,reject)=>canvas.toBlob(blob=>blob?resolve(blob):reject(new Error('تعذر تجهيز الصورة')),'image/png'));
+ return new Promise((resolve,reject)=>canvas.toBlob(blob=>blob?resolve(blob):reject(new Error('تعذر تجهيز الصورة')),'image/jpeg',0.9));
+}
+async function toggleCameraTorch(stream,buttonId,statusId){
+ const button=document.getElementById(buttonId),status=document.getElementById(statusId);
+ const track=stream?.getVideoTracks?.()[0];
+ if(!track){if(status)status.textContent='افتح الكاميرا أولاً ثم شغّل الكشاف.';return}
+ try{
+  const capabilities=track.getCapabilities?.();
+  if(!capabilities||!capabilities.torch){if(status)status.textContent='كشاف هذا الجهاز غير مدعوم من الكاميرا الحالية. يمكنك تشغيل فلاش الهاتف يدويًا إن أمكن.';return}
+  const enabled=button?.dataset.torch==='on';
+  await track.applyConstraints({advanced:[{torch:!enabled}]});
+  if(button){button.dataset.torch=enabled?'off':'on';button.textContent=enabled?'تشغيل الكشاف':'إيقاف الكشاف'}
+  if(status)status.textContent=enabled?'تم إيقاف الكشاف.':'تم تشغيل الكشاف لتحسين إضاءة البوليصة.';
+ }catch(err){if(status)status.textContent='تعذر التحكم في الكشاف: '+err.message+'؛ قد لا يدعم الهاتف هذه الخاصية.'}
+}
+function resetCameraTorch(buttonId){
+ const button=document.getElementById(buttonId);
+ if(button){button.dataset.torch='off';button.textContent='تشغيل الكشاف'}
 }
 let waybillCameraStream=null;
 async function startWaybillCamera(){
@@ -961,6 +978,8 @@ async function startWaybillCamera(){
  }catch(err){progress.textContent='تعذر فتح الكاميرا: '+err.message+'. اسمح للمتصفح باستخدام الكاميرا وافتح النظام عبر HTTPS.'}
 }
 function stopWaybillCamera(){
+ const activeTrack=waybillCameraStream?.getVideoTracks?.()[0];if(activeTrack&&document.getElementById('ocrTorchButton')?.dataset.torch==='on')activeTrack.applyConstraints({advanced:[{torch:false}]}).catch(()=>{});
+ resetCameraTorch('ocrTorchButton');
  if(waybillCameraStream){waybillCameraStream.getTracks().forEach(track=>track.stop());waybillCameraStream=null}
  const video=document.getElementById('ocrCameraVideo');if(video)video.srcObject=null;
 }
@@ -1002,7 +1021,7 @@ async function readWaybillImage(file){
   const worker=await getWaybillOCRWorker(progress);
   progress.textContent='جاري قراءة البوليصة بالعربية والإنجليزية...';
   const result=await worker.recognize(enhanced,{
-   tessedit_pageseg_mode:'11',
+   tessedit_pageseg_mode:'6',
    preserve_interword_spaces:'1'
   });
   lastOCR=(result.data.text||'').trim();
@@ -1049,6 +1068,8 @@ async function scanFrameLoop(){
 }
 function stopMobileScanner(){
  if(scannerTimer)clearTimeout(scannerTimer);scannerTimer=null;
+ const activeTrack=scannerStream?.getVideoTracks?.()[0];if(activeTrack&&document.getElementById('scannerTorchButton')?.dataset.torch==='on')activeTrack.applyConstraints({advanced:[{torch:false}]}).catch(()=>{});
+ resetCameraTorch('scannerTorchButton');
  if(scannerStream){scannerStream.getTracks().forEach(t=>t.stop());scannerStream=null}
  const v=document.getElementById('scannerVideo');if(v)v.srcObject=null;
 }
