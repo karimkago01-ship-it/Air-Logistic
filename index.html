@@ -742,6 +742,12 @@ img,video,canvas,svg{max-width:100%}
  <div class="panel">
   <h2>الإشعارات والتنبيهات</h2>
   <p class="muted">الإشعارات خاصة بحسابك، ويمكنك تحديدها كمقروءة.</p>
+  <div class="air-alert-settings" role="group" aria-label="إعدادات تنبيهات الهاتف">
+   <button class="primary" type="button" onclick="enableAirNotificationAlerts()">تفعيل تنبيهات الهاتف</button>
+   <label><input id="airAlertSound" type="checkbox" checked> صوت التنبيه</label>
+   <label><input id="airAlertVibration" type="checkbox" checked> اهتزاز الهاتف</label>
+   <small id="airAlertPermission" class="muted">حالة إذن تنبيهات الهاتف</small>
+  </div>
   <div id="airNotificationStatus" class="muted" role="status">جارٍ تحميل الإشعارات...</div>
   <div id="airNotificationList" class="air-notification-list"></div>
  </div>
@@ -769,6 +775,10 @@ img,video,canvas,svg{max-width:100%}
 .air-notification-head{display:flex;justify-content:space-between;gap:10px;align-items:center}
 .air-notification p{margin:7px 0;white-space:pre-wrap;line-height:1.7}
 .air-notification small{color:var(--muted)}
+.air-alert-settings{display:flex;flex-wrap:wrap;align-items:center;gap:12px;padding:12px;margin:12px 0;background:#f4f7fb;border:1px solid var(--line);border-radius:12px}
+.air-alert-settings label{display:inline-flex;align-items:center;gap:6px;font-size:13px}
+.air-alert-settings input{width:17px;height:17px}
+.air-alert-settings small{flex-basis:100%}
 @media(max-width:600px){.air-chat-compose{grid-template-columns:1fr}.air-chat-compose button{width:100%}.air-chat-message{max-width:96%}}
 </style>
 <style>.air-unread-dot{display:inline-block;margin-inline-start:auto;padding:2px 7px;border-radius:20px;background:#f28b28;color:#fff;font-size:10px;font-weight:700}</style>
