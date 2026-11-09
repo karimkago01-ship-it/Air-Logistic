@@ -685,6 +685,119 @@
       }).subscribe();
   }
 
+
+  // Private identity-document center. Files stay in a private Storage bucket;
+  // only the owner and workspace admins/managers can read them.
+  const IDENTITY_BUCKET = 'air-logistic-identity';
+  const IDENTITY_TYPES = [
+    ['national_id_front','البطاقة الشخصية - الوجه الأمامي'],
+    ['national_id_back','البطاقة الشخصية - الوجه الخلفي'],
+    ['personal_photo','الصورة الشخصية'],
+    ['driving_license','رخصة القيادة']
+  ];
+  let identityPanelReady = false;
+  const identityEscape = value => String(value ?? '').replace(/[&<>"']/g, ch => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]));
+  function ensureIdentityPanel() {
+    if (identityPanelReady || !window.currentProfile?.active) return;
+    identityPanelReady = true;
+    const panel = document.createElement('section');
+    panel.id = 'airIdentityPanel';
+    panel.style.cssText = 'position:fixed;z-index:9998;right:14px;bottom:14px;width:min(440px,calc(100vw - 28px));max-height:78vh;overflow:auto;background:#fff;color:#172b45;border:1px solid #d7e0eb;border-radius:16px;box-shadow:0 12px 40px #10274633;padding:14px;display:none;font:14px/1.6 system-ui,sans-serif;direction:rtl;';
+    panel.innerHTML = '<div style="display:flex;align-items:center;justify-content:space-between;gap:8px"><b style="font-size:16px">الملف الشخصي والأوراق الرسمية</b><button type="button" id="airIdentityClose" style="border:0;background:#eef3f8;border-radius:9px;padding:6px 10px">إغلاق</button></div><p id="airIdentityIntro" style="color:#53657a;margin:8px 0">ارفع المستندات المطلوبة لمراجعتها بأمان.</p><div id="airIdentityOwn"></div><hr style="border:0;border-top:1px solid #e5ebf2;margin:12px 0"><div id="airIdentityReview" style="display:none"><b>مراجعة مستندات الحسابات</b><div id="airIdentityReviewList" style="margin-top:8px"></div></div><p id="airIdentityMessage" role="status" style="margin:8px 0;color:#176b46"></p>';
+    document.body.appendChild(panel);
+    const launcher = document.createElement('button');
+    launcher.id = 'airIdentityLauncher';
+    launcher.type = 'button';
+    launcher.textContent = '📄 أوراق الحساب';
+    launcher.style.cssText = 'position:fixed;z-index:9997;right:14px;bottom:14px;border:0;border-radius:999px;padding:12px 16px;background:#102746;color:white;box-shadow:0 5px 20px #10274644;font-weight:700;cursor:pointer;';
+    document.body.appendChild(launcher);
+    launcher.addEventListener('click', async () => { panel.style.display='block'; launcher.style.display='none'; await renderIdentityPanel(); });
+    panel.querySelector('#airIdentityClose').addEventListener('click', () => { panel.style.display='none'; launcher.style.display='block'; });
+    renderIdentityPanel();
+  }
+  async function renderIdentityPanel() {
+    const profile = window.currentProfile;
+    const own = document.getElementById('airIdentityOwn');
+    const review = document.getElementById('airIdentityReview');
+    const reviewList = document.getElementById('airIdentityReviewList');
+    const message = document.getElementById('airIdentityMessage');
+    if (!profile?.active || !own) return;
+    const required = IDENTITY_TYPES.filter(([type]) => type !== 'driving_license' || profile.role === 'courier');
+    const mineResult = await client.from('identity_documents')
+      .select('id,document_type,storage_path,status,rejection_reason,created_at')
+      .eq('user_id',profile.user_id).order('created_at',{ascending:false});
+    if (mineResult.error) { own.textContent='تعذر تحميل أوراقك. تحقق من الاتصال.'; return; }
+    const mine = mineResult.data || [];
+    const statusLabel = status => ({pending:'قيد المراجعة',approved:'مقبول',rejected:'مرفوض'})[status] || status;
+    own.innerHTML = required.map(([type,label]) => {
+      const docs = mine.filter(d => d.document_type === type);
+      const latest = docs[0];
+      const inputId = 'airIdentityFile_' + type;
+      return '<div style="border:1px solid #e2e9f1;border-radius:11px;padding:10px;margin:8px 0"><div style="font-weight:700">'+label+'</div><div style="font-size:12px;color:#53657a;margin:3px 0">'+(latest ? 'الحالة: '+statusLabel(latest.status) : 'لم يتم رفع المستند بعد')+(latest?.rejection_reason ? ' · السبب: '+identityEscape(latest.rejection_reason) : '')+'</div>'+(latest?.status==='approved' ? '' : '<input id="'+inputId+'" type="file" accept="image/jpeg,image/png,image/webp,application/pdf" style="display:block;width:100%;margin:7px 0"><button type="button" data-upload-type="'+type+'" style="background:#176b46;color:white;border:0;border-radius:8px;padding:8px 12px">رفع المستند</button>')+'</div>';
+    }).join('');
+    own.querySelectorAll('[data-upload-type]').forEach(button => button.addEventListener('click', () => uploadIdentityDocument(button.dataset.uploadType)));
+    const canReview = ['admin','manager'].includes(profile.role);
+    if (review) review.style.display = canReview ? 'block' : 'none';
+    if (canReview && reviewList) {
+      const allResult = await client.from('identity_documents')
+        .select('id,user_id,document_type,storage_path,status,rejection_reason,created_at')
+        .eq('workspace_id',profile.workspace_id).order('created_at',{ascending:false}).limit(100);
+      if (allResult.error) { reviewList.textContent='تعذر تحميل قائمة المراجعة.'; return; }
+      const profilesResult = await client.from('profiles').select('user_id,full_name,role').eq('workspace_id',profile.workspace_id);
+      const names = new Map((profilesResult.data || []).map(x => [x.user_id,x.full_name || 'حساب']));
+      const labels = new Map(IDENTITY_TYPES);
+      reviewList.innerHTML = (allResult.data || []).length ? allResult.data.map(doc =>
+        '<article style="border:1px solid #e2e9f1;border-radius:10px;padding:9px;margin:8px 0"><b>'+identityEscape(names.get(doc.user_id) || 'حساب')+'</b><div>'+identityEscape(labels.get(doc.document_type) || doc.document_type)+' · '+statusLabel(doc.status)+'</div><div style="display:flex;gap:7px;flex-wrap:wrap;margin-top:7px"><button type="button" data-open-doc="'+doc.id+'" style="border:0;border-radius:7px;padding:7px 10px">عرض آمن</button>'+(doc.status==='pending' ? '<button type="button" data-approve-doc="'+doc.id+'" style="background:#176b46;color:#fff;border:0;border-radius:7px;padding:7px 10px">اعتماد</button><button type="button" data-reject-doc="'+doc.id+'" style="background:#a83232;color:#fff;border:0;border-radius:7px;padding:7px 10px">رفض</button>' : '')+(doc.rejection_reason ? '<div style="font-size:12px">سبب الرفض: '+identityEscape(doc.rejection_reason)+'</div>' : '')+'</div></article>'
+      ).join('') : '<p style="color:#53657a">لا توجد مستندات مرفوعة حتى الآن.</p>';
+      reviewList.querySelectorAll('[data-open-doc]').forEach(b => b.addEventListener('click', () => openIdentityDocument((allResult.data || []).find(d => d.id===b.dataset.openDoc))));
+      reviewList.querySelectorAll('[data-approve-doc]').forEach(b => b.addEventListener('click', () => reviewIdentityDocument(b.dataset.approveDoc,'approved')));
+      reviewList.querySelectorAll('[data-reject-doc]').forEach(b => b.addEventListener('click', () => reviewIdentityDocument(b.dataset.rejectDoc,'rejected')));
+    }
+    if (message) message.textContent = '';
+  }
+  async function uploadIdentityDocument(type) {
+    const profile = window.currentProfile;
+    const input = document.getElementById('airIdentityFile_' + type);
+    const file = input?.files?.[0];
+    const message = document.getElementById('airIdentityMessage');
+    if (!profile?.active || !file) { if (message) message.textContent='اختر صورة أو ملف PDF أولًا.'; return; }
+    const allowed = ['image/jpeg','image/png','image/webp','application/pdf'];
+    if (!allowed.includes(file.type) || file.size > 10*1024*1024) { if (message) message.textContent='الصيغ المسموحة JPG وPNG وWEBP وPDF، وبحد أقصى 10 ميجابايت.'; return; }
+    if (type === 'driving_license' && profile.role !== 'courier') return;
+    if (message) message.textContent='جارٍ رفع المستند بشكل آمن...';
+    const ext = ({'image/jpeg':'jpg','image/png':'png','image/webp':'webp','application/pdf':'pdf'})[file.type];
+    const path = profile.workspace_id+'/'+profile.user_id+'/'+type+'/'+crypto.randomUUID()+'.'+ext;
+    const uploaded = await client.storage.from(IDENTITY_BUCKET).upload(path,file,{contentType:file.type,upsert:false});
+    if (uploaded.error) { if (message) message.textContent='تعذر رفع المستند. '+uploaded.error.message; return; }
+    const saved = await client.from('identity_documents').insert({
+      workspace_id:profile.workspace_id,user_id:profile.user_id,document_type:type,storage_path:path
+    });
+    if (saved.error) { if (message) message.textContent='تم رفع الملف لكن تعذر تسجيله للمراجعة. تواصل مع مدير النظام.'; return; }
+    if (message) message.textContent='تم رفع المستند وإرساله للمراجعة.';
+    await renderIdentityPanel();
+  }
+  async function openIdentityDocument(doc) {
+    if (!doc) return;
+    const result = await client.storage.from(IDENTITY_BUCKET).createSignedUrl(doc.storage_path,60);
+    if (result.error) return alert('تعذر فتح المستند. تحقق من صلاحية الاطلاع.');
+    window.open(result.data.signedUrl,'_blank','noopener,noreferrer');
+  }
+  async function reviewIdentityDocument(id,status) {
+    const profile = window.currentProfile;
+    if (!['admin','manager'].includes(profile?.role)) return alert('المراجعة متاحة لمدير النظام والمدير المصرح له فقط.');
+    let reason = null;
+    if (status === 'rejected') {
+      reason = window.prompt('اكتب سبب رفض المستند:');
+      if (!reason || !reason.trim()) return;
+    }
+    const result = await client.from('identity_documents').update({
+      status,reviewer_id:profile.user_id,reviewed_at:new Date().toISOString(),
+      rejection_reason:status==='rejected' ? reason.trim().slice(0,500) : null
+    }).eq('id',id).eq('workspace_id',profile.workspace_id);
+    if (result.error) return alert('تعذر حفظ قرار المراجعة. تحقق من الصلاحيات.');
+    await renderIdentityPanel();
+  }
+
   async function activateSession(session) {
     if (!session || !session.user) {
       window.currentProfile = null; activeAuthUser = null; lockApp(); return;
@@ -702,6 +815,7 @@
       await loadCloudData();
       setAuthBar(profile,session.user.email);
       unlockApp();
+      ensureIdentityPanel();
       subscribeRealtime();
       window.renderAirNotifications();
       if (profile.role === 'admin') renderAccountRequests();
