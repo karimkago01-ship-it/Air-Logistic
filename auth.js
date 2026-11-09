@@ -127,6 +127,8 @@
     });
     const nav = document.querySelector('#nav button[data-page="accountRequests"]');
     if (nav) nav.style.display = profile.role === 'admin' ? '' : 'none';
+    const activityNav = document.querySelector('#nav button[data-page="activityLog"]');
+    if (activityNav) activityNav.style.display = ['admin','manager'].includes(profile.role) ? '' : 'none';
   }
 
   async function syncDBToCloud() {
