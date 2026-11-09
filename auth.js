@@ -317,6 +317,118 @@
     });
   }
   installPasswordVisibility();
+
+  const airHtml = value => String(value ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+  const airDate = value => { try { return new Date(value).toLocaleString('ar-EG',{dateStyle:'short',timeStyle:'short'}); } catch (_) { return ''; } };
+
+  window.renderAirChat = async function() {
+    const profile = window.currentProfile;
+    const box = $('airChatMessages'), status = $('airChatStatus');
+    if (!profile?.active || !box) return;
+    if (status) status.textContent = 'جارٍ تحميل المحادثة...';
+    const result = await client.from('chat_messages')
+      .select('id,sender_id,message,created_at')
+      .eq('workspace_id',profile.workspace_id).eq('room_key','general')
+      .order('created_at',{ascending:true}).limit(150);
+    if (result.error) {
+      if (status) status.textContent = 'تعذر تحميل المحادثة. تحقق من اتصال الإنترنت وصلاحيات الحساب.';
+      return;
+    }
+    const rows = result.data || [];
+    box.innerHTML = rows.length ? rows.map(row => {
+      const mine = row.sender_id === profile.user_id;
+      const who = mine ? 'أنت' : 'عضو بالفريق';
+      return '<article class="air-chat-message'+(mine?' mine':'')+'"><div class="air-chat-meta"><b>'+who+'</b><time>'+airHtml(airDate(row.created_at))+'</time></div><div class="air-chat-text">'+airHtml(row.message)+'</div></article>';
+    }).join('') : '<p class="muted">لا توجد رسائل بعد. ابدأ أول محادثة مع الفريق.</p>';
+    if (status) status.textContent = rows.length ? 'آخر 150 رسالة في محادثة الفرع' : 'المحادثة جاهزة لاستقبال أول رسالة';
+    box.scrollTop = box.scrollHeight;
+  };
+
+  window.sendAirChatMessage = async function(event) {
+    event?.preventDefault();
+    const profile = window.currentProfile, input = $('airChatInput');
+    const message = input?.value.trim();
+    if (!profile?.active || !message) return;
+    if (message.length > 5000) return alert('الرسالة أطول من الحد المسموح.');
+    const button = $('airChatForm')?.querySelector('button[type="submit"]');
+    if (button) button.disabled = true;
+    const result = await client.from('chat_messages').insert({
+      workspace_id:profile.workspace_id, sender_id:profile.user_id, room_key:'general', message
+    });
+    if (button) button.disabled = false;
+    if (result.error) return alert('تعذر إرسال الرسالة. تأكد من اتصال الإنترنت وصلاحيات الحساب.');
+    input.value = '';
+    await window.renderAirChat();
+  };
+
+  window.renderAirNotifications = async function() {
+    const profile = window.currentProfile;
+    const box = $('airNotificationList'), status = $('airNotificationStatus');
+    if (!profile?.active || !box) return;
+    const canBroadcast = ['admin','manager'].includes(profile.role);
+    $('airAnnouncementPanel')?.classList.toggle('hidden',!canBroadcast);
+    if (status) status.textContent = 'جارٍ تحميل إشعارات حسابك...';
+    const result = await client.from('notifications')
+      .select('id,title,body,link,read_at,created_at')
+      .eq('workspace_id',profile.workspace_id).eq('recipient_id',profile.user_id)
+      .order('created_at',{ascending:false}).limit(100);
+    if (result.error) {
+      if (status) status.textContent = 'تعذر تحميل الإشعارات. تحقق من الاتصال والصلاحيات.';
+      return;
+    }
+    const rows = result.data || [];
+    const unread = rows.filter(x => !x.read_at).length;
+    if (status) status.textContent = 'لديك '+unread+' إشعار غير مقروء من أصل '+rows.length;
+    box.innerHTML = rows.length ? rows.map(row =>
+      '<article class="air-notification'+(!row.read_at?' unread':'')+'"><div class="air-notification-head"><b>'+airHtml(row.title)+'</b><small>'+airHtml(airDate(row.created_at))+'</small></div><p>'+airHtml(row.body)+'</p>'+
+      (row.link ? '<a href="'+airHtml(row.link)+'" target="_blank" rel="noopener">فتح الرابط المرتبط</a>' : '')+
+      (!row.read_at ? '<div class="actions"><button class="light" type="button" onclick="markAirNotificationRead(\''+row.id+'\')">تحديد كمقروء</button></div>' : '<small>تمت القراءة</small>')+
+      '</article>'
+    ).join('') : '<p class="muted">لا توجد إشعارات حتى الآن.</p>';
+  };
+
+  window.markAirNotificationRead = async function(id) {
+    const profile = window.currentProfile;
+    if (!profile?.active || !id) return;
+    const result = await client.from('notifications')
+      .update({read_at:new Date().toISOString()})
+      .eq('id',id).eq('workspace_id',profile.workspace_id).eq('recipient_id',profile.user_id);
+    if (result.error) return alert('تعذر تحديث حالة الإشعار.');
+    await window.renderAirNotifications();
+  };
+
+  window.sendAirNotification = async function(event) {
+    event?.preventDefault();
+    const profile = window.currentProfile;
+    if (!profile?.active || !['admin','manager'].includes(profile.role)) return alert('إرسال تنبيه للفريق متاح لمدير النظام والمدير فقط.');
+    const title = $('airAnnouncementTitle')?.value.trim();
+    const body = $('airAnnouncementBody')?.value.trim();
+    if (!title || !body) return alert('اكتب عنوان التنبيه ونصه.');
+    const button = $('airAnnouncementForm')?.querySelector('button[type="submit"]');
+    if (button) button.disabled = true;
+    const members = await client.from('profiles').select('user_id')
+      .eq('workspace_id',profile.workspace_id).eq('active',true);
+    if (members.error) {
+      if (button) button.disabled = false;
+      return alert('تعذر تحميل قائمة أعضاء الفرع لإرسال التنبيه.');
+    }
+    const recipients = (members.data || []).filter(x => x.user_id !== profile.user_id);
+    if (!recipients.length) {
+      if (button) button.disabled = false;
+      return alert('لا توجد حسابات أخرى نشطة في الفرع لإرسال التنبيه إليها.');
+    }
+    const rows = recipients.map(x => ({
+      workspace_id:profile.workspace_id, recipient_id:x.user_id,
+      title, body, payload:{kind:'team_announcement'}
+    }));
+    const result = await client.from('notifications').insert(rows);
+    if (button) button.disabled = false;
+    if (result.error) return alert('تعذر إرسال التنبيه. راجع صلاحيات المدير واتصال الإنترنت.');
+    $('airAnnouncementForm').reset();
+    alert('تم إرسال التنبيه إلى '+rows.length+' حساب نشط.');
+    await window.renderAirNotifications();
+  };
+
   function subscribeRealtime() {
     if (realtimeChannel) client.removeChannel(realtimeChannel);
     const workspaceId = window.currentProfile.workspace_id;
@@ -343,6 +455,15 @@
           if (idx >= 0) db[collection][idx] = item; else db[collection].push(item);
         }
         if (typeof render === 'function') render();
+      })
+      .on('postgres_changes',{event:'INSERT',schema:'public',table:'chat_messages',filter:'workspace_id=eq.' + workspaceId},payload => {
+        if (document.getElementById('chat') && !document.getElementById('chat').classList.contains('hidden')) window.renderAirChat();
+      })
+      .on('postgres_changes',{event:'INSERT',schema:'public',table:'notifications',filter:'recipient_id=eq.' + window.currentProfile.user_id},payload => {
+        const page = document.getElementById('notifications');
+        if (page && !page.classList.contains('hidden')) window.renderAirNotifications();
+        const navButton = document.querySelector('#nav button[data-page=\"notifications\"]');
+        if (navButton) navButton.dataset.hasUnread = 'true';
       }).subscribe();
   }
 
