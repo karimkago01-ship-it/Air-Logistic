@@ -973,7 +973,7 @@ function renderFinanceReport(){
 }
 function exportFinanceReport(){
  const r=financeRange(),rows=[['رقم الشحنة','التاريخ','التاجر','المندوب','رسوم الشحن','COD','المحصل','المتبقي','الحالة'],...r.shipments.map(s=>[s.id,s.date,s.merchant,s.agent,s.fee,s.cod,s.collected,Math.max(0,(+s.cod||0)-(+s.collected||0)),s.status]),[],['مصروف','التاريخ','النوع','البيان','القيمة'],...r.expenses.map(e=>['',e.date,e.type,e.desc,e.amount])];
- download('\\ufeff'+rows.map(row=>row.map(v=>'"'+String(v??'').replace(/"/g,'""')+'"').join(',')).join('\\r\\n'),'air-logistic-financial-report.csv','text/csv;charset=utf-8');
+ download('\ufeff'+rows.map(row=>row.map(v=>'"'+String(v??'').replace(/"/g,'""')+'"').join(',')).join('\r\n'),'air-logistic-financial-report.csv','text/csv;charset=utf-8');
 }
 function render(){let a=stats();document.getElementById('kpis').innerHTML=[['إجمالي الشحنات',a.total],['قيد التنفيذ',a.active],['تم التسليم',a.del],['متأخرة',a.late],['رسوم الشحن',money(a.fees)],['تحصيل COD',money(a.cod)],['المحصل فعليًا',money(a.col)],['المصروفات',money(a.exp)]].map(x=>`<div class="kpi"><small>${x[0]}</small><strong>${x[1]}</strong></div>`).join('');
 document.getElementById('recent').innerHTML=table(['رقم الشحنة','العميل','الوجهة','الحالة'],db.shipments.slice(-6).reverse().map(x=>[x.id,x.customer,x.to,x.status]));
