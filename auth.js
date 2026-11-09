@@ -738,6 +738,15 @@
       .eq('user_id',profile.user_id).order('created_at',{ascending:false});
     if (mineResult.error) { own.textContent='تعذر تحميل أوراقك. تحقق من الاتصال.'; return; }
     const mine = mineResult.data || [];
+    const allRequiredApproved = required.every(([type]) => mine.some(doc => doc.document_type === type && doc.status === 'approved'));
+    if (!allRequiredApproved) {
+      const panel = document.getElementById('airIdentityPanel');
+      const launcher = document.getElementById('airIdentityLauncher');
+      if (panel) panel.style.display = 'block';
+      if (launcher) launcher.style.display = 'none';
+      const intro = document.getElementById('airIdentityIntro');
+      if (intro) intro.textContent = 'مطلوب استكمال الأوراق الرسمية واعتمادها. يمكنك رفعها هنا دون مشاركة روابط عامة.';
+    }
     const statusLabel = status => ({pending:'قيد المراجعة',approved:'مقبول',rejected:'مرفوض'})[status] || status;
     own.innerHTML = required.map(([type,label]) => {
       const docs = mine.filter(d => d.document_type === type);
