@@ -133,6 +133,18 @@
     if (nav) nav.style.display = profile.role === 'admin' ? '' : 'none';
     const activityNav = document.querySelector('#nav button[data-page="activityLog"]');
     if (activityNav) activityNav.style.display = ['admin','manager'].includes(profile.role) ? '' : 'none';
+    const savedDocsNav = document.querySelector('#nav button[data-page="savedDocuments"]');
+    if (savedDocsNav) {
+      const canViewAllIdentityDocs = profile.user_id === IDENTITY_GRACE_APPROVER_USER_ID && profile.role === 'admin';
+      savedDocsNav.style.display = canViewAllIdentityDocs ? '' : 'none';
+      savedDocsNav.addEventListener('click', event => {
+        event.preventDefault();
+        event.stopImmediatePropagation();
+        if (!canViewAllIdentityDocs) return;
+        const launcher = document.getElementById('airIdentityLauncher');
+        if (launcher) launcher.click();
+      }, true);
+    }
   }
 
   async function syncDBToCloud() {
