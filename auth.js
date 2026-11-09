@@ -152,6 +152,7 @@
     if (!profile || !profile.active) return false;
     if (syncBusy) { syncPending = true; return false; }
     syncBusy = true;
+    window.airSyncState = {...(window.airSyncState||{}),status:'syncing',lastError:null};
     try {
       for (const collection of keys) {
         if (profile.role === 'courier' && collection !== 'shipments') continue;
@@ -207,8 +208,10 @@
         if (result.error) throw result.error;
         deleteQueue.shift();
       }
+      window.airSyncState = {...(window.airSyncState||{}),status:'success',lastSuccess:new Date().toISOString(),lastError:null};
       return true;
     } catch (error) {
+      window.airSyncState = {...(window.airSyncState||{}),status:'error',lastError:String(error?.message||error).slice(0,240)};
       console.error('Air Logistic cloud sync:',error);
       if (typeof toast === 'function') toast('تعذرت مزامنة بعض البيانات؛ راجع اتصال الإنترنت وصلاحيات الحساب.');
       return false;
