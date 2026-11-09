@@ -335,9 +335,15 @@
       return;
     }
     const rows = result.data || [];
+    const senderIds = [...new Set(rows.map(row => row.sender_id).filter(id => id !== profile.user_id))];
+    let senderNames = {};
+    if (senderIds.length && ['admin','manager'].includes(profile.role)) {
+      const people = await client.from('profiles').select('user_id,full_name').in('user_id',senderIds);
+      if (!people.error) senderNames = Object.fromEntries((people.data || []).map(person => [person.user_id,person.full_name]));
+    }
     box.innerHTML = rows.length ? rows.map(row => {
       const mine = row.sender_id === profile.user_id;
-      const who = mine ? 'أنت' : 'عضو بالفريق';
+      const who = mine ? 'أنت' : (senderNames[row.sender_id] || 'عضو بالفريق');
       return '<article class="air-chat-message'+(mine?' mine':'')+'"><div class="air-chat-meta"><b>'+who+'</b><time>'+airHtml(airDate(row.created_at))+'</time></div><div class="air-chat-text">'+airHtml(row.message)+'</div></article>';
     }).join('') : '<p class="muted">لا توجد رسائل بعد. ابدأ أول محادثة مع الفريق.</p>';
     if (status) status.textContent = rows.length ? 'آخر 150 رسالة في محادثة الفرع' : 'المحادثة جاهزة لاستقبال أول رسالة';
@@ -377,11 +383,13 @@
       return;
     }
     const rows = result.data || [];
+    const navButton = document.querySelector('#nav button[data-page="notifications"]');
+    if (navButton && rows.every(x => !!x.read_at)) { navButton.dataset.hasUnread = 'false'; navButton.querySelector('.air-unread-dot')?.remove(); }
     const unread = rows.filter(x => !x.read_at).length;
     if (status) status.textContent = 'لديك '+unread+' إشعار غير مقروء من أصل '+rows.length;
     box.innerHTML = rows.length ? rows.map(row =>
       '<article class="air-notification'+(!row.read_at?' unread':'')+'"><div class="air-notification-head"><b>'+airHtml(row.title)+'</b><small>'+airHtml(airDate(row.created_at))+'</small></div><p>'+airHtml(row.body)+'</p>'+
-      (row.link ? '<a href="'+airHtml(row.link)+'" target="_blank" rel="noopener">فتح الرابط المرتبط</a>' : '')+
+      (/^https?:\\/\\//i.test(String(row.link || '')) ? '<a href="'+airHtml(row.link)+'" target="_blank" rel="noopener noreferrer">فتح الرابط المرتبط</a>' : '')+
       (!row.read_at ? '<div class="actions"><button class="light" type="button" onclick="markAirNotificationRead(\''+row.id+'\')">تحديد كمقروء</button></div>' : '<small>تمت القراءة</small>')+
       '</article>'
     ).join('') : '<p class="muted">لا توجد إشعارات حتى الآن.</p>';
@@ -463,7 +471,7 @@
         const page = document.getElementById('notifications');
         if (page && !page.classList.contains('hidden')) window.renderAirNotifications();
         const navButton = document.querySelector('#nav button[data-page=\"notifications\"]');
-        if (navButton) navButton.dataset.hasUnread = 'true';
+        if (navButton) { navButton.dataset.hasUnread = 'true'; if (!navButton.querySelector('.air-unread-dot')) navButton.insertAdjacentHTML('beforeend','<span class="air-unread-dot">جديد</span>'); }
       }).subscribe();
   }
 
