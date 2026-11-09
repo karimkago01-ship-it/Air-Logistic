@@ -497,7 +497,7 @@ img,video,canvas,svg{max-width:100%}
 <div id="authBar"></div>
 
 <main class="wrap">
-<div class="notice"><b>تنبيه تشغيل:</b> هذه النسخة جاهزة للاستخدام والتجربة على جهاز واحد وتحفظ البيانات في المتصفح. مشاركة البيانات بين الموظفين من أجهزة مختلفة تحتاج ربط قاعدة بيانات سحابية وإعداد حسابات وصلاحيات؛ لا تضع بيانات عملاء حقيقية قبل إعداد ذلك.</div>
+<div class="notice"><b>تنبيه تشغيل:</b> بيانات الفرع تُزامَن عبر قاعدة البيانات السحابية بين الحسابات النشطة وفق الصلاحيات. احتفظ بنسخة احتياطية دورية، ولا تشارك بيانات الدخول مع الآخرين.</div>
 <div class="app-layout">
 <aside class="air-sidebar">
 <div class="sidebar-brand"><span class="sidebar-mark">📦</span><div><b>Air Logistic</b><small>القائمة الرئيسية</small></div></div>
@@ -771,6 +771,7 @@ img,video,canvas,svg{max-width:100%}
 .air-notification small{color:var(--muted)}
 @media(max-width:600px){.air-chat-compose{grid-template-columns:1fr}.air-chat-compose button{width:100%}.air-chat-message{max-width:96%}}
 </style>
+<style>.air-unread-dot{display:inline-block;margin-inline-start:auto;padding:2px 7px;border-radius:20px;background:#f28b28;color:#fff;font-size:10px;font-weight:700}</style>
 <section id="accountRequests" class="page hidden">
  <div class="panel"><h2>الحسابات غير النشطة وطلبات التفعيل</h2>
  <p class="muted">لن يتمكن أي مستخدم جديد من الدخول قبل موافقة المدير.</p>
