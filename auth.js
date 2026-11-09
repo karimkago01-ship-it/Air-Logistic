@@ -693,6 +693,9 @@
   // Private identity-document center. Files stay in a private Storage bucket;
   // only the owner and workspace admins/managers can read them.
   const IDENTITY_BUCKET = 'air-logistic-identity';
+  // Only Abu Rizq's verified admin account is exempt from personal document submission.
+  const IDENTITY_EXEMPT_USER_ID = '0e7fe9b5-bc54-403b-9884-ad1facf5efe0';
+  const IDENTITY_GRACE_APPROVER_USER_ID = IDENTITY_EXEMPT_USER_ID;
   const IDENTITY_TYPES = [
     ['national_id_front','البطاقة الشخصية - الوجه الأمامي'],
     ['national_id_back','البطاقة الشخصية - الوجه الخلفي'],
@@ -713,7 +716,7 @@
     const panel = document.createElement('section');
     panel.id = 'airIdentityPanel';
     panel.style.cssText = 'position:fixed;z-index:9998;right:14px;bottom:14px;width:min(440px,calc(100vw - 28px));max-height:78vh;overflow:auto;background:#fff;color:#172b45;border:1px solid #d7e0eb;border-radius:16px;box-shadow:0 12px 40px #10274633;padding:14px;display:none;font:14px/1.6 system-ui,sans-serif;direction:rtl;';
-    panel.innerHTML = '<div style="display:flex;align-items:center;justify-content:space-between;gap:8px"><b style="font-size:16px">الملف الشخصي والأوراق الرسمية</b><button type="button" id="airIdentityClose" style="border:0;background:#eef3f8;border-radius:9px;padding:6px 10px">إغلاق</button></div><p id="airIdentityIntro" style="color:#53657a;margin:8px 0">ارفع المستندات المطلوبة لمراجعتها بأمان.</p><div id="airIdentityOwn"></div><div id="airIdentityGrace" style="border:1px solid #dce6f0;border-radius:11px;padding:10px;margin-top:10px;background:#f7f9fc"><b>المستندات مش جاهزة؟</b><p id="airIdentityGraceStatus" style="margin:5px 0;color:#53657a">اطلب مهلة تشغيل مؤقتة لمدة 15 يومًا بعد موافقة الإدارة.</p><button type="button" id="airIdentityGraceRequest" style="background:#245b91;color:white;border:0;border-radius:8px;padding:9px 12px">طلب مهلة تشغيل 15 يوم</button></div><hr style="border:0;border-top:1px solid #e5ebf2;margin:12px 0"><div id="airIdentityReview" style="display:none"><b>مراجعة المستندات وطلبات المهلة</b><div id="airIdentityReviewList" style="margin-top:8px"></div></div><p id="airIdentityMessage" role="status" style="margin:8px 0;color:#176b46"></p>';
+    panel.innerHTML = '<div style="display:flex;align-items:center;gap:8px"><b style="font-size:16px">الملف الشخصي والأوراق الرسمية</b></div><p id="airIdentityIntro" style="color:#53657a;margin:8px 0">ارفع المستندات المطلوبة لمراجعتها بأمان.</p><div id="airIdentityOwn"></div><div id="airIdentityGrace" style="border:1px solid #dce6f0;border-radius:11px;padding:10px;margin-top:10px;background:#f7f9fc"><b>المستندات مش جاهزة؟</b><p id="airIdentityGraceStatus" style="margin:5px 0;color:#53657a">اطلب مهلة تشغيل مؤقتة لمدة 15 يومًا بعد موافقة الإدارة.</p><button type="button" id="airIdentityGraceRequest" style="background:#245b91;color:white;border:0;border-radius:8px;padding:9px 12px">طلب مهلة تشغيل 15 يوم</button></div><button type="button" id="airIdentityDone" style="display:none;background:#176b46;color:white;border:0;border-radius:8px;padding:10px 18px;margin-top:12px;font-weight:700">موافق</button><hr style="border:0;border-top:1px solid #e5ebf2;margin:12px 0"><div id="airIdentityReview" style="display:none"><b>مراجعة المستندات وطلبات المهلة</b><div id="airIdentityReviewList" style="margin-top:8px"></div></div><p id="airIdentityMessage" role="status" style="margin:8px 0;color:#176b46"></p>';
     document.body.appendChild(panel);
     const launcher = document.createElement('button');
     launcher.id = 'airIdentityLauncher';
@@ -722,7 +725,7 @@
     launcher.style.cssText = 'position:fixed;z-index:9997;right:14px;bottom:14px;border:0;border-radius:999px;padding:12px 16px;background:#102746;color:white;box-shadow:0 5px 20px #10274644;font-weight:700;cursor:pointer;';
     document.body.appendChild(launcher);
     launcher.addEventListener('click', async () => { panel.style.display='block'; launcher.style.display='none'; await renderIdentityPanel(); });
-    panel.querySelector('#airIdentityClose').addEventListener('click', () => { panel.style.display='none'; launcher.style.display='block'; });
+    panel.querySelector('#airIdentityDone').addEventListener('click', () => { panel.style.display='none'; launcher.style.display='block'; });
     renderIdentityPanel();
   }
   async function renderIdentityPanel() {
@@ -732,7 +735,13 @@
     const reviewList = document.getElementById('airIdentityReviewList');
     const message = document.getElementById('airIdentityMessage');
     if (!profile?.active || !own) return;
+    const isExemptAdmin = profile.user_id === IDENTITY_EXEMPT_USER_ID;
     const required = IDENTITY_TYPES.filter(([type]) => type !== 'driving_license' || profile.role === 'courier');
+    const ownWrap = document.getElementById('airIdentityOwn');
+    const graceWrap = document.getElementById('airIdentityGrace');
+    const doneButton = document.getElementById('airIdentityDone');
+    if (ownWrap) ownWrap.style.display = isExemptAdmin ? 'none' : 'block';
+    if (graceWrap) graceWrap.style.display = isExemptAdmin ? 'none' : 'block';
     const mineResult = await client.from('identity_documents')
       .select('id,document_type,storage_path,status,rejection_reason,created_at')
       .eq('user_id',profile.user_id).order('created_at',{ascending:false});
@@ -756,7 +765,13 @@
     }
 
     const allRequiredApproved = required.every(([type]) => mine.some(doc => doc.document_type === type && doc.status === 'approved'));
-    if (!allRequiredApproved) {
+    const graceApproved = !!(grace && grace.status === 'approved' && new Date(grace.expires_at) > new Date());
+    const canDismiss = allRequiredApproved || graceApproved;
+    if (doneButton) {
+      doneButton.style.display = !isExemptAdmin && canDismiss ? 'block' : 'none';
+      doneButton.textContent = allRequiredApproved ? 'موافق - تم استكمال المستندات' : 'موافق - تم اعتماد مهلة الـ15 يوم';
+    }
+    if (!isExemptAdmin && !canDismiss) {
       const panel = document.getElementById('airIdentityPanel');
       const launcher = document.getElementById('airIdentityLauncher');
       if (panel) panel.style.display = 'block';
@@ -783,8 +798,9 @@
       const profilesResult = await client.from('profiles').select('user_id,full_name,role').eq('workspace_id',profile.workspace_id);
       const names = new Map((profilesResult.data || []).map(x => [x.user_id,x.full_name || 'حساب']));
       const labels = new Map(IDENTITY_TYPES);
+      const canApproveGrace = profile.user_id === IDENTITY_GRACE_APPROVER_USER_ID;
       const graceHtml = (graceReviewResult.data || []).map(req =>
-        '<article style="border:1px solid #dce6f0;border-radius:10px;padding:9px;margin:8px 0"><b>'+identityEscape(names.get(req.user_id)||'حساب')+'</b><div>طلب مهلة 15 يوم · '+(req.status==='requested'?'بانتظار الموافقة':req.status==='approved'?'تمت الموافقة':'مرفوض')+(req.expires_at?' · حتى '+new Date(req.expires_at).toLocaleString('ar-EG'):'')+'</div>'+(req.status==='requested'?'<button type="button" data-grace-approve="'+req.id+'" style="background:#176b46;color:white;border:0;border-radius:7px;padding:7px 10px;margin:5px">موافقة 15 يوم</button><button type="button" data-grace-reject="'+req.id+'" style="background:#a83232;color:white;border:0;border-radius:7px;padding:7px 10px">رفض</button>':'')+'</article>'
+        '<article style="border:1px solid #dce6f0;border-radius:10px;padding:9px;margin:8px 0"><b>'+identityEscape(names.get(req.user_id)||'حساب')+'</b><div>طلب مهلة 15 يوم · '+(req.status==='requested'?'بانتظار موافقة مدير النظام':req.status==='approved'?'تمت الموافقة':'مرفوض')+(req.expires_at?' · حتى '+new Date(req.expires_at).toLocaleString('ar-EG'):'')+'</div>'+(req.status==='requested' && canApproveGrace?'<button type="button" data-grace-approve="'+req.id+'" style="background:#176b46;color:white;border:0;border-radius:7px;padding:7px 10px;margin:5px">موافقة 15 يوم</button><button type="button" data-grace-reject="'+req.id+'" style="background:#a83232;color:white;border:0;border-radius:7px;padding:7px 10px">رفض</button>':req.status==='requested'?'<small>قرار المهلة متاح لحساب مدير النظام المعتمد فقط.</small>':'')+'</article>'
       ).join('');
 
       reviewList.innerHTML = graceHtml + ((allResult.data || []).length ? allResult.data.map(doc =>
@@ -800,7 +816,7 @@
   }
   async function requestIdentityGrace() {
     const profile=window.currentProfile, message=document.getElementById('airIdentityMessage');
-    if(!profile?.active) return;
+    if(!profile?.active || profile.user_id === IDENTITY_EXEMPT_USER_ID) return;
     const old=await client.from('identity_access_requests').select('id,status,expires_at')
       .eq('user_id',profile.user_id).order('requested_at',{ascending:false}).limit(1);
     const req=old.data?.[0];
@@ -814,7 +830,7 @@
   }
   async function reviewIdentityGrace(id,status) {
     const profile=window.currentProfile;
-    if(!['admin','manager'].includes(profile?.role)) return;
+    if(!['admin','manager'].includes(profile?.role) || profile.user_id !== IDENTITY_GRACE_APPROVER_USER_ID) return alert('اعتماد مهلة الـ15 يوم متاح لحساب أبو رزق الإداري فقط.');
     let reason=null;
     if(status==='rejected') { reason=window.prompt('اكتب سبب رفض طلب المهلة:'); if(!reason?.trim()) return; }
     const now=new Date();
