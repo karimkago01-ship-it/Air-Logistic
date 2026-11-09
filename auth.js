@@ -320,6 +320,72 @@
 
   const airHtml = value => String(value ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
   const airDate = value => { try { return new Date(value).toLocaleString('ar-EG',{dateStyle:'short',timeStyle:'short'}); } catch (_) { return ''; } };
+  const airAlertPrefs = (() => {
+    try { return Object.assign({sound:true,vibration:true},JSON.parse(localStorage.getItem('air_logistic_alert_prefs') || '{}')); }
+    catch (_) { return {sound:true,vibration:true}; }
+  })();
+  let airAlertAudio = null;
+  function saveAirAlertPrefs() {
+    try { localStorage.setItem('air_logistic_alert_prefs',JSON.stringify(airAlertPrefs)); } catch (_) {}
+  }
+  function playAirAlert() {
+    if (!airAlertPrefs.sound) return;
+    try {
+      const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+      if (!AudioContextClass) return;
+      airAlertAudio = airAlertAudio || new AudioContextClass();
+      if (airAlertAudio.state === 'suspended') airAlertAudio.resume();
+      const oscillator = airAlertAudio.createOscillator();
+      const gain = airAlertAudio.createGain();
+      oscillator.type = 'sine';
+      oscillator.frequency.setValueAtTime(880,airAlertAudio.currentTime);
+      oscillator.frequency.setValueAtTime(660,airAlertAudio.currentTime + 0.13);
+      gain.gain.setValueAtTime(0.0001,airAlertAudio.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.16,airAlertAudio.currentTime + 0.025);
+      gain.gain.exponentialRampToValueAtTime(0.0001,airAlertAudio.currentTime + 0.32);
+      oscillator.connect(gain); gain.connect(airAlertAudio.destination);
+      oscillator.start(); oscillator.stop(airAlertAudio.currentTime + 0.34);
+    } catch (error) { console.warn('Air Logistic alert sound:',error); }
+  }
+  function updateAirAlertControls() {
+    const sound = $('airAlertSound'), vibration = $('airAlertVibration'), permission = $('airAlertPermission');
+    if (sound) sound.checked = !!airAlertPrefs.sound;
+    if (vibration) vibration.checked = !!airAlertPrefs.vibration;
+    if (permission) permission.textContent = ('Notification' in window && Notification.permission === 'granted')
+      ? 'تنبيهات الهاتف مفعّلة' : ('Notification' in window && Notification.permission === 'denied')
+        ? 'إذن التنبيهات مرفوض من إعدادات المتصفح' : 'فعّل تنبيهات الهاتف للسماح بظهورها خارج التطبيق';
+  }
+  window.enableAirNotificationAlerts = async function() {
+    if (!('Notification' in window)) return alert('هذا المتصفح لا يدعم إشعارات الهاتف.');
+    try {
+      const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+      if (AudioContextClass) {
+        airAlertAudio = airAlertAudio || new AudioContextClass();
+        if (airAlertAudio.state === 'suspended') await airAlertAudio.resume();
+      }
+      const permission = await Notification.requestPermission();
+      updateAirAlertControls();
+      if (permission === 'granted') {
+        if (navigator.vibrate && airAlertPrefs.vibration) navigator.vibrate([70,40,70]);
+        if (typeof toast === 'function') toast('تم تفعيل تنبيهات الهاتف لهذا الجهاز.');
+      } else {
+        alert(permission === 'denied' ? 'إذن الإشعارات مرفوض. فعّله من إعدادات الموقع في Chrome.' : 'لم يتم منح إذن الإشعارات.');
+      }
+    } catch (error) { console.error(error); alert('تعذر تفعيل تنبيهات الهاتف على هذا الجهاز.'); }
+  };
+  function notifyAirIncoming(row) {
+    playAirAlert();
+    if (airAlertPrefs.vibration && navigator.vibrate) navigator.vibrate([90,45,90]);
+    if ('Notification' in window && Notification.permission === 'granted' && document.visibilityState === 'hidden') {
+      const options = {body:String(row.body || ''),icon:'./icon.svg',tag:'air-logistic-'+row.id,renotify:false,data:{url:row.link || './'}};
+      if (navigator.serviceWorker?.ready) navigator.serviceWorker.ready.then(reg => reg.showNotification(String(row.title || 'Air Logistic'),options)).catch(() => {});
+      else try { new Notification(String(row.title || 'Air Logistic'),options); } catch (_) {}
+    }
+  }
+  $('airAlertSound')?.addEventListener('change',event => { airAlertPrefs.sound = event.target.checked; saveAirAlertPrefs(); });
+  $('airAlertVibration')?.addEventListener('change',event => { airAlertPrefs.vibration = event.target.checked; saveAirAlertPrefs(); });
+  updateAirAlertControls();
+
 
   window.renderAirChat = async function() {
     const profile = window.currentProfile;
@@ -468,6 +534,7 @@
         if (document.getElementById('chat') && !document.getElementById('chat').classList.contains('hidden')) window.renderAirChat();
       })
       .on('postgres_changes',{event:'INSERT',schema:'public',table:'notifications',filter:'recipient_id=eq.' + window.currentProfile.user_id},payload => {
+        if (payload.new) notifyAirIncoming(payload.new);
         const page = document.getElementById('notifications');
         if (page && !page.classList.contains('hidden')) window.renderAirNotifications();
         const navButton = document.querySelector('#nav button[data-page=\"notifications\"]');
