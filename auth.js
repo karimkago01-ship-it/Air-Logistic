@@ -48,6 +48,7 @@
     $('loginForm')?.classList.toggle('hidden', mode !== 'login');
     $('signupForm')?.classList.toggle('hidden', mode !== 'signup');
     $('resetForm')?.classList.toggle('hidden', mode !== 'reset');
+    $('newPasswordForm')?.classList.toggle('hidden', mode !== 'newPassword');
     $('loginModeBtn')?.classList.toggle('active', mode === 'login');
     $('signupModeBtn')?.classList.toggle('active', mode === 'signup');
     hideNotice();
@@ -106,6 +107,23 @@
     const result = await client.auth.resetPasswordForEmail(email,{redirectTo:APP_REDIRECT});
     if (result.error) return say('تعذر إرسال رابط الاستعادة. تحقق من البريد وحاول مرة أخرى.', true);
     say('إذا كان البريد مسجلًا، ستصلك رسالة آمنة لإعادة تعيين كلمة المرور.');
+  });
+
+  $('newPasswordForm')?.addEventListener('submit', async event => {
+    event.preventDefault(); hideNotice();
+    const password = $('newPassword').value;
+    const confirm = $('newPasswordConfirm').value;
+    if (password.length < 12 || !/[A-Z]/.test(password) || !/[a-z]/.test(password) || !/[0-9]/.test(password))
+      return say('كلمة المرور يجب أن تكون 12 حرفًا على الأقل وبها حرف كبير وصغير ورقم.', true);
+    if (password !== confirm) return say('تأكيد كلمة المرور غير مطابق.', true);
+    const button = $('saveNewPassword'); button.disabled = true; button.textContent = 'جارٍ حفظ كلمة المرور...';
+    const result = await client.auth.updateUser({password});
+    button.disabled = false; button.textContent = 'حفظ كلمة المرور والدخول';
+    if (result.error) return say('تعذر تحديث كلمة المرور. افتح أحدث رسالة استعادة وجرّب مرة أخرى.', true);
+    say('تم تحديث كلمة المرور بنجاح. جارٍ فتح حسابك...');
+    const current = await client.auth.getSession();
+    if (current.error || !current.data.session) { showMode('login'); return say('تم تحديث كلمة المرور. سجّل الدخول الآن بكلمة المرور الجديدة.'); }
+    await activateSession(current.data.session);
   });
 
   async function readProfile(user) {
@@ -928,7 +946,15 @@
     }
   }
 
-  client.auth.onAuthStateChange((_event,session) => setTimeout(() => activateSession(session),0));
+  client.auth.onAuthStateChange((event,session) => setTimeout(() => {
+    if (event === 'PASSWORD_RECOVERY') {
+      lockApp();
+      showMode('newPassword');
+      say('تم التحقق من رابط الاستعادة. أدخل كلمة المرور الجديدة لتحديث حسابك.');
+      return;
+    }
+    activateSession(session);
+  },0));
   (async () => {
     lockApp(); showMode('login');
     const result = await client.auth.getSession();
