@@ -455,6 +455,80 @@ img,video,canvas,svg{max-width:100%}
 }
 </style>
 
+
+
+<style id="air-premium-mobile-v2">
+/* Air Logistic — dedicated premium mobile workspace; desktop layout remains unchanged */
+@media (max-width:680px){
+ :root{--mobile-ink:#132c47;--mobile-muted:#6e8195;--mobile-line:#e4ebf3;--mobile-surface:#fff;--mobile-blue:#1769aa}
+ html{scroll-padding-top:12px}
+ body{padding-bottom:calc(78px + env(safe-area-inset-bottom));background:#f2f6fb}
+ header{position:relative;min-height:0;padding:12px 14px 13px;gap:9px;border-bottom:3px solid #ef9a2d;background:linear-gradient(135deg,#102746 0%,#174875 72%,#12616a 100%)}
+ header .brand{width:auto;flex:1 1 auto;gap:10px;align-items:center}
+ header .brand-logo{width:58px;height:54px;padding:3px;border-radius:13px;box-shadow:0 5px 15px #061a3038}
+ header .brand-copy h1{font-size:21px;line-height:1.2;letter-spacing:0;margin:0 0 3px}
+ header .brand-copy p{font-size:10px;line-height:1.45;opacity:.9}
+ header>.row{width:auto;flex:0 0 auto;gap:5px}
+ header #today{font-size:10px;color:#dceafa}
+ header>.row button{min-height:36px;padding:7px 9px;font-size:10px;border-radius:10px}
+ #authBar{font-size:12px}
+ .wrap{padding:10px 11px 16px!important}
+ .notice{padding:10px 12px;margin:0 0 10px;border-radius:12px;font-size:11px;line-height:1.65}
+ .app-layout{display:block!important}
+ .air-content{min-width:0}
+ .air-mobile-menu{display:none!important}
+ .air-hero{position:relative;min-height:0!important;display:flex;align-items:center;gap:10px;padding:16px 14px!important;margin:0 0 12px;border-radius:17px!important;overflow:hidden;background:linear-gradient(115deg,#102b4b,#1d5682 72%,#16727a)!important;box-shadow:0 9px 24px #123b6324}
+ .air-hero:after{content:"";position:absolute;width:150px;height:150px;left:-55px;top:-75px;border:1px solid #ffffff22;border-radius:50%;box-shadow:0 0 0 18px #ffffff0a,0 0 0 38px #ffffff08}
+ .air-hero-copy{position:relative;z-index:1;flex:1;min-width:0}
+ .air-hero .air-eyebrow{font-size:8px;letter-spacing:1.1px;color:#ffcf8b}
+ .air-hero h2,.air-content .air-hero h2{font-size:16px!important;line-height:1.55;margin:5px 0;color:#fff}
+ .air-hero p,.air-content .air-hero p{font-size:10px!important;line-height:1.65;margin:0;color:#d8e8f7}
+ .air-hero-art{width:62px;height:62px;flex:0 0 62px;border-radius:17px;background:#ffffff16;border:1px solid #ffffff25;display:grid;place-items:center;position:relative;z-index:1}
+ .air-hero-art span{font-size:19px!important}.air-hero-art strong{font-size:22px!important}.air-hero-art i{font-size:16px!important}
+ .air-hero-chip{display:none!important}
+ .air-content .grid{grid-template-columns:repeat(2,minmax(0,1fr))!important;gap:9px!important;margin:0 0 12px}
+ .air-content .kpi{position:relative;min-height:104px;padding:13px 12px!important;border:1px solid #e5edf5;border-radius:15px!important;background:linear-gradient(160deg,#fff,#f9fbfe);box-shadow:0 4px 13px #183c5e0a}
+ .air-content .kpi strong{display:block;font-size:23px!important;line-height:1.2;margin-top:10px;color:#12385d}
+ .air-content .kpi small{font-size:10px;line-height:1.5;color:#6d8094}
+ .air-content .cards2{grid-template-columns:1fr!important;gap:10px!important}
+ .air-content .panel{padding:14px!important;margin:0 0 11px!important;border:1px solid #e5edf5;border-radius:15px!important;background:#fff;box-shadow:0 4px 14px #1736530a}
+ .air-content .panel h2{font-size:14px!important;line-height:1.5;margin:0 0 11px!important;color:#173b60}
+ .air-content .page{padding:0!important;min-width:0}
+ .air-content .page>h2{font-size:17px;line-height:1.5;margin:5px 2px 12px}
+ .air-content .formgrid{grid-template-columns:1fr!important;gap:10px!important}
+ .air-content .formgrid>.span2,.air-content .formgrid>.span4{grid-column:span 1!important}
+ .air-content label{font-size:12px;line-height:1.6}
+ .air-content input,.air-content select,.air-content textarea{width:100%;min-height:45px;padding:11px 12px!important;border:1px solid #dce6f0!important;border-radius:11px!important;background:#fbfdff;font-size:16px!important;color:#18334e}
+ .air-content textarea{min-height:90px}
+ .air-content button{min-height:43px;border-radius:11px}
+ .air-content .actions{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+ .air-content .actions button{width:100%;font-size:12px}
+ .air-content .row{align-items:stretch}
+ .air-content .row input,.air-content .row select{width:100%;max-width:none}
+ .air-content .tablewrap{max-width:100%;overflow-x:auto;border:1px solid #e7edf4;border-radius:11px;background:#fff}
+ .air-content table{min-width:720px;font-size:11px}
+ .air-content th{position:sticky;top:0;background:#eef4fa;color:#244765}
+ .air-content th,.air-content td{padding:10px 9px;white-space:nowrap}
+ .air-sidebar{width:min(88vw,330px)!important;padding:16px 14px calc(18px + env(safe-area-inset-bottom))!important}
+ .sidebar-brand{padding-bottom:13px!important}
+ #nav button{min-height:46px!important;font-size:13px!important}
+ #toast{bottom:calc(84px + env(safe-area-inset-bottom));left:12px;right:12px;border-radius:12px}
+ #airMobileBottomNav{position:fixed;z-index:9998;right:0;left:0;bottom:0;display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:2px;padding:7px 7px calc(7px + env(safe-area-inset-bottom));background:#ffffffed;border-top:1px solid #dce6f0;box-shadow:0 -7px 24px #17365312;backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px)}
+ #airMobileBottomNav button{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;min-width:0;min-height:53px;padding:5px 2px;border:0;border-radius:11px;background:transparent;color:#718399;font:600 9px Tahoma,Arial,sans-serif;white-space:nowrap}
+ #airMobileBottomNav button .mobile-nav-icon{font-size:19px;line-height:1.2}
+ #airMobileBottomNav button.active{background:#eaf3fb;color:#13588d;font-weight:800}
+ #airMobileBottomNav button:focus-visible{outline:2px solid #2778b9;outline-offset:2px}
+}
+@media (max-width:380px){
+ header .brand-logo{width:50px;height:48px}
+ header .brand-copy h1{font-size:19px}
+ .air-content .kpi{min-height:96px;padding:11px!important}
+ .air-content .kpi strong{font-size:21px!important}
+ #airMobileBottomNav button{font-size:8px}
+}
+@media (min-width:681px){#airMobileBottomNav{display:none!important}}
+</style>
+
 </head>
 <body class="auth-locked">
 
@@ -1237,4 +1311,56 @@ if ("serviceWorker" in navigator) {
  window.addEventListener('resize',()=>{if(window.innerWidth>680)close()});
 })();
 </script>
+
+
+<script id="air-premium-mobile-navigation-v2">
+(function(){
+ if(document.getElementById('airMobileBottomNav'))return;
+ const nav=document.getElementById('nav');
+ const sidebar=document.querySelector('.air-sidebar');
+ if(!nav||!sidebar)return;
+ const items=[
+  {page:'home',icon:'⌂',label:'الرئيسية'},
+  {page:'shipments',icon:'▣',label:'الشحنات'},
+  {page:'scanner',icon:'⌗',label:'الماسح'},
+  {page:'finance',icon:'▤',label:'الحسابات'},
+  {page:'more',icon:'☰',label:'المزيد'}
+ ];
+ const bar=document.createElement('nav');
+ bar.id='airMobileBottomNav';bar.setAttribute('aria-label','التنقل السريع');
+ items.forEach(item=>{
+  const button=document.createElement('button');button.type='button';button.dataset.mobilePage=item.page;
+  button.innerHTML='<span class="mobile-nav-icon" aria-hidden="true">'+item.icon+'</span><span>'+item.label+'</span>';
+  if(item.page==='home'){button.classList.add('active');button.setAttribute('aria-current','page')}
+  button.addEventListener('click',()=>{
+   if(item.page==='more'){
+    document.body.classList.add('air-menu-open');
+    const opener=document.getElementById('airMobileMenuBtn');if(opener)opener.setAttribute('aria-expanded','true');
+    return;
+   }
+   const target=nav.querySelector('button[data-page="'+item.page+'"]');
+   if(target)target.click();
+   setActive(item.page);
+   window.scrollTo({top:0,behavior:'smooth'});
+  });
+  bar.appendChild(button);
+ });
+ document.body.appendChild(bar);
+ function setActive(page){
+  bar.querySelectorAll('button').forEach(b=>{
+   const active=b.dataset.mobilePage===page;
+   b.classList.toggle('active',active);
+   if(active)b.setAttribute('aria-current','page');else b.removeAttribute('aria-current');
+  });
+ }
+ nav.querySelectorAll('button[data-page]').forEach(button=>button.addEventListener('click',()=>setActive(button.dataset.page)));
+ const observer=new MutationObserver(()=>{
+  const active=nav.querySelector('button.active[data-page]');
+  if(active)setActive(active.dataset.page);
+ });
+ observer.observe(nav,{subtree:true,attributes:true,attributeFilter:['class']});
+ window.addEventListener('resize',()=>{if(window.innerWidth>680)document.body.classList.remove('air-menu-open')});
+})();
+</script>
+
 </body></html>
