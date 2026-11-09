@@ -38,6 +38,9 @@ assert.ok(html.includes('id="activityLog"'), 'central activity log page must be 
 assert.ok(auditMigration.includes('create trigger air_logistic_record_audit'), 'database audit trigger migration must exist');
 assert.ok(auditMigration.includes('revoke insert, update, delete on public.activity_log'), 'client accounts must not edit or forge central audit rows');
 
+assert.ok(html.includes('air-logo-transition-styles'), 'segmented brand logo transition styles must exist');
+assert.ok(html.includes('air-logo-page-transition'), 'page navigation must show the segmented brand logo loader');
+assert.ok(html.includes("#nav button[data-page],#airMobileBottomNav button[data-mobile-page]"), 'loader must cover desktop and mobile page navigation');
 assert.ok(/serviceWorker|service-worker/i.test(html), 'PWA service worker registration must remain present');
 assert.ok(/CACHE_NAME|cacheName/i.test(sw), 'service worker must define a cache version');
 
