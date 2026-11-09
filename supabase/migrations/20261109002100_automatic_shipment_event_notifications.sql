@@ -90,7 +90,8 @@ begin
     and p.active = true
     and p.user_id <> v_actor
     and (
-      (v_event = 'shipment_created' and p.role in ('admin','manager'))
+      (v_event = 'shipment_created' and
+        (p.role in ('admin','manager') or (v_agent is not null and p.full_name = v_agent)))
       or
       (v_event in ('shipment_status_changed','shipment_status_and_assignment_changed'))
       or
