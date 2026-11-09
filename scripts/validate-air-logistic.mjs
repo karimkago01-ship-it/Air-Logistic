@@ -41,6 +41,9 @@ assert.ok(auditMigration.includes('revoke insert, update, delete on public.activ
 assert.ok(html.includes('startWaybillCamera'), 'live camera capture for waybill OCR must exist');
 assert.ok(html.includes('captureWaybillFromCamera'), 'captured camera frames must be sent to OCR');
 assert.ok(html.includes('readWaybillImage(blob)'), 'camera images must use the shared Arabic/English OCR pipeline');
+assert.ok(html.includes('tessdata_fast'), 'waybill OCR must use compact fast language models');
+assert.ok(html.includes('waybillOCRWorkerPromise'), 'waybill OCR worker must be reused across scans');
+assert.ok(html.includes("cacheMethod:'write'"), 'OCR language data must be cached for subsequent scans');
 assert.ok(html.includes('capture="environment"'), 'waybill image input must request the rear camera on mobile');
 assert.ok(html.includes('air-logo-transition-styles'), 'segmented brand logo transition styles must exist');
 assert.ok(html.includes('air-logo-page-transition'), 'page navigation must show the segmented brand logo loader');
