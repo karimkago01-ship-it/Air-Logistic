@@ -38,6 +38,10 @@ assert.ok(html.includes('id="activityLog"'), 'central activity log page must be 
 assert.ok(auditMigration.includes('create trigger air_logistic_record_audit'), 'database audit trigger migration must exist');
 assert.ok(auditMigration.includes('revoke insert, update, delete on public.activity_log'), 'client accounts must not edit or forge central audit rows');
 
+assert.ok(html.includes('startWaybillCamera'), 'live camera capture for waybill OCR must exist');
+assert.ok(html.includes('captureWaybillFromCamera'), 'captured camera frames must be sent to OCR');
+assert.ok(html.includes('readWaybillImage(blob)'), 'camera images must use the shared Arabic/English OCR pipeline');
+assert.ok(html.includes('capture="environment"'), 'waybill image input must request the rear camera on mobile');
 assert.ok(html.includes('air-logo-transition-styles'), 'segmented brand logo transition styles must exist');
 assert.ok(html.includes('air-logo-page-transition'), 'page navigation must show the segmented brand logo loader');
 assert.ok(html.includes("#nav button[data-page],#airMobileBottomNav button[data-mobile-page]"), 'loader must cover desktop and mobile page navigation');
