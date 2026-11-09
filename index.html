@@ -33,7 +33,7 @@ textarea{min-height:85px;resize:vertical}.span2{grid-column:span 2}.span4{grid-c
 @media(max-width:850px){.grid{grid-template-columns:repeat(2,minmax(0,1fr))}.formgrid{grid-template-columns:repeat(2,minmax(0,1fr))}.span4{grid-column:span 2}}
 @media(max-width:650px){header{min-height:0;padding:12px;gap:10px;align-items:center;flex-wrap:wrap}.brand{gap:10px;width:100%;flex:1 1 100%}.brand-logo{width:112px;height:92px}.brand-copy h1{font-size:25px}.brand-copy p{font-size:12px}header>.row{width:100%;justify-content:space-between}.wrap{padding:12px}.grid{gap:8px}.kpi{padding:12px}.kpi strong{font-size:24px}.formgrid{gap:9px}.panel{padding:12px}}
 .scan-frame{border:3px solid var(--teal);border-radius:14px}.scan-actions button{min-width:130px}.okrow{background:#f0faf5}.badrow{background:#fff4f3}.warnrow{background:#fff9e9}.mapping-item{padding:8px;border:1px solid var(--line);border-radius:9px;background:#fafcfd}.pill{display:inline-block;border-radius:20px;padding:4px 8px;font-size:12px;background:#edf3f6;margin:2px}
-</style><style>
+.recent-status{display:inline-block;white-space:normal;line-height:1.6;max-width:220px}.recent-meta{display:inline-block;margin-top:4px;line-height:1.6}</style><style>
 
 /* ===== Air Logistic full dashboard redesign ===== */
 :root{
@@ -980,8 +980,21 @@ function exportFinanceReport(){
  const r=financeRange(),rows=[['رقم الشحنة','التاريخ','التاجر','المندوب','رسوم الشحن','COD','المحصل','المتبقي','الحالة'],...r.shipments.map(s=>[s.id,s.date,s.merchant,s.agent,s.fee,s.cod,s.collected,Math.max(0,(+s.cod||0)-(+s.collected||0)),s.status]),[],['مصروف','التاريخ','النوع','البيان','القيمة'],...r.expenses.map(e=>['',e.date,e.type,e.desc,e.amount])];
  download('\ufeff'+rows.map(row=>row.map(v=>'"'+String(v??'').replace(/"/g,'""')+'"').join(',')).join('\r\n'),'air-logistic-financial-report.csv','text/csv;charset=utf-8');
 }
+function renderRecentShipments(){
+ const el=document.getElementById('recent');if(!el)return;
+ const rows=db.shipments.slice(-6).reverse();
+ if(!rows.length){el.innerHTML='<p class="muted">لا توجد بيانات مسجلة حتى الآن.</p>';return;}
+ const body=rows.map(x=>{
+  const last=Array.isArray(x.history)&&x.history.length?x.history[0]:{};
+  const status=String(x.status||last.toStatus||last.event||'غير محددة');
+  const movement=String(last.reason||(last.fromStatus&&last.toStatus?last.fromStatus+' ← '+last.toStatus:(last.event&&last.event!==status?last.event:'')));
+  const at=last.at?new Date(last.at).toLocaleString('ar-EG'):'';
+  return '<tr><td>'+esc(x.id||'')+'</td><td>'+esc(x.customer||'')+'</td><td>'+esc(x.to||'')+'</td><td><span class="tag recent-status">'+esc(status)+'</span></td><td>'+(movement?'<small class="muted">آخر حركة: '+esc(movement)+'</small>':'<small class="muted">لا توجد تفاصيل حركة إضافية</small>')+(at?'<br><small class="muted">'+esc(at)+'</small>':'')+'</td></tr>';
+ }).join('');
+ el.innerHTML='<div class="tablewrap"><table><thead><tr><th>رقم الشحنة</th><th>العميل</th><th>الوجهة</th><th>الحالة الكاملة</th><th>تفاصيل آخر حركة</th></tr></thead><tbody>'+body+'</tbody></table></div>';
+}
 function render(){let a=stats();document.getElementById('kpis').innerHTML=[['إجمالي الشحنات',a.total],['قيد التنفيذ',a.active],['تم التسليم',a.del],['متأخرة',a.late],['رسوم الشحن',money(a.fees)],['تحصيل COD',money(a.cod)],['المحصل فعليًا',money(a.col)],['المصروفات',money(a.exp)]].map(x=>`<div class="kpi"><small>${x[0]}</small><strong>${x[1]}</strong></div>`).join('');
-document.getElementById('recent').innerHTML=table(['رقم الشحنة','العميل','الوجهة','الحالة'],db.shipments.slice(-6).reverse().map(x=>[x.id,x.customer,x.to,x.status]));
+renderRecentShipments();
 document.getElementById('finSummary').innerHTML=`<p>إجمالي رسوم الشحن: <b>${money(a.fees)}</b></p><p>إجمالي المطلوب تحصيله COD: <b>${money(a.cod)}</b></p><p>المحصل: <b>${money(a.col)}</b></p><p>المصروفات المسجلة: <b>${money(a.exp)}</b></p><p>المتبقي من COD: <b>${money(Math.max(0,a.cod-a.col))}</b></p>`;
 renderShip();let ag=document.querySelector('#shipForm [name=agent]');if(ag){let v=ag.value;ag.innerHTML=agentOptions(v)}let ta=document.getElementById('transferAgent');if(ta){let v=ta.value;ta.innerHTML='<option value="">اختر المندوب</option>'+db.drivers.filter(d=>d.status!=='غير نشط').map(d=>`<option value="${esc(d.name)}">${esc(d.name)}</option>`).join('');ta.value=v}renderTransfers();document.getElementById('customerTable').innerHTML=table(['الاسم','الهاتف','العنوان'],db.customers.map(x=>[x.name,x.phone,x.address]));
 document.getElementById('driverTable').innerHTML=table(['الاسم','الهاتف','الكود','الحالة'],db.drivers.map(x=>[x.name,x.phone,x.code,x.status]));
