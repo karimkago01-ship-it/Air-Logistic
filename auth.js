@@ -691,7 +691,7 @@
 
 
   // Private identity-document center. Files stay in a private Storage bucket;
-  // only the owner and workspace admins/managers can read them.
+  // owners can read their own files; only Abu Rizq's admin account can review all users' files.
   const IDENTITY_BUCKET = 'air-logistic-identity';
   // Only Abu Rizq's verified admin account is exempt from personal document submission.
   const IDENTITY_EXEMPT_USER_ID = '0e7fe9b5-bc54-403b-9884-ad1facf5efe0';
@@ -787,7 +787,7 @@
       return '<div style="border:1px solid #e2e9f1;border-radius:11px;padding:10px;margin:8px 0"><div style="font-weight:700">'+label+'</div><div style="font-size:12px;color:#53657a;margin:3px 0">'+(latest ? 'الحالة: '+statusLabel(latest.status) : 'لم يتم رفع المستند بعد')+(latest?.rejection_reason ? ' · السبب: '+identityEscape(latest.rejection_reason) : '')+'</div>'+(latest?.status==='approved' ? '' : '<input id="'+inputId+'" type="file" accept="image/jpeg,image/png,image/webp,application/pdf" style="display:block;width:100%;margin:7px 0"><button type="button" data-upload-type="'+type+'" style="background:#176b46;color:white;border:0;border-radius:8px;padding:8px 12px">رفع المستند</button>')+'</div>';
     }).join('');
     own.querySelectorAll('[data-upload-type]').forEach(button => button.addEventListener('click', () => uploadIdentityDocument(button.dataset.uploadType)));
-    const canReview = ['admin','manager'].includes(profile.role);
+    const canReview = profile.user_id === IDENTITY_GRACE_APPROVER_USER_ID && profile.role === 'admin';
     if (review) review.style.display = canReview ? 'block' : 'none';
     if (canReview && reviewList) {
       const allResult = await client.from('identity_documents')
@@ -872,7 +872,7 @@
   }
   async function reviewIdentityDocument(id,status) {
     const profile = window.currentProfile;
-    if (!['admin','manager'].includes(profile?.role)) return alert('المراجعة متاحة لمدير النظام والمدير المصرح له فقط.');
+    if (profile?.user_id !== IDENTITY_GRACE_APPROVER_USER_ID || profile?.role !== 'admin') return alert('الاطلاع ومراجعة المستندات متاحان لحساب أبو رزق فقط.');
     let reason = null;
     if (status === 'rejected') {
       reason = window.prompt('اكتب سبب رفض المستند:');
