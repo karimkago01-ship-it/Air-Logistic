@@ -1,5 +1,5 @@
-const CACHE_NAME = "air-logistic-pwa-v13";
-const APP_SHELL = ["./", "./index.html", "./manifest.webmanifest", "./icon.svg", "./auth.js"];
+const CACHE_NAME = "air-logistic-pwa-v14";
+const APP_SHELL = ["./", "./index.html", "./confirm.html", "./manifest.webmanifest", "./icon.svg", "./auth.js"];
 self.addEventListener("install", event => {
   event.waitUntil(caches.open(CACHE_NAME).then(cache => cache.addAll(APP_SHELL)).then(() => self.skipWaiting()));
 });
@@ -10,13 +10,14 @@ self.addEventListener("fetch", event => {
   if (event.request.method !== "GET" || new URL(event.request.url).origin !== self.location.origin) return;
   if (event.request.mode === "navigate") {
     event.respondWith(fetch(event.request).then(response => {
-      const copy = response.clone();
-      caches.open(CACHE_NAME).then(cache => cache.put("./index.html", copy));
+      if (response.ok) {
+        const copy = response.clone();
+        caches.open(CACHE_NAME).then(cache => cache.put(event.request, copy));
+      }
       return response;
-    }).catch(() => caches.match("./index.html")));
+    }).catch(async () => (await caches.match(event.request)) || (await caches.match("./index.html"))));
   }
 });
-
 self.addEventListener("notificationclick", event => {
   event.notification.close();
   const target = new URL(event.notification.data?.url || "./", self.location.origin).href;
