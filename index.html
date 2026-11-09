@@ -977,15 +977,31 @@ async function captureWaybillFromCamera(){
   await readWaybillImage(blob);
  }catch(err){progress.textContent='تعذر التقاط البوليصة: '+err.message}
 }
+let waybillOCRWorkerPromise=null;
+async function getWaybillOCRWorker(progress){
+ if(!waybillOCRWorkerPromise){
+  progress.textContent='جاري تجهيز محرك القراءة لأول مرة؛ سيتم حفظ ملفات اللغة لاستخدامها لاحقًا...';
+  waybillOCRWorkerPromise=Tesseract.createWorker('ara+eng',1,{
+   langPath:'https://cdn.jsdelivr.net/gh/tesseract-ocr/tessdata_fast@main',
+   gzip:false,
+   cacheMethod:'write',
+   logger:m=>{
+    if(m.status==='loading language traineddata')progress.textContent='تحميل ملفات اللغة '+Math.round((m.progress||0)*100)+'% (أول مرة فقط)';
+    else if(m.status)progress.textContent=m.status+(Number.isFinite(m.progress)?' '+Math.round(m.progress*100)+'%':'');
+   }
+  }).catch(err=>{waybillOCRWorkerPromise=null;throw err});
+ }
+ return await waybillOCRWorkerPromise;
+}
 async function readWaybillImage(file){
  const progress=document.getElementById('ocrProgress');
  try{
   if(!window.Tesseract)throw Error('محرك OCR لم يتم تحميله. تأكد من الإنترنت ثم أعد فتح الصفحة.');
   progress.textContent='جاري تحسين وضوح صورة البوليصة...';
   const enhanced=await prepareWaybillImage(file);
+  const worker=await getWaybillOCRWorker(progress);
   progress.textContent='جاري قراءة البوليصة بالعربية والإنجليزية...';
-  const result=await Tesseract.recognize(enhanced,'ara+eng',{
-   logger:m=>{if(m.status)progress.textContent=m.status+' '+Math.round((m.progress||0)*100)+'%'},
+  const result=await worker.recognize(enhanced,{
    tessedit_pageseg_mode:'11',
    preserve_interword_spaces:'1'
   });
