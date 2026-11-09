@@ -122,6 +122,10 @@
     $('secureSignOut')?.addEventListener('click',async () => {
       await client.auth.signOut({scope:'local'});
       window.currentProfile = null; activeAuthUser = null;
+      const identityPanel = document.getElementById('airIdentityPanel');
+      const identityLauncher = document.getElementById('airIdentityLauncher');
+      if (identityPanel) { identityPanel.style.display = 'none'; identityPanel.querySelector('#airIdentityOwn').textContent = ''; identityPanel.querySelector('#airIdentityReviewList').textContent = ''; }
+      if (identityLauncher) identityLauncher.style.display = 'none';
       if (realtimeChannel) { await client.removeChannel(realtimeChannel); realtimeChannel = null; }
       lockApp(); say('تم تسجيل الخروج بأمان.');
     });
@@ -698,7 +702,13 @@
   let identityPanelReady = false;
   const identityEscape = value => String(value ?? '').replace(/[&<>"']/g, ch => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]));
   function ensureIdentityPanel() {
-    if (identityPanelReady || !window.currentProfile?.active) return;
+    if (!window.currentProfile?.active) return;
+    if (identityPanelReady) {
+      const launcher = document.getElementById('airIdentityLauncher');
+      if (launcher) launcher.style.display = 'block';
+      renderIdentityPanel();
+      return;
+    }
     identityPanelReady = true;
     const panel = document.createElement('section');
     panel.id = 'airIdentityPanel';
