@@ -30,6 +30,7 @@ assert.ok(html.includes('async function commitImport()'), 'bulk import must reso
 assert.ok(html.includes("transferForm').onsubmit=async"), 'shipment transfer must resolve courier account before saving');
 assert.ok(html.includes('s.courier_user_id=courierUserId'), 'shipment transfer must persist courier user ID');
 assert.ok(auth.includes('window.renderAirActivityLog'), 'central activity log viewer must exist');
+assert.ok(auth.includes("activityNav.style.display = ['admin','manager'].includes(profile.role)"), 'activity log navigation must be restricted to managers');
 assert.ok(html.includes('id="activityLog"'), 'central activity log page must be visible in the application');
 assert.ok(auditMigration.includes('create trigger air_logistic_record_audit'), 'database audit trigger migration must exist');
 assert.ok(auditMigration.includes('revoke insert, update, delete on public.activity_log'), 'client accounts must not edit or forge central audit rows');
