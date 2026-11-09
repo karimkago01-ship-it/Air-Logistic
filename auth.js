@@ -152,11 +152,29 @@
             created_by:item._createdBy, updated_by:profile.user_id
           });
         }
-        for (let i=0;i<rows.length;i+=100) {
-          const result = await client.from('app_records').upsert(rows.slice(i,i+100),{
-            onConflict:'workspace_id,collection,record_id'
-          });
-          if (result.error) throw result.error;
+        if (profile.role === 'courier') {
+          // Couriers may update only shipments already assigned to their authenticated user.
+          // Use UPDATE (not UPSERT): the database intentionally grants couriers no INSERT
+          // policy on app_records, and an UPSERT can fail even when its row already exists.
+          for (const row of rows) {
+            const result = await client.from('app_records')
+              .update({data:row.data,updated_by:profile.user_id})
+              .eq('workspace_id',profile.workspace_id)
+              .eq('collection','shipments')
+              .eq('record_id',row.record_id)
+              .select('record_id');
+            if (result.error) throw result.error;
+            if (!result.data || result.data.length !== 1) {
+              throw new Error('لم يتم حفظ تحديث الشحنة؛ تأكد أن الشحنة ما زالت مسندة إلى حسابك.');
+            }
+          }
+        } else {
+          for (let i=0;i<rows.length;i+=100) {
+            const result = await client.from('app_records').upsert(rows.slice(i,i+100),{
+              onConflict:'workspace_id,collection,record_id'
+            });
+            if (result.error) throw result.error;
+          }
         }
       }
       if (profile.role !== 'courier' && db.policies && Object.keys(db.policies).length) {
