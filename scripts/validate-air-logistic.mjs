@@ -16,7 +16,7 @@ const inlineScripts = [...html.matchAll(/<script\\b[^>]*>([\\s\\S]*?)<\\/script>
 
 assert.ok(inlineScripts.length > 0, 'index.html must contain application scripts');
 inlineScripts.forEach((source, index) => {
-  new vm.Script(source, { filename: `index.html:inline-script-${index + 1}` });
+  new vm.Script(source, { filename: 'index.html:inline-script-' + (index + 1) });
 });
 
 assert.ok(auth.includes('air_logistic_recovery_v1'), 'local recovery archive must remain enabled');
@@ -33,4 +33,4 @@ assert.ok(/serviceWorker|service-worker/i.test(html), 'PWA service worker regist
 assert.ok(/CACHE_NAME|cacheName/i.test(sw), 'service worker must define a cache version');
 
 console.log('Air Logistic validation passed.');
-console.log(`Validated auth.js, sw.js, and ${inlineScripts.length} inline application scripts.`);
+console.log('Validated auth.js, sw.js, and ' + inlineScripts.length + ' inline application scripts.');
