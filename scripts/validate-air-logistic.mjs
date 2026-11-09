@@ -6,6 +6,7 @@ const read = (path) => fs.readFileSync(new URL(path, import.meta.url), 'utf8');
 const auth = read('../auth.js');
 const html = read('../index.html');
 const sw = read('../sw.js');
+const auditMigration = read('../supabase/migrations/20261109051126_central_append_only_air_logistic_activity_audit.sql');
 
 new vm.Script(auth, { filename: 'auth.js' });
 new vm.Script(sw, { filename: 'sw.js' });
@@ -28,6 +29,10 @@ assert.ok(html.includes("shipForm').onsubmit=async"), 'shipment save must resolv
 assert.ok(html.includes('async function commitImport()'), 'bulk import must resolve courier accounts before saving');
 assert.ok(html.includes("transferForm').onsubmit=async"), 'shipment transfer must resolve courier account before saving');
 assert.ok(html.includes('s.courier_user_id=courierUserId'), 'shipment transfer must persist courier user ID');
+assert.ok(auth.includes('window.renderAirActivityLog'), 'central activity log viewer must exist');
+assert.ok(html.includes('id="activityLog"'), 'central activity log page must be visible in the application');
+assert.ok(auditMigration.includes('create trigger air_logistic_record_audit'), 'database audit trigger migration must exist');
+assert.ok(auditMigration.includes('revoke insert, update, delete on public.activity_log'), 'client accounts must not edit or forge central audit rows');
 
 assert.ok(/serviceWorker|service-worker/i.test(html), 'PWA service worker registration must remain present');
 assert.ok(/CACHE_NAME|cacheName/i.test(sw), 'service worker must define a cache version');
