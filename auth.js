@@ -382,6 +382,67 @@
 
   const airHtml = value => String(value ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
   const airDate = value => { try { return new Date(value).toLocaleString('ar-EG',{dateStyle:'short',timeStyle:'short'}); } catch (_) { return ''; } };
+  window.renderAirActivityLog = async function() {
+    const target = $('airActivityTable');
+    const status = $('airActivityStatus');
+    if (!target) return;
+    const profile = window.currentProfile;
+    if (!profile?.active || !['admin','manager'].includes(profile.role)) {
+      if (status) status.textContent = 'سجل العمليات متاح لمدير النظام والمدير فقط.';
+      target.textContent = '';
+      return;
+    }
+    if (status) status.textContent = 'جارٍ تحميل سجل العمليات الموثّق...';
+    const [logsResult, profilesResult] = await Promise.all([
+      client.from('activity_log')
+        .select('id,actor_id,action,details,created_at')
+        .eq('workspace_id',profile.workspace_id)
+        .order('created_at',{ascending:false})
+        .limit(100),
+      client.from('profiles')
+        .select('user_id,full_name,role')
+        .eq('workspace_id',profile.workspace_id)
+    ]);
+    if (logsResult.error) {
+      if (status) status.textContent = 'تعذر تحميل سجل العمليات. تحقق من الاتصال والصلاحيات.';
+      target.textContent = '';
+      return;
+    }
+    const names = new Map((profilesResult.data || []).map(x => [x.user_id,x.full_name || x.user_id]));
+    const collectionNames = {
+      shipments:'الشحنات',customers:'العملاء',drivers:'المناديب',vehicles:'السيارات',
+      expenses:'المصروفات',transfers:'التحويلات',settlements:'التسويات',
+      remits:'توريدات المناديب',agents:'الوكلاء',priceRules:'التسعير',
+      ledger:'الحركة المالية',policies:'السياسات',roles:'الصلاحيات'
+    };
+    const actionNames = {record_insert:'إضافة سجل',record_update:'تعديل سجل',record_delete:'حذف سجل'};
+    const rows = logsResult.data || [];
+    target.innerHTML = rows.length
+      ? '<div class="tablewrap"><table><thead><tr><th>التاريخ والوقت</th><th>المستخدم</th><th>العملية</th><th>القسم</th><th>رقم السجل</th><th>تفاصيل التغيير</th></tr></thead><tbody>' +
+        rows.map(row => {
+          const d = row.details || {};
+          const changes = [];
+          if (d.status_before !== d.status_after && (d.status_before || d.status_after)) {
+            changes.push('الحالة: ' + (d.status_before || '—') + ' ← ' + (d.status_after || '—'));
+          }
+          if (d.agent_before !== d.agent_after && (d.agent_before || d.agent_after)) {
+            changes.push('المندوب: ' + (d.agent_before || '—') + ' ← ' + (d.agent_after || '—'));
+          }
+          if (d.courier_user_id_before !== d.courier_user_id_after &&
+              (d.courier_user_id_before || d.courier_user_id_after)) {
+            changes.push('تم تحديث ربط حساب المندوب');
+          }
+          return '<tr><td>' + airHtml(airDate(row.created_at)) +
+            '</td><td>' + airHtml(names.get(row.actor_id) || 'حساب غير معروف') +
+            '</td><td>' + airHtml(actionNames[row.action] || row.action) +
+            '</td><td>' + airHtml(collectionNames[d.collection] || d.collection || '—') +
+            '</td><td>' + airHtml(d.shipment_id || d.record_id || '—') +
+            '</td><td>' + airHtml(changes.join('؛ ') || 'تم تسجيل العملية') + '</td></tr>';
+        }).join('') + '</tbody></table></div>'
+      : '<p class="muted">لا توجد عمليات مسجلة بعد. سيظهر هنا كل تغيير جديد تلقائيًا.</p>';
+    if (status) status.textContent = 'يعرض آخر ' + rows.length + ' عملية محفوظة مركزيًا وغير قابلة للتعديل من حسابات الموظفين.';
+  };
+
   const airAlertPrefs = (() => {
     try { return Object.assign({sound:true,vibration:true},JSON.parse(localStorage.getItem('air_logistic_alert_prefs') || '{}')); }
     catch (_) { return {sound:true,vibration:true}; }
