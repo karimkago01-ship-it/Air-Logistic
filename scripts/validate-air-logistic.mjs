@@ -24,6 +24,9 @@ assert.ok(auth.includes('air_logistic_recovery_v1'), 'local recovery archive mus
 assert.ok(!auth.includes("removeItem('air_logistic_full_v1')"), 'local recovery snapshot must never be silently removed');
 assert.ok(auth.includes('resolveAirCourierUserId'), 'authenticated courier resolver must exist');
 assert.ok(auth.includes("String(item.courier_user_id || '')"), 'courier cloud sync must be scoped by authenticated user ID');
+assert.ok(auth.includes(".update({data:row.data,updated_by:profile.user_id})"), 'courier sync must update assigned rows without attempting an unauthorized insert');
+assert.ok(auth.includes(".eq('collection','shipments')"), 'courier sync updates must be restricted to shipment records');
+assert.ok(auth.includes("result.data.length !== 1"), 'courier sync must detect when RLS prevents the assigned shipment update');
 
 assert.ok(html.includes("shipForm').onsubmit=async"), 'shipment save must resolve courier account before saving');
 assert.ok(html.includes('async function commitImport()'), 'bulk import must resolve courier accounts before saving');
