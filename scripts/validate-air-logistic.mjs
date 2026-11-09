@@ -44,6 +44,14 @@ assert.ok(html.includes('readWaybillImage(blob)'), 'camera images must use the s
 assert.ok(html.includes('tessdata_fast'), 'waybill OCR must use compact fast language models');
 assert.ok(html.includes('waybillOCRWorkerPromise'), 'waybill OCR worker must be reused across scans');
 assert.ok(html.includes("cacheMethod:'write'"), 'OCR language data must be cached for subsequent scans');
+assert.ok(html.includes('toggleCameraTorch'), 'camera flashlight toggle must be available');
+assert.ok(html.includes('ocrTorchButton'), 'waybill camera must expose a flashlight control');
+assert.ok(html.includes('scannerTorchButton'), 'barcode scanner camera must expose a flashlight control');
+assert.ok(html.includes('getCapabilities'), 'flashlight control must detect device torch support');
+assert.ok(html.includes("tessedit_pageseg_mode:'6'"), 'OCR must use a block-oriented page mode for faster waybill recognition');
+assert.ok(html.includes('maxSide=2000,scale=Math.min(1'), 'OCR image preparation must avoid unnecessary upscaling');
+assert.ok(html.includes("'image/jpeg',0.9"), 'OCR image preparation must use compressed JPEG to reduce processing time');
+
 assert.ok(html.includes('capture="environment"'), 'waybill image input must request the rear camera on mobile');
 assert.ok(html.includes('air-logo-transition-styles'), 'segmented brand logo transition styles must exist');
 assert.ok(html.includes('air-logo-page-transition'), 'page navigation must show the segmented brand logo loader');
