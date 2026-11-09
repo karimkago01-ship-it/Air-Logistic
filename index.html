@@ -585,6 +585,11 @@ img,video,canvas,svg{max-width:100%}
    <button class="primary" type="submit">إرسال رابط استعادة كلمة المرور</button>
    <button type="button" class="light" id="backToLoginBtn">العودة لتسجيل الدخول</button>
   </form>
+  <form id="newPasswordForm" class="hidden">
+   <label>كلمة المرور الجديدة<input id="newPassword" type="password" autocomplete="new-password" required minlength="12" placeholder="12 حرفًا على الأقل"></label>
+   <label>تأكيد كلمة المرور الجديدة<input id="newPasswordConfirm" type="password" autocomplete="new-password" required minlength="12" placeholder="أعد كتابة كلمة المرور"></label>
+   <button class="primary" id="saveNewPassword" type="submit">حفظ كلمة المرور والدخول</button>
+  </form>
   <p class="auth-help">كل الحسابات الجديدة تظل موقوفة حتى اعتماد مدير النظام. سيتم تفعيل حساب المدير الأول يدويًا بعد التحقق من بريده. لا تشارك كلمة المرور مع أي شخص.</p>
  </div>
 </div>
