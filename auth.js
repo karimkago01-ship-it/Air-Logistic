@@ -284,6 +284,25 @@
     if (typeof toast === 'function') toast('تم حذف الشحنة');
   };
 
+  // Resolve the selected courier's authenticated account ID for RLS-safe shipment assignment.
+  window.resolveAirCourierUserId = async function(fullName) {
+    const profile = window.currentProfile;
+    const name = String(fullName || '').trim();
+    if (!profile?.active || !['admin','manager'].includes(profile.role)) {
+      throw new Error('تعيين الشحنة لحساب مندوب يتطلب صلاحية المدير أو مدير النظام.');
+    }
+    if (!name) throw new Error('اختر اسم المندوب أولًا.');
+    const result = await client.from('profiles').select('user_id')
+      .eq('workspace_id',profile.workspace_id)
+      .eq('full_name',name).eq('role','courier').eq('active',true)
+      .maybeSingle();
+    if (result.error) throw result.error;
+    if (!result.data?.user_id) {
+      throw new Error('لا يوجد حساب مندوب نشط مطابق لهذا الاسم. تأكد من تسجيل حساب المندوب وتفعيله.');
+    }
+    return result.data.user_id;
+  };
+
   async function renderAccountRequests() {
     const pendingBox = $('pendingAccounts'), approvedBox = $('approvedAccounts');
     if (!pendingBox || !approvedBox) return;
