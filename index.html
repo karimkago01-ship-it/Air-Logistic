@@ -529,6 +529,28 @@ img,video,canvas,svg{max-width:100%}
 @media (min-width:681px){#airMobileBottomNav{display:none!important}}
 </style>
 
+
+<style id="air-logo-transition-styles">
+#airLogoPageLoader{position:fixed;inset:0;z-index:99999;display:grid;place-items:center;background:rgba(247,250,255,.97);opacity:0;visibility:hidden;pointer-events:none;transition:opacity .16s ease,visibility .16s ease}
+#airLogoPageLoader.is-visible{opacity:1;visibility:visible;pointer-events:all}
+#airLogoPageLoader .air-loader-card{display:flex;flex-direction:column;align-items:center;gap:16px;padding:28px 34px;border:1px solid #dce7f3;border-radius:22px;background:#fff;box-shadow:0 18px 55px #123b6820;min-width:220px}
+#airLogoPageLoader .air-logo-pieces{position:relative;width:104px;height:104px;filter:drop-shadow(0 7px 12px #123b6820)}
+#airLogoPageLoader .air-logo-piece{position:absolute;width:50%;height:50%;background-repeat:no-repeat;background-size:200% 200%;opacity:.12}
+#airLogoPageLoader .air-logo-piece:nth-child(1){top:0;right:0;background-position:100% 0;transform:translate(13px,-13px)}
+#airLogoPageLoader .air-logo-piece:nth-child(2){top:0;left:0;background-position:0 0;transform:translate(-13px,-13px)}
+#airLogoPageLoader .air-logo-piece:nth-child(3){bottom:0;right:0;background-position:100% 100%;transform:translate(13px,13px)}
+#airLogoPageLoader .air-logo-piece:nth-child(4){bottom:0;left:0;background-position:0 100%;transform:translate(-13px,13px)}
+#airLogoPageLoader.is-visible .air-logo-piece{animation:airLogoAssemble .42s cubic-bezier(.2,.8,.2,1) forwards}
+#airLogoPageLoader.is-visible .air-logo-piece:nth-child(2){animation-delay:.035s}
+#airLogoPageLoader.is-visible .air-logo-piece:nth-child(3){animation-delay:.07s}
+#airLogoPageLoader.is-visible .air-logo-piece:nth-child(4){animation-delay:.105s}
+@keyframes airLogoAssemble{to{transform:translate(0,0);opacity:1}}
+#airLogoPageLoader .air-loader-caption{font:700 13px Tahoma,Arial,sans-serif;color:#173b63}
+#airLogoPageLoader .air-loader-track{width:150px;height:4px;overflow:hidden;border-radius:8px;background:#e8eff7}
+#airLogoPageLoader .air-loader-track:after{content:"";display:block;width:42%;height:100%;border-radius:8px;background:linear-gradient(90deg,#1674d1,#f28a16);transform:translateX(250%);animation:airLoaderProgress .42s ease-in-out forwards}
+@keyframes airLoaderProgress{to{transform:translateX(-5%)}}
+@media(prefers-reduced-motion:reduce){#airLogoPageLoader,#airLogoPageLoader .air-logo-piece,#airLogoPageLoader .air-loader-track:after{animation:none!important;transition:none!important}#airLogoPageLoader.is-visible .air-logo-piece{transform:none;opacity:1}}
+</style>
 </head>
 <body class="auth-locked">
 
@@ -1372,4 +1394,35 @@ if ("serviceWorker" in navigator) {
 })();
 </script>
 
+
+<script id="air-logo-page-transition">
+(function(){
+ if(window.__airLogoPageTransitionInstalled)return;
+ window.__airLogoPageTransitionInstalled=true;
+ const logo=document.querySelector('.brand-logo');
+ if(!logo)return;
+ const overlay=document.createElement('div');
+ overlay.id='airLogoPageLoader';
+ overlay.setAttribute('role','status');
+ overlay.setAttribute('aria-live','polite');
+ overlay.setAttribute('aria-hidden','true');
+ overlay.innerHTML='<div class="air-loader-card"><div class="air-logo-pieces" aria-hidden="true"><span class="air-logo-piece"></span><span class="air-logo-piece"></span><span class="air-logo-piece"></span><span class="air-logo-piece"></span></div><div class="air-loader-caption">جاري تجهيز الصفحة</div><div class="air-loader-track" aria-hidden="true"></div></div>';
+ overlay.querySelectorAll('.air-logo-piece').forEach(piece=>{piece.style.backgroundImage='url("'+logo.src+'")'});
+ document.body.appendChild(overlay);
+ let hideTimer=0;
+ document.addEventListener('click',function(event){
+  const button=event.target.closest('#nav button[data-page],#airMobileBottomNav button[data-mobile-page]');
+  if(!button||button.dataset.page==='more'||button.dataset.mobilePage==='more')return;
+  overlay.classList.remove('is-visible');
+  void overlay.offsetWidth;
+  overlay.setAttribute('aria-hidden','false');
+  overlay.classList.add('is-visible');
+  window.clearTimeout(hideTimer);
+  hideTimer=window.setTimeout(function(){
+   overlay.classList.remove('is-visible');
+   overlay.setAttribute('aria-hidden','true');
+  },520);
+ },true);
+})();
+</script>
 </body></html>
