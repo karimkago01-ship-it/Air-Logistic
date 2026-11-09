@@ -377,7 +377,7 @@
     playAirAlert();
     if (airAlertPrefs.vibration && navigator.vibrate) navigator.vibrate([90,45,90]);
     if ('Notification' in window && Notification.permission === 'granted' && document.visibilityState === 'hidden') {
-      const options = {body:String(row.body || ''),icon:'./icon.svg',tag:'air-logistic-'+row.id,renotify:false,data:{url:row.link || './'}};
+      const options = {body:String(row.body || ''),icon:'./icon.svg',tag:'air-logistic-'+row.id,renotify:false,vibrate:airAlertPrefs.vibration?[100,50,100]:[],data:{url:row.link || './'}};
       if (navigator.serviceWorker?.ready) navigator.serviceWorker.ready.then(reg => reg.showNotification(String(row.title || 'Air Logistic'),options)).catch(() => {});
       else try { new Notification(String(row.title || 'Air Logistic'),options); } catch (_) {}
     }
