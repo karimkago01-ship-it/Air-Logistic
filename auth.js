@@ -137,11 +137,14 @@
   }
 
   function setAuthBar(profile,email) {
+    const backupAdminOnly = $('backupAdminOnly');
+    if (backupAdminOnly) backupAdminOnly.style.display = isOwnerAccount(profile) && profile.role === 'admin' ? '' : 'none';
     const bar = $('authBar'); if (!bar) return;
     bar.innerHTML = '<span>مرحبًا، <b>' + esc(profile.full_name) + '</b> · ' + roleName(profile.role) + ' · ' + esc(email || '') + '</span><button type="button" id="secureSignOut">تسجيل خروج آمن</button>';
     $('secureSignOut')?.addEventListener('click',async () => {
       await client.auth.signOut({scope:'local'});
       window.currentProfile = null; activeAuthUser = null;
+      const backupAdminOnly = $('backupAdminOnly'); if (backupAdminOnly) backupAdminOnly.style.display = 'none';
       const identityPanel = document.getElementById('airIdentityPanel');
       const identityLauncher = document.getElementById('airIdentityLauncher');
       if (identityPanel) { identityPanel.style.display = 'none'; identityPanel.querySelector('#airIdentityOwn').textContent = ''; identityPanel.querySelector('#airIdentityReviewList').textContent = ''; }
