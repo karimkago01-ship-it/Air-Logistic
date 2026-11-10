@@ -850,7 +850,6 @@
   const IDENTITY_TYPES = [
     ['national_id_front','البطاقة الشخصية - الوجه الأمامي'],
     ['national_id_back','البطاقة الشخصية - الوجه الخلفي'],
-    ['personal_photo','الصورة الشخصية'],
     ['driving_license','رخصة القيادة']
   ];
   let identityPanelReady = false;
@@ -866,8 +865,8 @@
     identityPanelReady = true;
     const panel = document.createElement('section');
     panel.id = 'airIdentityPanel';
-    panel.style.cssText = 'position:fixed;z-index:9998;right:14px;bottom:14px;width:min(440px,calc(100vw - 28px));max-height:78vh;overflow:auto;background:#fff;color:#172b45;border:1px solid #d7e0eb;border-radius:16px;box-shadow:0 12px 40px #10274633;padding:14px;display:none;font:14px/1.6 system-ui,sans-serif;direction:rtl;';
-    panel.innerHTML = '<div style="display:flex;align-items:center;gap:8px"><b style="font-size:16px">الملف الشخصي والأوراق الرسمية</b></div><p id="airIdentityIntro" style="color:#53657a;margin:8px 0">ارفع المستندات المطلوبة لمراجعتها بأمان.</p><div id="airIdentityOwn"></div><div id="airIdentityGrace" style="border:1px solid #dce6f0;border-radius:11px;padding:10px;margin-top:10px;background:#f7f9fc"><b>المستندات مش جاهزة؟</b><p id="airIdentityGraceStatus" style="margin:5px 0;color:#53657a">اطلب مهلة تشغيل مؤقتة لمدة 15 يومًا بعد موافقة الإدارة.</p><button type="button" id="airIdentityGraceRequest" style="background:#245b91;color:white;border:0;border-radius:8px;padding:9px 12px">طلب مهلة تشغيل 15 يوم</button></div><button type="button" id="airIdentityDone" style="display:none;background:#176b46;color:white;border:0;border-radius:8px;padding:10px 18px;margin-top:12px;font-weight:700">موافق</button><hr style="border:0;border-top:1px solid #e5ebf2;margin:12px 0"><div id="airIdentityReview" style="display:none"><b>مراجعة المستندات وطلبات المهلة</b><div id="airIdentityReviewList" style="margin-top:8px"></div></div><p id="airIdentityMessage" role="status" style="margin:8px 0;color:#176b46"></p>';
+    panel.style.cssText = 'position:fixed;z-index:9998;inset:0;width:100vw;height:100vh;height:100dvh;max-height:none;overflow:auto;box-sizing:border-box;background:#f4f7fb;color:#172b45;border:0;border-radius:0;box-shadow:none;padding:clamp(16px,4vw,34px);display:none;font:15px/1.7 system-ui,sans-serif;direction:rtl;';
+    panel.innerHTML = '<div style="max-width:760px;margin:0 auto"><div style="display:flex;align-items:center;gap:8px"><b style="font-size:22px">استكمال أوراق حساب Air Logistic</b></div><p id="airIdentityIntro" style="color:#53657a;margin:8px 0">قبل استخدام النظام، ارفع صورة البطاقة الشخصية (الوجهين) ورخصة القيادة. لو مستند مش معاك اضغط زر «مش معايا» لطلب مهلة من المدير.</p><div id="airIdentityOwn"></div><div id="airIdentityGrace" style="border:1px solid #dce6f0;border-radius:11px;padding:10px;margin-top:10px;background:#f7f9fc"><b>المستندات مش جاهزة؟</b><p id="airIdentityGraceStatus" style="margin:5px 0;color:#53657a">اطلب مهلة تشغيل مؤقتة لمدة 15 يومًا بعد موافقة الإدارة.</p><button type="button" id="airIdentityGraceRequest" style="background:#245b91;color:white;border:0;border-radius:8px;padding:9px 12px">طلب مهلة تشغيل 15 يوم</button></div><button type="button" id="airIdentityDone" style="display:none;background:#176b46;color:white;border:0;border-radius:8px;padding:10px 18px;margin-top:12px;font-weight:700">موافق</button><hr style="border:0;border-top:1px solid #e5ebf2;margin:12px 0"><div id="airIdentityReview" style="display:none"><b>مراجعة المستندات وطلبات المهلة</b><div id="airIdentityReviewList" style="margin-top:8px"></div></div><p id="airIdentityMessage" role="status" style="margin:8px 0;color:#176b46"></p></div>';
     document.body.appendChild(panel);
     const launcher = document.createElement('button');
     launcher.id = 'airIdentityLauncher';
@@ -887,7 +886,7 @@
     const message = document.getElementById('airIdentityMessage');
     if (!profile?.active || !own) return;
     const isExemptAdmin = profile.user_id === IDENTITY_EXEMPT_USER_ID;
-    const required = IDENTITY_TYPES.filter(([type]) => type !== 'driving_license' || profile.role === 'courier');
+    const required = IDENTITY_TYPES;
     const ownWrap = document.getElementById('airIdentityOwn');
     const graceWrap = document.getElementById('airIdentityGrace');
     const doneButton = document.getElementById('airIdentityDone');
@@ -935,9 +934,10 @@
       const docs = mine.filter(d => d.document_type === type);
       const latest = docs[0];
       const inputId = 'airIdentityFile_' + type;
-      return '<div style="border:1px solid #e2e9f1;border-radius:11px;padding:10px;margin:8px 0"><div style="font-weight:700">'+label+'</div><div style="font-size:12px;color:#53657a;margin:3px 0">'+(latest ? 'الحالة: '+statusLabel(latest.status) : 'لم يتم رفع المستند بعد')+(latest?.rejection_reason ? ' · السبب: '+identityEscape(latest.rejection_reason) : '')+'</div>'+(latest?.status==='approved' ? '' : '<input id="'+inputId+'" type="file" accept="image/jpeg,image/png,image/webp,application/pdf" style="display:block;width:100%;margin:7px 0"><button type="button" data-upload-type="'+type+'" style="background:#176b46;color:white;border:0;border-radius:8px;padding:8px 12px">رفع المستند</button>')+'</div>';
+      return '<div style="border:1px solid #e2e9f1;border-radius:11px;padding:10px;margin:8px 0"><div style="font-weight:700">'+label+'</div><div style="font-size:12px;color:#53657a;margin:3px 0">'+(latest ? 'الحالة: '+statusLabel(latest.status) : 'لم يتم رفع المستند بعد')+(latest?.rejection_reason ? ' · السبب: '+identityEscape(latest.rejection_reason) : '')+'</div>'+(latest?.status==='approved' ? '' : '<input id="'+inputId+'" type="file" accept="image/jpeg,image/png,image/webp,application/pdf" style="display:block;width:100%;margin:7px 0"><div style="display:flex;gap:8px;flex-wrap:wrap"><button type="button" data-upload-type="'+type+'" style="background:#176b46;color:white;border:0;border-radius:8px;padding:9px 13px">رفع المستند</button><button type="button" data-no-document="'+type+'" style="background:#fff;color:#245b91;border:1px solid #9bb4cf;border-radius:8px;padding:9px 13px">مش معايا المستند</button></div>')+'</div>';
     }).join('');
     own.querySelectorAll('[data-upload-type]').forEach(button => button.addEventListener('click', () => uploadIdentityDocument(button.dataset.uploadType)));
+    own.querySelectorAll('[data-no-document]').forEach(button => button.addEventListener('click', () => requestIdentityGrace()));
     const canReview = profile.user_id === IDENTITY_GRACE_APPROVER_USER_ID && profile.role === 'admin';
     if (review) review.style.display = canReview ? 'block' : 'none';
     if (canReview && reviewList) {
@@ -1002,7 +1002,7 @@
     if (!profile?.active || !file) { if (message) message.textContent='اختر صورة أو ملف PDF أولًا.'; return; }
     const allowed = ['image/jpeg','image/png','image/webp','application/pdf'];
     if (!allowed.includes(file.type) || file.size > 10*1024*1024) { if (message) message.textContent='الصيغ المسموحة JPG وPNG وWEBP وPDF، وبحد أقصى 10 ميجابايت.'; return; }
-    if (type === 'driving_license' && profile.role !== 'courier') return;
+    
     if (message) message.textContent='جارٍ رفع المستند بشكل آمن...';
     const ext = ({'image/jpeg':'jpg','image/png':'png','image/webp':'webp','application/pdf':'pdf'})[file.type];
     const path = profile.workspace_id+'/'+profile.user_id+'/'+type+'/'+crypto.randomUUID()+'.'+ext;
