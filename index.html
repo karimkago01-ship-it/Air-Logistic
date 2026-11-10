@@ -692,6 +692,26 @@ img,video,canvas,svg{max-width:100%}
   <div class="actions">
    <button class="primary" type="button" onclick="startMobileScanner()">تشغيل الكاميرا</button>
    <button class="secondary" type="button" onclick="stopMobileScanner()">إيقاف الكاميرا</button><button class="secondary" type="button" id="scannerTorchButton" onclick="toggleCameraTorch(scannerStream,'scannerTorchButton','scannerStatus')">تشغيل الكشاف</button>
+   <button class="primary" type="button" onclick="toggleScannerPolicyReader()">📄 قراءة البوليصة</button>
+  </div>
+  <div id="scannerPolicyReader" class="panel hidden" style="margin-top:14px;background:#f7fafc">
+   <h3>قراءة البوليصة داخل الماسح</h3>
+   <p class="muted">صوّر البوليصة أو ارفع صورتها لاستخراج رقم الشحنة والبيانات المقروءة. راجع النص قبل نقله إلى نموذج الشحنة؛ لن يتم حفظ أي بيانات تلقائيًا.</p>
+   <label>صورة البوليصة<input id="scannerPolicyImage" type="file" accept="image/*" capture="environment" onchange="readScannerPolicyImage()"></label>
+   <div class="actions">
+    <button class="secondary" type="button" onclick="startScannerPolicyCamera()">فتح كاميرا البوليصة</button>
+    <button class="secondary" type="button" onclick="captureScannerPolicyCamera()">التقاط وقراءة</button>
+    <button class="light" type="button" onclick="stopScannerPolicyCamera()">إيقاف كاميرا البوليصة</button>
+   </div>
+   <div id="scannerPolicyCameraWrap" class="hidden" style="max-width:620px;margin-top:10px">
+    <video id="scannerPolicyVideo" playsinline muted style="width:100%;max-height:55vh;object-fit:contain;border-radius:12px;background:#101820"></video>
+   </div>
+   <p id="scannerPolicyProgress" class="muted" role="status" aria-live="polite">اختر صورة أو افتح الكاميرا لبدء القراءة.</p>
+   <label>النص المستخرج<textarea id="scannerPolicyText" rows="7" placeholder="سيظهر هنا النص الذي تم استخراجه من البوليصة..." readonly></textarea></label>
+   <div class="actions">
+    <button class="success" type="button" onclick="transferScannerPolicyToShipment()">نقل البيانات إلى نموذج الشحنة</button>
+    <button class="light" type="button" onclick="copyScannerPolicyText()">نسخ النص</button>
+   </div>
   </div>
   <div id="scannerVideoWrap" class="hidden" style="margin-top:12px;max-width:620px">
    <video id="scannerVideo" playsinline muted style="width:100%;border-radius:14px;background:#101820;min-height:220px;object-fit:cover"></video>
@@ -1141,6 +1161,98 @@ async function readWaybill(){
 function copyOCR(){let t=document.getElementById('ocrText').value;if(!t)return alert('لا يوجد نص');navigator.clipboard?.writeText(t).then(()=>toast('تم نسخ النص')).catch(()=>alert(t))}
 function fillFromOCR(){let t=document.getElementById('ocrText').value;if(!t.trim())return alert('اقرأ البوليصة أولاً');let find=(re)=>{let m=t.match(re);return m?m[1].trim():''};let vals={id:find(/(?:رقم\s*الشحنة|بوليصة\s*رقم|waybill|tracking)\s*[:：#-]?\s*([A-Z0-9-]+)/i),customer:find(/(?:اسم\s*العميل|المرسل|المستلم|customer|consignee)\s*[:：-]\s*([^\n]+)/i),phone:find(/(?:موبايل|هاتف|تليفون|phone|mobile)\s*[:：-]?\s*([+0-9 ()-]{7,})/i),to:find(/(?:جهة\s*الوصول|عنوان\s*التسليم|destination|delivery\s*address)\s*[:：-]\s*([^\n]+)/i)};document.querySelectorAll('#shipForm [name]').forEach(el=>{if(vals[el.name])el.value=vals[el.name]});document.getElementById('shipTitle').textContent='راجع بيانات البوليصة قبل الحفظ';document.querySelector('[data-page="shipments"]').click();toast('تم نقل الحقول التي أمكن التعرف عليها؛ راجعها قبل الحفظ')}
 
+
+
+// ===== Waybill OCR integrated into the mobile scanner =====
+let scannerPolicyCameraStream=null;
+function toggleScannerPolicyReader(){
+ const panel=document.getElementById('scannerPolicyReader');
+ if(!panel)return;
+ panel.classList.toggle('hidden');
+ if(!panel.classList.contains('hidden'))panel.scrollIntoView({behavior:'smooth',block:'nearest'});
+ else stopScannerPolicyCamera();
+}
+async function readScannerPolicyImage(){
+ const input=document.getElementById('scannerPolicyImage');
+ const file=input?.files?.[0];
+ if(!file)return;
+ stopMobileScanner();
+ await runScannerPolicyOCR(file);
+}
+async function runScannerPolicyOCR(file){
+ const progress=document.getElementById('scannerPolicyProgress');
+ const output=document.getElementById('scannerPolicyText');
+ try{
+  if(!window.Tesseract)throw new Error('محرك قراءة البوليصة لم يتم تحميله. تحقق من الإنترنت ثم أعد المحاولة.');
+  progress.textContent='جاري تحسين صورة البوليصة...';
+  const enhanced=await prepareWaybillImage(file);
+  const worker=await getWaybillOCRWorker(progress);
+  progress.textContent='جاري قراءة النص العربي والإنجليزي...';
+  const result=await worker.recognize(enhanced,{tessedit_pageseg_mode:'6',preserve_interword_spaces:'1'});
+  lastOCR=(result.data.text||'').trim();
+  output.value=lastOCR;
+  document.getElementById('ocrText').value=lastOCR;
+  const confidence=Math.round(Number(result.data.confidence||0));
+  progress.textContent='انتهت القراءة — دقة المحرك التقديرية '+confidence+'%. راجع البيانات قبل نقلها.';
+  toast(lastOCR?'تم استخراج نص البوليصة':'لم يتم العثور على نص واضح؛ جرّب صورة أقرب وإضاءة أفضل.');
+ }catch(error){
+  progress.textContent='تعذرت قراءة البوليصة: '+(error?.message||error);
+  console.error('Air Logistic scanner OCR:',error);
+ }
+}
+async function startScannerPolicyCamera(){
+ const video=document.getElementById('scannerPolicyVideo');
+ const wrap=document.getElementById('scannerPolicyCameraWrap');
+ const progress=document.getElementById('scannerPolicyProgress');
+ try{
+  stopMobileScanner();stopScannerPolicyCamera();
+  if(!navigator.mediaDevices?.getUserMedia)throw new Error('الكاميرا غير مدعومة. استخدم اختيار صورة البوليصة.');
+  scannerPolicyCameraStream=await navigator.mediaDevices.getUserMedia({
+   audio:false,video:{facingMode:{ideal:'environment'},width:{ideal:1600},height:{ideal:1200}}
+  });
+  video.srcObject=scannerPolicyCameraStream;
+  await video.play();
+  wrap.classList.remove('hidden');
+  progress.textContent='الكاميرا جاهزة. ثبّت البوليصة داخل الإطار ثم اضغط التقاط وقراءة.';
+ }catch(error){
+  progress.textContent='تعذر فتح كاميرا البوليصة: '+(error?.message||error)+' — تأكد من إذن الكاميرا وفتح الموقع عبر HTTPS.';
+ }
+}
+function stopScannerPolicyCamera(){
+ if(scannerPolicyCameraStream){scannerPolicyCameraStream.getTracks().forEach(track=>track.stop());scannerPolicyCameraStream=null;}
+ const video=document.getElementById('scannerPolicyVideo');
+ if(video)video.srcObject=null;
+}
+async function captureScannerPolicyCamera(){
+ const video=document.getElementById('scannerPolicyVideo');
+ const progress=document.getElementById('scannerPolicyProgress');
+ if(!scannerPolicyCameraStream||!video||video.readyState<2){
+  progress.textContent='افتح الكاميرا وانتظر ظهور الصورة أولاً.';return;
+ }
+ try{
+  const canvas=document.createElement('canvas');
+  const scale=Math.min(1,1800/Math.max(video.videoWidth,video.videoHeight));
+  canvas.width=Math.max(1,Math.round(video.videoWidth*scale));
+  canvas.height=Math.max(1,Math.round(video.videoHeight*scale));
+  canvas.getContext('2d',{willReadFrequently:true}).drawImage(video,0,0,canvas.width,canvas.height);
+  const blob=await new Promise((resolve,reject)=>canvas.toBlob(value=>value?resolve(value):reject(new Error('تعذر التقاط الصورة')),'image/jpeg',0.94));
+  stopScannerPolicyCamera();
+  await runScannerPolicyOCR(blob);
+ }catch(error){progress.textContent='تعذر التقاط البوليصة: '+(error?.message||error);}
+}
+function transferScannerPolicyToShipment(){
+ const text=document.getElementById('scannerPolicyText')?.value||'';
+ if(!text.trim()){alert('اقرأ صورة البوليصة أولاً.');return;}
+ document.getElementById('ocrText').value=text;
+ fillFromOCR();
+}
+function copyScannerPolicyText(){
+ const text=document.getElementById('scannerPolicyText')?.value||'';
+ if(!text.trim()){alert('لا يوجد نص لنسخه.');return;}
+ if(navigator.clipboard?.writeText){
+  navigator.clipboard.writeText(text).then(()=>toast('تم نسخ نص البوليصة')).catch(()=>alert(text));
+ }else alert(text);
+}
 
 // ===== Mobile barcode / QR scanner =====
 let scannerStream=null, scannerTimer=null, scannerDetector=null, lastScannedCode='';
