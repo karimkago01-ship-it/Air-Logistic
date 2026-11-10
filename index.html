@@ -268,6 +268,7 @@ tr:hover td{background:#f7fbff}
 #nav button.active{background:linear-gradient(100deg,#24527c,#1c456c)!important;color:#fff!important;border-color:#47739a!important;box-shadow:inset -3px 0 0 var(--air-accent),0 4px 12px #0002!important;font-weight:800}
 #nav button.active:before{background:var(--air-accent);box-shadow:0 0 0 3px #f59a2324}
 .air-content>.page{display:block;min-width:0}
+.air-content>.page.hidden{display:none!important}
 .air-mobile-menu{display:none!important}
 .air-menu-backdrop{display:none}
 @media(max-width:900px){
@@ -613,7 +614,7 @@ img,video,canvas,svg{max-width:100%}
 <aside class="air-sidebar">
 <div class="sidebar-brand"><span class="sidebar-mark">📦</span><div><b>Air Logistic</b><small>القائمة الرئيسية</small></div></div>
 <nav id="nav"><button data-page="accountRequests">إدارة مديري التسليمات والصلاحيات</button>
-<button class="active" data-page="home">الرئيسية</button><button data-page="monitor">مركز مراقبة النظام</button><button data-page="shipments">الشحنات</button><button data-page="customers">العملاء</button><button data-page="drivers">السائقون</button><button data-page="vehicles">السيارات</button><button data-page="finance">الحسابات</button><button data-page="ocr">قراءة البوليصة OCR</button><button data-page="importer">استيراد Excel</button><button data-page="scanner">ماسح الموبايل</button><button data-page="transfers">التحويلات</button><button data-page="chat">المحادثة الجماعية</button><button data-page="notifications">الإشعارات</button><button data-page="activityLog">سجل العمليات</button><button data-page="merchantPortal">بوابة التاجر</button><button data-page="courierPortal">لوحة المندوب</button><button data-page="tracking">تتبع العميل</button><button data-page="settlements">التسويات المالية</button><button data-page="policies">الشروط والسياسات</button><button data-page="workflow">دورة الشحنة (48 حالة)</button><button data-page="agents">الوكلاء الخارجيون</button><button data-page="pricing">مناطق وأسعار الشحن</button><button data-page="roles">الصلاحيات والأدوار</button><button data-page="finance">دفتر الحركة المالية</button><button data-page="tools">النسخ والاستيراد</button><button data-page="savedDocuments" style="display:none">📁 حفظ المستندات</button>
+<button class="active" data-page="home">الرئيسية</button><button data-page="monitor">مركز مراقبة النظام</button><button data-page="shipments">الشحنات</button><button data-page="customers">العملاء</button><button data-page="drivers">السائقون</button><button data-page="vehicles">السيارات</button><button data-page="finance">الحسابات</button><button data-page="financeLedger">دفتر الحركة المالية</button><button data-page="ocr">قراءة البوليصة OCR</button><button data-page="importer">استيراد Excel</button><button data-page="scanner">ماسح الموبايل</button><button data-page="transfers">التحويلات</button><button data-page="chat">المحادثة الجماعية</button><button data-page="notifications">الإشعارات</button><button data-page="activityLog">سجل العمليات</button><button data-page="merchantPortal">بوابة التاجر</button><button data-page="courierPortal">لوحة المندوب</button><button data-page="tracking">تتبع العميل</button><button data-page="settlements">التسويات المالية</button><button data-page="policies">الشروط والسياسات</button><button data-page="workflow">دورة الشحنة (48 حالة)</button><button data-page="agents">الوكلاء الخارجيون</button><button data-page="pricing">مناطق وأسعار الشحن</button><button data-page="roles">الصلاحيات والأدوار</button><button data-page="finance">دفتر الحركة المالية</button><button data-page="tools">النسخ والاستيراد</button><button data-page="savedDocuments" style="display:none">📁 حفظ المستندات</button>
 </nav>
 <div class="sidebar-foot">Fast • Safe • Everywhere</div>
 </aside>
@@ -831,7 +832,7 @@ img,video,canvas,svg{max-width:100%}
  <div class="panel"><h3>إدارة الحسابات المسجلة</h3><p class="muted">لعرض جميع مديري التسليمات والمديرين، وتغيير الدور بين مدير التسليمات أو مندوب أو مدير، أو تشغيل الحساب وإيقافه.</p><button type="button" class="primary" onclick="document.querySelector('#nav button[data-page=accountRequests]').click()">فتح إدارة مديري التسليمات والحسابات</button></div>
  <div class="panel"><h3>مصفوفة الصلاحيات المقترحة</h3><div id="permissionMatrix"></div></div>
 </section>
-<section id="finance" class="page hidden">
+<section id="financeLedger" class="page hidden">
  <div class="panel"><h2>دفتر الحركة المالية</h2>
  <p class="muted">سجل المقبوضات والمدفوعات والتسويات والتوريدات في دفتر واحد. لا تُسجّل قيودًا محاسبية تلقائيًا من أحداث الشحن إلا بعد مراجعتها واعتمادها.</p>
  <form id="ledgerForm" class="formgrid">
