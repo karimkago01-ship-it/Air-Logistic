@@ -1596,4 +1596,101 @@ if ("serviceWorker" in navigator) {
 })();
 </script>
 <script id="air-unified-page-navigation-hotfix">(function(){if(window.__airUnifiedPageNavigationInstalled)return;window.__airUnifiedPageNavigationInstalled=true;function openPage(page){const target=document.getElementById(page);if(!target||!target.classList.contains('page'))return false;if((page==='roles'||page==='accountRequests')&&window.currentProfile?.user_id!=='0e7fe9b5-bc54-403b-9884-ad1facf5efe0'){if(typeof window.toast==='function')window.toast('هذا القسم محمي ولا يفتح إلا بموافقة حساب المالك الخاص.');else alert('هذا القسم محمي ولا يفتح إلا بموافقة حساب المالك الخاص.');return false;}document.querySelectorAll('.page').forEach(function(section){const active=section===target;section.classList.toggle('hidden',!active);section.style.setProperty('display',active?'block':'none','important');section.setAttribute('aria-hidden',active?'false':'true')});const hero=document.querySelector('.air-hero');if(hero)hero.style.setProperty('display',page==='home'?'':'none','important');document.querySelectorAll('#nav button[data-page]').forEach(function(b){b.classList.toggle('active',b.dataset.page===page)});document.querySelectorAll('#airMobileBottomNav button[data-mobile-page]').forEach(function(b){b.classList.toggle('active',b.dataset.mobilePage===page)});if(page!=='scanner'&&typeof window.stopMobileScanner==='function')window.stopMobileScanner();if(page!=='ocr'&&typeof window.stopWaybillCamera==='function')window.stopWaybillCamera();if(page==='monitor'&&typeof window.renderAirMonitor==='function')window.renderAirMonitor();if(page==='monitor'&&window.airDiagnostics?.refresh)window.airDiagnostics.refresh();if(page==='finance'&&typeof window.renderFinanceReport==='function')window.renderFinanceReport();if(page==='chat'&&typeof window.renderAirChat==='function')window.renderAirChat();if(page==='notifications'&&typeof window.renderAirNotifications==='function')window.renderAirNotifications();if(page==='activityLog'&&typeof window.renderAirActivityLog==='function')window.renderAirActivityLog();if(page==='accountRequests'&&typeof window.renderAccountRequests==='function')window.renderAccountRequests();return true}window.airNavigateToPage=openPage;document.addEventListener('click',function(event){const b=event.target.closest('#nav button[data-page],#airMobileBottomNav button[data-mobile-page]');if(!b)return;const page=b.dataset.page||b.dataset.mobilePage;if(page!=='more')openPage(page)},false);document.querySelectorAll('.page').forEach(function(section){const active=section.id==='home';section.style.setProperty('display',active?'block':'none','important');section.classList.toggle('hidden',!active);section.setAttribute('aria-hidden',active?'false':'true')})})();</script>
-<script src="./diagnostics.js"></script>\n</body></html>
+<script src="./diagnostics.js"></script>
+
+<script id="air-monitor-reliability-hotfix">
+(() => {
+  'use strict';
+  if (window.__airMonitorReliabilityInstalled) return;
+  window.__airMonitorReliabilityInstalled = true;
+  const page = document.getElementById('monitor');
+  const statusHost = document.getElementById('airMonitorStatus');
+  const alertsHost = document.getElementById('airMonitorAlerts');
+  const details = document.getElementById('airMonitorDetails');
+  const originalRender = window.renderAirMonitor;
+  function visible() {
+    return !!page && !page.classList.contains('hidden') &&
+      getComputedStyle(page).display !== 'none';
+  }
+  function addCard(label, value, id) {
+    if (!statusHost) return;
+    document.getElementById(id)?.remove();
+    const card = document.createElement('div');
+    card.className = 'kpi'; card.id = id;
+    const small = document.createElement('small'); small.textContent = label;
+    const strong = document.createElement('strong');
+    strong.style.fontSize = '15px'; strong.textContent = value;
+    card.append(small, strong); statusHost.appendChild(card);
+  }
+  function cloudAlert(message) {
+    if (!alertsHost) return;
+    document.getElementById('airMonitorCloudAlert')?.remove();
+    const item = document.createElement('div');
+    item.className = 'alert'; item.id = 'airMonitorCloudAlert';
+    item.textContent = message; alertsHost.appendChild(item);
+  }
+  async function checkCloud() {
+    const profile = window.currentProfile, client = window.airLogisticSupabase;
+    if (!profile?.active || !profile.workspace_id || !client) {
+      addCard('قاعدة البيانات السحابية', 'بانتظار جلسة آمنة', 'airMonitorCloudCard');
+      return;
+    }
+    addCard('قاعدة البيانات السحابية', 'جارٍ اختبار الاتصال...', 'airMonitorCloudCard');
+    try {
+      const result = await client.from('app_records')
+        .select('record_id', {count:'exact',head:true})
+        .eq('workspace_id', profile.workspace_id);
+      if (result.error) throw result.error;
+      addCard('قاعدة البيانات السحابية',
+        'متصلة • ' + (Number.isFinite(result.count) ? result.count : 0) + ' سجل',
+        'airMonitorCloudCard');
+      document.getElementById('airMonitorCloudAlert')?.remove();
+      if (details) details.textContent =
+        (details.textContent ? details.textContent + ' — ' : '') +
+        'اختبار قاعدة البيانات السحابية ناجح: ' + new Date().toLocaleString('ar-EG') + '.';
+    } catch (error) {
+      addCard('قاعدة البيانات السحابية', 'تعذر الاتصال', 'airMonitorCloudCard');
+      cloudAlert('تعذر التحقق من قاعدة البيانات السحابية. راجع الاتصال أو صلاحيات الحساب؛ لم يتم تعديل أي بيانات.');
+      console.warn('Air Logistic monitor cloud check:', error);
+    }
+  }
+  window.renderAirMonitor = function() {
+    try {
+      if (typeof originalRender === 'function') originalRender();
+      else throw new Error('Local monitor renderer is unavailable');
+    } catch (error) {
+      addCard('الفحص المحلي', 'تعذر إكمال الفحص', 'airMonitorLocalErrorCard');
+      if (details) details.textContent = 'تعذر إكمال الفحص المحلي. أعد المحاولة؛ لم يتم تغيير أي بيانات.';
+      console.error('Air Logistic local monitor:', error);
+    }
+    void checkCloud();
+    if (window.airDiagnostics?.refresh) {
+      Promise.resolve(window.airDiagnostics.refresh()).catch(error =>
+        console.warn('Air Logistic private diagnostics refresh:', error));
+    }
+  };
+  let queued = false;
+  function schedule() {
+    if (queued) return;
+    queued = true;
+    setTimeout(() => {
+      queued = false;
+      if (visible()) window.renderAirMonitor();
+    }, 120);
+  }
+  if (page && typeof MutationObserver !== 'undefined') {
+    new MutationObserver(schedule).observe(page, {attributes:true,attributeFilter:['class','style']});
+  }
+  document.addEventListener('click', event => {
+    if (event.target.closest('#nav button[data-page="monitor"], #airMobileBottomNav button[data-mobile-page="monitor"]')) {
+      setTimeout(schedule, 0);
+    }
+  });
+  window.addEventListener('online', schedule);
+  window.addEventListener('focus', schedule);
+  document.addEventListener('visibilitychange', () => { if (!document.hidden) schedule(); });
+  setInterval(schedule, 60000);
+  schedule();
+})();
+</script>
+</body></html>
