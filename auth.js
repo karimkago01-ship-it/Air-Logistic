@@ -7,6 +7,8 @@
   };
   const $ = id => document.getElementById(id);
   const APP_REDIRECT = 'https://karimkago01-ship-it.github.io/Air-Logistic/';
+  const OWNER_USER_ID = '0e7fe9b5-bc54-403b-9884-ad1facf5efe0';
+  const isOwnerAccount = profile => profile?.user_id === OWNER_USER_ID;
   const say = (message, error = false) => {
     const n = $('authNotice'); if (!n) return;
     n.textContent = message; n.style.color = error ? '#b42318' : '#176b46';
@@ -148,7 +150,9 @@
       lockApp(); say('تم تسجيل الخروج بأمان.');
     });
     const nav = document.querySelector('#nav button[data-page="accountRequests"]');
-    if (nav) nav.style.display = profile.role === 'admin' ? '' : 'none';
+    if (nav) nav.style.display = isOwnerAccount(profile) ? '' : 'none';
+    const rolesNav = document.querySelector('#nav button[data-page="roles"]');
+    if (rolesNav) rolesNav.style.display = isOwnerAccount(profile) ? '' : 'none';
     const activityNav = document.querySelector('#nav button[data-page="activityLog"]');
     if (activityNav) activityNav.style.display = ['admin','manager'].includes(profile.role) ? '' : 'none';
     const savedDocsNav = document.querySelector('#nav button[data-page="savedDocuments"]');
@@ -173,6 +177,7 @@
     window.airSyncState = {...(window.airSyncState||{}),status:'syncing',lastError:null};
     try {
       for (const collection of keys) {
+        if (collection === 'roles' && !isOwnerAccount(profile)) continue;
         if (profile.role === 'courier' && collection !== 'shipments') continue;
         const items = Array.isArray(db[collection]) ? db[collection] : [];
         const rows = [];
@@ -212,7 +217,7 @@
           }
         }
       }
-      if (profile.role !== 'courier' && db.policies && Object.keys(db.policies).length) {
+      if (isOwnerAccount(profile) && db.policies && Object.keys(db.policies).length) {
         const policyResult = await client.from('app_records').upsert({
           workspace_id:profile.workspace_id, collection:'policies', record_id:'settings',
           data:db.policies, created_by:profile.user_id, updated_by:profile.user_id
@@ -258,7 +263,7 @@
       next[row.collection].push(item);
     }
     // Preserve a point-in-time recovery copy before reconciling local and cloud data.
-    if (profile.role === 'admin' && oldSnapshot && typeof oldSnapshot === 'object') {
+    if (isOwnerAccount(profile) && oldSnapshot && typeof oldSnapshot === 'object') {
       try {
         if (!localStorage.getItem('air_logistic_recovery_v1')) {
           localStorage.setItem('air_logistic_recovery_v1', JSON.stringify({
@@ -273,7 +278,7 @@
     }
 
     const cloudRows = result.data || [];
-    if (!cloudRows.length && profile.role === 'admin' && oldSnapshot) {
+    if (!cloudRows.length && isOwnerAccount(profile) && oldSnapshot) {
       // Empty cloud: retain the complete local snapshot and attempt a non-destructive upload.
       for (const key of keys) {
         if (Array.isArray(oldSnapshot[key])) next[key] = oldSnapshot[key].map(item => ({...item}));
@@ -284,7 +289,7 @@
     } else {
       // Existing cloud rows remain authoritative for matching IDs. Add local-only rows
       // so offline-created records are not silently discarded during first reconciliation.
-      if (profile.role === 'admin' && oldSnapshot) {
+      if (isOwnerAccount(profile) && oldSnapshot) {
         for (const key of keys) {
           if (!Array.isArray(oldSnapshot[key])) continue;
           const existing = new Set(next[key].map(item =>
@@ -363,8 +368,8 @@
   async function renderAccountRequests() {
     const pendingBox = $('pendingAccounts'), approvedBox = $('approvedAccounts');
     if (!pendingBox || !approvedBox) return;
-    if (window.currentProfile?.role !== 'admin') {
-      pendingBox.textContent = 'هذه الصفحة متاحة لمدير النظام فقط.';
+    if (!isOwnerAccount(window.currentProfile)) {
+      pendingBox.textContent = 'هذه الصفحة متاحة لحساب المالك فقط وبموافقته.';
       approvedBox.textContent = '';
       return;
     }
@@ -395,7 +400,7 @@
   window.renderAccountRequests = renderAccountRequests;
 
   window.setAirEmployeeAccess = async function(userId,active) {
-    if (window.currentProfile?.role !== 'admin') return alert('مدير النظام فقط يمكنه إدارة الحسابات.');
+    if (!isOwnerAccount(window.currentProfile)) return alert('إدارة الحسابات محصورة بحساب المالك الخاص فقط.');
     if (userId === window.currentProfile.user_id && !active) return alert('لا يمكن إيقاف حساب المدير الذي تستخدمه حاليًا.');
     const role = $('pending-role-' + userId)?.value || 'employee';
     const result = await client.from('profiles').update({active,role})
@@ -406,7 +411,7 @@
   };
 
   window.updateAirEmployeeProfile = async function(userId) {
-    if (window.currentProfile?.role !== 'admin') return alert('مدير النظام فقط يمكنه إدارة الحسابات.');
+    if (!isOwnerAccount(window.currentProfile)) return alert('إدارة الحسابات محصورة بحساب المالك الخاص فقط.');
     if (userId === window.currentProfile.user_id) return alert('لا يمكن تعديل دور أو حالة حساب المدير الذي تستخدمه حاليًا من هذه الشاشة.');
     const role = $('managed-role-' + userId)?.value;
     const active = $('managed-active-' + userId)?.value === 'true';
