@@ -20,6 +20,7 @@ inlineScripts.forEach((source, index) => {
   new vm.Script(source, { filename: 'index.html:inline-script-' + (index + 1) });
 });
 
+assert.ok(auth.includes('let activeAuthUser = null;'), 'auth state must be declared inside the strict-mode auth scope');
 assert.ok(auth.includes('air_logistic_recovery_v1'), 'local recovery archive must remain enabled');
 assert.ok(!auth.includes("removeItem('air_logistic_full_v1')"), 'local recovery snapshot must never be silently removed');
 assert.ok(auth.includes('resolveAirCourierUserId'), 'authenticated courier resolver must exist');
