@@ -188,6 +188,9 @@
     if (status) status.textContent = 'جارٍ إرسال طلب الموافقة إلى المدير الأساسي...';
     const existing = await client.from('backup_access_requests').select('id,status').eq('workspace_id',profile.workspace_id).eq('requester_id',profile.user_id).eq('status','pending').order('requested_at',{ascending:false}).limit(1).maybeSingle();
     if (existing.error) { if(status) status.textContent='تعذر التحقق من الطلبات السابقة. حاول مرة أخرى.'; return; }
+    const approved = await client.from('backup_access_requests').select('id,status').eq('workspace_id',profile.workspace_id).eq('requester_id',profile.user_id).eq('status','approved').gt('expires_at',new Date().toISOString()).order('requested_at',{ascending:false}).limit(1).maybeSingle();
+    if (approved.error) { if(status) status.textContent='تعذر التحقق من الموافقات السابقة. حاول مرة أخرى.'; return; }
+    if (approved.data) { pendingBackupRequestId=approved.data.id; await refreshBackupApprovalStatus(); return; }
     if (existing.data) {
       pendingBackupRequestId = existing.data.id;
       if(status) status.textContent='لديك طلب سابق ينتظر موافقة المدير الأساسي.';
@@ -223,7 +226,8 @@
 
   async function downloadApprovedBackup() {
     if (!pendingBackupRequestId) return alert('لا يوجد طلب موافق عليه.');
-    await window.backup(pendingBackupRequestId);
+    const completed = await window.backup(pendingBackupRequestId);
+    if (!completed) return;
     pendingBackupRequestId = null;
     if ($('backupApprovedDownloadButton')) $('backupApprovedDownloadButton').style.display='none';
     if ($('backupRequestStatus')) $('backupRequestStatus').textContent='تم استهلاك الموافقة. لتنزيل نسخة أخرى يلزم طلب جديد.';
