@@ -1067,7 +1067,7 @@ function resetCameraTorch(buttonId){
  const button=document.getElementById(buttonId);
  if(button){button.dataset.torch='off';button.textContent='تشغيل الكشاف'}
 }
-let waybillCameraStream=null;
+var waybillCameraStream = null; // global var avoids lexical TDZ in inline camera controls
 async function startWaybillCamera(){
  const video=document.getElementById('ocrCameraVideo'),wrap=document.getElementById('ocrCameraWrap'),progress=document.getElementById('ocrProgress');
  if(!navigator.mediaDevices?.getUserMedia){progress.textContent='الكاميرا غير مدعومة هنا. استخدم اختيار صورة البوليصة لفتح كاميرا الهاتف.';return}
