@@ -5,11 +5,11 @@ import assert from 'node:assert/strict';
 const read = (path) => fs.readFileSync(new URL(path, import.meta.url), 'utf8');
 const auth = read('../auth.js');
 const html = read('../index.html');
-const sw = read('../sw.js');
+const sw = read('../sw.js');\nconst diagnostics = read('../diagnostics.js');\nconst diagnosticsMigration = read('../supabase/migrations/20261110113000_owner_only_app_diagnostics.sql');
 const auditMigration = read('../supabase/migrations/20261109051126_central_append_only_air_logistic_activity_audit.sql');
 
 new vm.Script(auth, { filename: 'auth.js' });
-new vm.Script(sw, { filename: 'sw.js' });
+new vm.Script(sw, { filename: 'sw.js' });\nnew vm.Script(diagnostics, { filename: 'diagnostics.js' });
 
 const inlineScripts = [...html.matchAll(/<script\b[^>]*>([\s\S]*?)<\/script>/gi)]
   .map((match) => match[1])
@@ -20,7 +20,7 @@ inlineScripts.forEach((source, index) => {
   new vm.Script(source, { filename: 'index.html:inline-script-' + (index + 1) });
 });
 
-assert.ok(auth.includes('let activeAuthUser = null;'), 'auth state must be declared inside the strict-mode auth scope');
+assert.ok(diagnostics.includes('air_diagnostics') === false, 'diagnostics must use the dedicated private table');\nassert.ok(diagnostics.includes("const OWNER_ID = '0e7fe9b5-bc54-403b-9884-ad1facf5efe0'"), 'diagnostics capture must be restricted to the owner account');\nassert.ok(diagnostics.includes("from('app_diagnostics')"), 'runtime diagnostics must be stored in the private diagnostics table');\nassert.ok(diagnosticsMigration.includes('enable row level security'), 'diagnostics table must enforce RLS');\nassert.ok(diagnosticsMigration.includes('app_diagnostics_owner_read') && diagnosticsMigration.includes('app_diagnostics_owner_insert'), 'diagnostics access must be owner-only');\nassert.ok(diagnosticsMigration.includes('revoke all on public.app_diagnostics from anon, authenticated'), 'diagnostics table must not expose anonymous or broad client permissions');\nassert.ok(auth.includes('let activeAuthUser = null;'), 'auth state must be declared inside the strict-mode auth scope');
 assert.ok(auth.includes('air_logistic_recovery_v1'), 'local recovery archive must remain enabled');
 assert.ok(!auth.includes("removeItem('air_logistic_full_v1')"), 'local recovery snapshot must never be silently removed');
 assert.ok(auth.includes('resolveAirCourierUserId'), 'authenticated courier resolver must exist');
