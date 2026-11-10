@@ -957,16 +957,7 @@ function agentOptions(selected=''){return '<option value="">— بدون تعي�
 function esc(s){return String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
 function money(n){return (+n||0).toLocaleString('ar-EG',{maximumFractionDigits:2})+' ج.م'}
 function toast(s){let t=document.getElementById('toast');t.textContent=s;t.style.display='block';setTimeout(()=>t.style.display='none',2400)}
-// Alexandria and Cairo use the same IANA time zone: Africa/Cairo.\nconst airAlexandriaDateOptions={timeZone:'Africa/Cairo'};
-function updateAirDigitalClock(){
- const now=new Date();
- const clock=document.getElementById('digitalClock');
- const date=document.getElementById('today');
- if(clock)clock.textContent=new Intl.DateTimeFormat('ar-EG',{...airAlexandriaDateOptions,hour:'2-digit',minute:'2-digit',second:'2-digit',hour12:false}).format(now);
- if(date)date.textContent=new Intl.DateTimeFormat('ar-EG',{...airAlexandriaDateOptions,weekday:'long',day:'numeric',month:'long',year:'numeric'}).format(now);
-}
-updateAirDigitalClock();
-setInterval(updateAirDigitalClock,1000);
+// Clock moved to an isolated end-of-document script.
 document.querySelectorAll('#nav button').forEach(b=>b.onclick=()=>{document.querySelectorAll('#nav button').forEach(x=>x.classList.remove('active'));b.classList.add('active');document.querySelectorAll('.page').forEach(x=>x.classList.add('hidden'));document.getElementById(b.dataset.page).classList.remove('hidden');if(b.dataset.page==='accountRequests'&&typeof renderAccountRequests==='function')renderAccountRequests();if(b.dataset.page==='chat'&&typeof renderAirChat==='function')renderAirChat();if(b.dataset.page==='notifications'&&typeof renderAirNotifications==='function')renderAirNotifications();if(b.dataset.page==='activityLog'&&typeof renderAirActivityLog==='function')renderAirActivityLog();if(b.dataset.page==='monitor')renderAirMonitor();if(b.dataset.page==='finance')renderFinanceReport();if(b.dataset.page!=='scanner')stopMobileScanner();if(b.dataset.page!=='ocr')stopWaybillCamera();render()});
 function stats(){let s=db.shipments,today=new Date().toISOString().slice(0,10);return{total:s.length,active:s.filter(x=>['تم الاستلام','تم الاستلام من التاجر','في المخزن','في المخزن / مركز التوزيع','خرجت للتوصيل','مؤجل / لم يتم الرد','تم إنشاء الطلب'].includes(x.status)).length,del:s.filter(x=>x.status==='تم التسليم').length,late:s.filter(x=>x.due&&x.due<today&&!['تم التسليم','ملغاة','مرتجع','مرتجعة'].includes(x.status)).length,fees:s.reduce((a,x)=>a+(+x.fee||0),0),cod:s.reduce((a,x)=>a+(+x.cod||0),0),col:s.reduce((a,x)=>a+(+x.collected||0),0),exp:db.expenses.reduce((a,x)=>a+(+x.amount||0),0)}}
 
@@ -1809,6 +1800,31 @@ if ("serviceWorker" in navigator) {
   document.addEventListener('visibilitychange', () => { if (!document.hidden) schedule(); });
   setInterval(schedule, 60000);
   schedule();
+})();
+</script>
+<script id="air-independent-clock">
+(function(){
+ 'use strict';
+ var zone='Africa/Cairo', timer=null;
+ function paint(){
+  var clock=document.getElementById('digitalClock');
+  var date=document.getElementById('today');
+  if(!clock && !date) return;
+  var now=new Date();
+  try {
+   var time=new Intl.DateTimeFormat('ar-EG',{timeZone:zone,hour:'2-digit',minute:'2-digit',second:'2-digit',hourCycle:'h23'}).format(now);
+   var day=new Intl.DateTimeFormat('ar-EG',{timeZone:zone,weekday:'long',day:'numeric',month:'long',year:'numeric'}).format(now);
+   if(clock) clock.textContent=time;
+   if(date) date.textContent=day;
+  } catch(err) {
+   if(clock) clock.textContent=now.toLocaleTimeString('ar-EG',{hour12:false});
+   if(date) date.textContent=now.toLocaleDateString('ar-EG',{weekday:'long',day:'numeric',month:'long',year:'numeric'});
+  }
+ }
+ function start(){paint();if(timer===null)timer=window.setInterval(paint,1000);}
+ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',start,{once:true});else start();
+ document.addEventListener('visibilitychange',function(){if(!document.hidden)paint();});
+ window.addEventListener('pageshow',paint);
 })();
 </script>
 </body></html>
