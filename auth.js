@@ -138,13 +138,20 @@
 
   function setAuthBar(profile,email) {
     const backupAdminOnly = $('backupAdminOnly');
-    if (backupAdminOnly) backupAdminOnly.style.display = isOwnerAccount(profile) && profile.role === 'admin' ? '' : 'none';
+    const owner = isOwnerAccount(profile) && profile.role === 'admin';
+    if (backupAdminOnly) backupAdminOnly.style.display = profile?.active ? '' : 'none';
+    if ($('backupDownloadButton')) $('backupDownloadButton').style.display = owner ? '' : 'none';
+    if ($('backupRequestButton')) $('backupRequestButton').style.display = owner ? 'none' : '';
+    if ($('backupRefreshButton')) $('backupRefreshButton').style.display = owner ? 'none' : '';
+    if ($('backupApprovedDownloadButton') && owner) $('backupApprovedDownloadButton').style.display = 'none';
+    const backupApprovalPanel = $('backupApprovalPanel');
+    if (backupApprovalPanel) backupApprovalPanel.style.display = owner ? '' : 'none';
     const bar = $('authBar'); if (!bar) return;
     bar.innerHTML = '<span>مرحبًا، <b>' + esc(profile.full_name) + '</b> · ' + roleName(profile.role) + ' · ' + esc(email || '') + '</span><button type="button" id="secureSignOut">تسجيل خروج آمن</button>';
     $('secureSignOut')?.addEventListener('click',async () => {
       await client.auth.signOut({scope:'local'});
       window.currentProfile = null; activeAuthUser = null;
-      const backupAdminOnly = $('backupAdminOnly'); if (backupAdminOnly) backupAdminOnly.style.display = 'none';
+      const backupAdminOnly = $('backupAdminOnly'); if (backupAdminOnly) backupAdminOnly.style.display = 'none'; const backupApprovalPanel = $('backupApprovalPanel'); if (backupApprovalPanel) backupApprovalPanel.style.display = 'none';
       const identityPanel = document.getElementById('airIdentityPanel');
       const identityLauncher = document.getElementById('airIdentityLauncher');
       if (identityPanel) { identityPanel.style.display = 'none'; identityPanel.querySelector('#airIdentityOwn').textContent = ''; identityPanel.querySelector('#airIdentityReviewList').textContent = ''; }
@@ -171,6 +178,105 @@
       }, true);
     }
   }
+
+  let pendingBackupRequestId = null;
+
+  async function requestBackupApproval() {
+    const profile = window.currentProfile;
+    if (!profile?.active || isOwnerAccount(profile)) return alert('هذا الإجراء متاح للحسابات الأخرى النشطة فقط.');
+    const status = $('backupRequestStatus');
+    if (status) status.textContent = 'جارٍ إرسال طلب الموافقة إلى المدير الأساسي...';
+    const existing = await client.from('backup_access_requests').select('id,status').eq('workspace_id',profile.workspace_id).eq('requester_id',profile.user_id).eq('status','pending').order('requested_at',{ascending:false}).limit(1).maybeSingle();
+    if (existing.error) { if(status) status.textContent='تعذر التحقق من الطلبات السابقة. حاول مرة أخرى.'; return; }
+    if (existing.data) {
+      pendingBackupRequestId = existing.data.id;
+      if(status) status.textContent='لديك طلب سابق ينتظر موافقة المدير الأساسي.';
+      await refreshBackupApprovalStatus();
+      return;
+    }
+    const created = await client.from('backup_access_requests').insert({workspace_id:profile.workspace_id,requester_id:profile.user_id,status:'pending'}).select('id').single();
+    if (created.error) { if(status) status.textContent='تعذر إرسال الطلب. تحقق من اتصال النظام ثم أعد المحاولة.'; return; }
+    pendingBackupRequestId = created.data.id;
+    if(status) status.textContent='تم إرسال طلبك إلى حساب المدير الأساسي. لن يبدأ التنزيل قبل موافقته.';
+  }
+
+  async function refreshBackupApprovalStatus() {
+    const profile = window.currentProfile;
+    if (!profile?.active || isOwnerAccount(profile)) return;
+    const status = $('backupRequestStatus');
+    const button = $('backupApprovedDownloadButton');
+    const result = await client.from('backup_access_requests').select('id,status,expires_at').eq('workspace_id',profile.workspace_id).eq('requester_id',profile.user_id).in('status',['pending','approved']).order('requested_at',{ascending:false}).limit(1).maybeSingle();
+    if (result.error) { if(status) status.textContent='تعذر تحديث حالة الموافقة. تحقق من الاتصال.'; return; }
+    if (!result.data) { pendingBackupRequestId=null; if(button) button.style.display='none'; if(status) status.textContent='لا يوجد طلب موافقة حالي. اضغط «طلب موافقة المدير على التنزيل».'; return; }
+    pendingBackupRequestId=result.data.id;
+    if (result.data.status === 'pending') {
+      if(button) button.style.display='none';
+      if(status) status.textContent='طلبك قيد المراجعة لدى المدير الأساسي.';
+    } else if (new Date(result.data.expires_at).getTime() > Date.now()) {
+      if(button) button.style.display='';
+      if(status) status.textContent='تمت الموافقة. اضغط زر التنزيل الآن؛ الموافقة صالحة لخمس دقائق ولمرة واحدة.';
+    } else {
+      if(button) button.style.display='none';
+      if(status) status.textContent='انتهت صلاحية الموافقة. أرسل طلبًا جديدًا.';
+    }
+  }
+
+  async function downloadApprovedBackup() {
+    if (!pendingBackupRequestId) return alert('لا يوجد طلب موافق عليه.');
+    await window.backup(pendingBackupRequestId);
+    pendingBackupRequestId = null;
+    if ($('backupApprovedDownloadButton')) $('backupApprovedDownloadButton').style.display='none';
+    if ($('backupRequestStatus')) $('backupRequestStatus').textContent='تم استهلاك الموافقة. لتنزيل نسخة أخرى يلزم طلب جديد.';
+  }
+
+  async function renderBackupApprovalRequests() {
+    const profile = window.currentProfile;
+    const box = $('backupApprovalRequests');
+    if (!box) return;
+    if (!isOwnerAccount(profile) || profile?.role !== 'admin') { box.textContent='هذه البوابة متاحة لحساب المدير الأساسي فقط.'; return; }
+    box.textContent='جارٍ تحميل الطلبات...';
+    const requests = await client.from('backup_access_requests').select('id,requester_id,requested_at').eq('workspace_id',profile.workspace_id).eq('status','pending').order('requested_at',{ascending:true});
+    if (requests.error) { box.textContent='تعذر تحميل الطلبات. تحقق من الاتصال.'; return; }
+    if (!requests.data?.length) { box.textContent='لا توجد طلبات موافقة معلّقة حاليًا.'; return; }
+    const ids=[...new Set(requests.data.map(x=>x.requester_id))];
+    const people=await client.from('profiles').select('user_id,full_name,role').in('user_id',ids);
+    const names=new Map((people.data||[]).map(x=>[x.user_id,x]));
+    box.replaceChildren();
+    for (const request of requests.data) {
+      const person=names.get(request.requester_id);
+      const row=document.createElement('div'); row.className='notice'; row.style.margin='10px 0';
+      const info=document.createElement('p');
+      info.textContent=(person?.full_name||'حساب غير معروف')+' — '+({admin:'مدير النظام',manager:'مدير',employee:'مدير التسليمات',courier:'مندوب'}[person?.role]||'حساب')+' — '+new Date(request.requested_at).toLocaleString('ar-EG');
+      const approve=document.createElement('button'); approve.type='button'; approve.className='primary'; approve.textContent='موافقة على تنزيل نسخة واحدة'; approve.addEventListener('click',()=>reviewBackupRequest(request.id,'approved'));
+      const reject=document.createElement('button'); reject.type='button'; reject.className='secondary'; reject.textContent='رفض الطلب'; reject.style.marginInlineStart='8px'; reject.addEventListener('click',()=>reviewBackupRequest(request.id,'rejected'));
+      row.append(info,approve,reject); box.append(row);
+    }
+  }
+
+  async function reviewBackupRequest(id, decision) {
+    const profile=window.currentProfile;
+    if (!isOwnerAccount(profile) || profile?.role !== 'admin' || !['approved','rejected'].includes(decision)) return alert('اعتماد الطلب متاح لحساب المدير الأساسي فقط.');
+    const now=new Date().toISOString();
+    const result=await client.from('backup_access_requests').update({status:decision,reviewed_by:profile.user_id,reviewed_at:now,expires_at:decision==='approved'?new Date(Date.now()+5*60*1000).toISOString():null}).eq('id',id).eq('workspace_id',profile.workspace_id).eq('status','pending').select('id').maybeSingle();
+    if (result.error || !result.data) { alert('تعذر حفظ القرار؛ ربما تمت مراجعة الطلب بالفعل.'); return; }
+    await renderBackupApprovalRequests();
+    alert(decision==='approved'?'تمت الموافقة. يستطيع صاحب الطلب الآن تنزيل نسخة واحدة خلال خمس دقائق.':'تم رفض طلب تنزيل النسخة الاحتياطية.');
+  }
+
+  async function consumeBackupApproval(id) {
+    const profile=window.currentProfile;
+    if (!profile?.active || isOwnerAccount(profile)) return false;
+    const now=new Date().toISOString();
+    const result=await client.from('backup_access_requests').update({status:'consumed',downloaded_at:now}).eq('id',id).eq('workspace_id',profile.workspace_id).eq('requester_id',profile.user_id).eq('status','approved').gt('expires_at',now).select('id').maybeSingle();
+    return !result.error && !!result.data;
+  }
+
+  window.requestBackupApproval=requestBackupApproval;
+  window.refreshBackupApprovalStatus=refreshBackupApprovalStatus;
+  window.downloadApprovedBackup=downloadApprovedBackup;
+  window.renderBackupApprovalRequests=renderBackupApprovalRequests;
+  window.reviewBackupRequest=reviewBackupRequest;
+  window.consumeBackupApproval=consumeBackupApproval;
 
   async function syncDBToCloud() {
     const profile = window.currentProfile;
@@ -944,6 +1050,8 @@
       await loadCloudData();
       setAuthBar(profile,session.user.email);
       unlockApp();
+      if (isOwnerAccount(profile) && profile.role === 'admin') renderBackupApprovalRequests();
+      else refreshBackupApprovalStatus();
       ensureIdentityPanel();
       subscribeRealtime();
       window.renderAirNotifications();
