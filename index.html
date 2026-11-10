@@ -634,7 +634,8 @@ img,video,canvas,svg{max-width:100%}
  <div class="panel"><h2>مركز مراقبة Air Logistic</h2><p class="muted">مؤشرات تشغيلية مباشرة من البيانات المحملة على هذا الجهاز وحالة الاتصال الحالية.</p>
  <div id="airMonitorStatus" class="grid"></div><div class="actions"><button class="primary" type="button" onclick="renderAirMonitor()">تحديث الفحص</button><button class="secondary" type="button" onclick="document.querySelector('#nav button[data-page=activityLog]')?.click()">فتح سجل العمليات المركزي</button></div>
  <p id="airMonitorDetails" class="muted"></p></div>
- <div class="panel"><h3>تنبيهات تحتاج متابعة</h3><div id="airMonitorAlerts"></div></div>\n <div class="panel"><h3>سجل الأعطال الذكي — خاص بحساب المالك</h3><p id="airDiagnosticsStatus" class="muted">يتم تسجيل أخطاء التشغيل تلقائيًا بعد تسجيل دخول حساب المالك.</p><div class="actions"><button class="secondary" type="button" onclick="window.airDiagnostics?.refresh()">تحديث سجل الأعطال</button></div><div id="airDiagnosticsList"></div></div>
+ <div class="panel"><h3>تنبيهات تحتاج متابعة</h3><div id="airMonitorAlerts"></div></div>
+ <div class="panel"><h3>سجل الأعطال الذكي — خاص بحساب المالك</h3><p id="airDiagnosticsStatus" class="muted">يتم تسجيل أخطاء التشغيل تلقائيًا بعد تسجيل دخول حساب المالك.</p><div class="actions"><button class="secondary" type="button" onclick="window.airDiagnostics?.refresh()">تحديث سجل الأعطال</button></div><div id="airDiagnosticsList"></div></div>
 </section>
 <section id="shipments" class="page hidden">
 <div class="panel"><h2 id="shipTitle">تسجيل شحنة جديدة</h2><form id="shipForm"><div class="formgrid">
