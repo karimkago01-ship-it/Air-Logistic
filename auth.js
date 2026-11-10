@@ -35,7 +35,7 @@
   });
   window.airLogisticSupabase = client;
   window.currentProfile = null;
-  activeAuthUser = null;
+  let activeAuthUser = null;
   let syncTimer = null, realtimeChannel = null, syncBusy = false, syncPending = false;
   const deleteQueue = [];
 
