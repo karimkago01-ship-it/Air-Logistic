@@ -10,7 +10,7 @@
 :root{--navy:#102b35;--teal:#087f86;--bg:#f2f5f9;--card:#fff;--ink:#1c2933;--muted:#71808d;--line:#e4eaf0;--red:#c83d50;--green:#18865d;--amber:#b7791f}
 *{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font-family:Tahoma,Arial,sans-serif}
 header{width:100%;min-height:170px;background:linear-gradient(110deg,#071d35 0%,#0b3157 55%,#102b35 100%);color:white;padding:14px clamp(14px,3vw,48px);display:flex;justify-content:space-between;align-items:center;gap:22px;flex-wrap:nowrap;border-bottom:5px solid #f07818;box-shadow:0 5px 18px #102b3526}
-header h1{font-size:clamp(28px,3vw,42px);margin:0 0 8px;color:#fff;letter-spacing:.3px}.brand{display:flex;align-items:center;gap:22px;min-width:0;flex:1}.brand-logo{width:clamp(150px,21vw,270px);height:138px;object-fit:contain;background:#fff;border-radius:14px;padding:5px;flex:0 0 auto}.brand-copy{min-width:0}header p{margin:0;color:#d7e8f6;font-size:clamp(14px,1.4vw,19px)}header>.row{justify-content:flex-end;flex:0 0 auto}
+header h1{font-size:clamp(28px,3vw,42px);margin:0 0 8px;color:#fff;letter-spacing:.3px}\n.brand-copy h1{color:#f4c95d;font-weight:900;letter-spacing:.6px;text-shadow:0 2px 0 #7a5315,0 4px 14px #0008;-webkit-text-stroke:.25px #ffe7a0}\n@media(max-width:650px){.brand-copy h1{font-size:clamp(25px,6vw,34px);letter-spacing:.3px}}.brand{display:flex;align-items:center;gap:22px;min-width:0;flex:1}.brand-logo{width:clamp(150px,21vw,270px);height:138px;object-fit:contain;background:#fff;border-radius:14px;padding:5px;flex:0 0 auto}.brand-copy{min-width:0}header p{margin:0;color:#d7e8f6;font-size:clamp(14px,1.4vw,19px)}header>.row{justify-content:flex-end;flex:0 0 auto}
 .wrap{max-width:1400px;margin:auto;padding:18px}
 .notice{background:#fff8e8;border:1px solid #f0d8a8;color:#775318;border-radius:12px;padding:12px 14px;font-size:13px;line-height:1.8;margin-bottom:15px}
 nav{display:flex;gap:8px;overflow:auto;padding:4px 0 14px}
@@ -924,13 +924,13 @@ function agentOptions(selected=''){return '<option value="">— بدون تعي�
 function esc(s){return String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
 function money(n){return (+n||0).toLocaleString('ar-EG',{maximumFractionDigits:2})+' ج.م'}
 function toast(s){let t=document.getElementById('toast');t.textContent=s;t.style.display='block';setTimeout(()=>t.style.display='none',2400)}
-const airCairoDateOptions={timeZone:'Africa/Cairo'};
+// Alexandria and Cairo use the same IANA time zone: Africa/Cairo.\nconst airAlexandriaDateOptions={timeZone:'Africa/Cairo'};
 function updateAirDigitalClock(){
  const now=new Date();
  const clock=document.getElementById('digitalClock');
  const date=document.getElementById('today');
- if(clock)clock.textContent=new Intl.DateTimeFormat('ar-EG',{...airCairoDateOptions,hour:'2-digit',minute:'2-digit',second:'2-digit',hour12:false}).format(now);
- if(date)date.textContent=new Intl.DateTimeFormat('ar-EG',{...airCairoDateOptions,weekday:'long',day:'numeric',month:'long',year:'numeric'}).format(now);
+ if(clock)clock.textContent=new Intl.DateTimeFormat('ar-EG',{...airAlexandriaDateOptions,hour:'2-digit',minute:'2-digit',second:'2-digit',hour12:false}).format(now);
+ if(date)date.textContent=new Intl.DateTimeFormat('ar-EG',{...airAlexandriaDateOptions,weekday:'long',day:'numeric',month:'long',year:'numeric'}).format(now);
 }
 updateAirDigitalClock();
 setInterval(updateAirDigitalClock,1000);
