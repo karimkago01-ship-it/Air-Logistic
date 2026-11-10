@@ -1097,7 +1097,7 @@ async function captureWaybillFromCamera(){
   await readWaybillImage(blob);
  }catch(err){progress.textContent='تعذر التقاط البوليصة: '+err.message}
 }
-let waybillOCRWorkerPromise=null;
+var waybillOCRWorkerPromise = null; // global var prevents initialization-order errors in OCR handlers
 async function getWaybillOCRWorker(progress){
  if(!waybillOCRWorkerPromise){
   progress.textContent='جاري تجهيز محرك القراءة لأول مرة؛ سيتم حفظ ملفات اللغة لاستخدامها لاحقًا...';
