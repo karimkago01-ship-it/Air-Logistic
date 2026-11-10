@@ -614,7 +614,7 @@ img,video,canvas,svg{max-width:100%}
 <aside class="air-sidebar">
 <div class="sidebar-brand"><span class="sidebar-mark">📦</span><div><b>Air Logistic</b><small>القائمة الرئيسية</small></div></div>
 <nav id="nav"><button data-page="accountRequests">إدارة مديري التسليمات والصلاحيات</button>
-<button class="active" data-page="home">الرئيسية</button><button data-page="monitor">مركز مراقبة النظام</button><button data-page="shipments">الشحنات</button><button data-page="customers">العملاء</button><button data-page="drivers">السائقون</button><button data-page="vehicles">السيارات</button><button data-page="finance">الحسابات</button><button data-page="financeLedger">دفتر الحركة المالية</button><button data-page="ocr">قراءة البوليصة OCR</button><button data-page="importer">استيراد Excel</button><button data-page="scanner">ماسح الموبايل</button><button data-page="transfers">التحويلات</button><button data-page="chat">المحادثة الجماعية</button><button data-page="notifications">الإشعارات</button><button data-page="activityLog">سجل العمليات</button><button data-page="merchantPortal">بوابة التاجر</button><button data-page="courierPortal">لوحة المندوب</button><button data-page="tracking">تتبع العميل</button><button data-page="settlements">التسويات المالية</button><button data-page="policies">الشروط والسياسات</button><button data-page="workflow">دورة الشحنة (48 حالة)</button><button data-page="agents">الوكلاء الخارجيون</button><button data-page="pricing">مناطق وأسعار الشحن</button><button data-page="roles">الصلاحيات والأدوار</button><button data-page="finance">دفتر الحركة المالية</button><button data-page="tools">النسخ والاستيراد</button><button data-page="savedDocuments" style="display:none">📁 حفظ المستندات</button>
+<button class="active" data-page="home">الرئيسية</button><button data-page="monitor">مركز مراقبة النظام</button><button data-page="shipments">الشحنات</button><button data-page="customers">العملاء</button><button data-page="drivers">السائقون</button><button data-page="vehicles">السيارات</button><button data-page="finance">الحسابات</button><button data-page="financeLedger">دفتر الحركة المالية</button><button data-page="importer">استيراد Excel</button><button data-page="scanner">ماسح الموبايل</button><button data-page="transfers">التحويلات</button><button data-page="chat">المحادثة الجماعية</button><button data-page="notifications">الإشعارات</button><button data-page="activityLog">سجل العمليات</button><button data-page="merchantPortal">بوابة التاجر</button><button data-page="courierPortal">لوحة المندوب</button><button data-page="tracking">تتبع العميل</button><button data-page="settlements">التسويات المالية</button><button data-page="policies">الشروط والسياسات</button><button data-page="workflow">دورة الشحنة (48 حالة)</button><button data-page="agents">الوكلاء الخارجيون</button><button data-page="pricing">مناطق وأسعار الشحن</button><button data-page="roles">الصلاحيات والأدوار</button><button data-page="finance">دفتر الحركة المالية</button><button data-page="tools">النسخ والاستيراد</button><button data-page="savedDocuments" style="display:none">📁 حفظ المستندات</button>
 </nav>
 <div class="sidebar-foot">Fast • Safe • Everywhere</div>
 </aside>
@@ -696,11 +696,12 @@ img,video,canvas,svg{max-width:100%}
   </div>
   <div id="scannerPolicyReader" class="panel hidden" style="margin-top:14px;background:#f7fafc">
    <h3>قراءة البوليصة داخل الماسح</h3>
-   <p class="muted">صوّر البوليصة أو ارفع صورتها لاستخراج رقم الشحنة والبيانات المقروءة. راجع النص قبل نقله إلى نموذج الشحنة؛ لن يتم حفظ أي بيانات تلقائيًا.</p>
+   <p class="muted">قراءة البوليصة مدمجة داخل بوابة ماسح الموبايل: صوّر البوليصة أو ارفع صورتها لاستخراج البيانات، ثم راجعها وانقلها إلى نموذج الشحنة. لا يتم حفظ أي بيانات قبل مراجعتك.</p>
    <label>صورة البوليصة<input id="scannerPolicyImage" type="file" accept="image/*" capture="environment" onchange="readScannerPolicyImage()"></label>
    <div class="actions">
     <button class="secondary" type="button" onclick="startScannerPolicyCamera()">فتح كاميرا البوليصة</button>
     <button class="secondary" type="button" onclick="captureScannerPolicyCamera()">التقاط وقراءة</button>
+    <button class="secondary" type="button" id="scannerPolicyTorchButton" onclick="toggleCameraTorch(scannerPolicyCameraStream,'scannerPolicyTorchButton','scannerPolicyProgress')">تشغيل الكشاف</button>
     <button class="light" type="button" onclick="stopScannerPolicyCamera()">إيقاف كاميرا البوليصة</button>
    </div>
    <div id="scannerPolicyCameraWrap" class="hidden" style="max-width:620px;margin-top:10px">
@@ -1219,6 +1220,11 @@ async function startScannerPolicyCamera(){
  }
 }
 function stopScannerPolicyCamera(){
+ const activeTrack=scannerPolicyCameraStream?.getVideoTracks?.()[0];
+ if(activeTrack&&document.getElementById('scannerPolicyTorchButton')?.dataset.torch==='on'){
+  activeTrack.applyConstraints({advanced:[{torch:false}]}).catch(()=>{});
+ }
+ resetCameraTorch('scannerPolicyTorchButton');
  if(scannerPolicyCameraStream){scannerPolicyCameraStream.getTracks().forEach(track=>track.stop());scannerPolicyCameraStream=null;}
  const video=document.getElementById('scannerPolicyVideo');
  if(video)video.srcObject=null;
