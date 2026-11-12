@@ -45,7 +45,7 @@
 
   // Queue a privacy-safe activity label for delivery after the cloud save succeeds.
   window.queueAirPushEvent = function(action) {
-    const safeAction = String(action || '').replace(/\\s+/g,' ').trim().slice(0,90);
+    const safeAction = String(action || '').replace(/\s+/g,' ').trim().slice(0,90);
     if (!safeAction) return;
     pendingAirPushEvents.push(safeAction);
     if (pendingAirPushEvents.length > 100) pendingAirPushEvents.shift();
