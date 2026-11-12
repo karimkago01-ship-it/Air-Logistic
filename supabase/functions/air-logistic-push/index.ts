@@ -82,6 +82,30 @@ Deno.serve(async req => {
     return reply({ error: "Invalid VAPID configuration" }, 503);
   }
 
+  // Device-scoped smoke test: the authenticated user can send only to their exact
+  // subscription endpoint in their own workspace. No inbox or shipment rows are created.
+  if (body.test_self === true) {
+    const endpoint = typeof body.endpoint === "string" ? body.endpoint : "";
+    if (!endpoint.startsWith("https://") || endpoint.length > 2048) {
+      return reply({ error: "Invalid test endpoint" }, 400);
+    }
+    const { data: sub, error: subError } = await admin.from("push_subscriptions")
+      .select("id,endpoint,p256dh,auth_key")
+      .eq("workspace_id", profile.workspace_id)
+      .eq("user_id", userData.user.id)
+      .eq("endpoint", endpoint)
+      .maybeSingle();
+    if (subError) return reply({ error: "Could not load this device subscription" }, 500);
+    if (!sub) return reply({ error: "This device is not registered" }, 404);
+    const result = await sendToSubscription(admin, sub, {
+      title: "اختبار إشعارات Air Logistic",
+      body: "نجح اتصال الإشعارات بالخلفية على هذا الهاتف.",
+      url: "./",
+      tag: "air-logistic-device-test"
+    });
+    return reply({ test: true, ...result }, result.sent === 1 ? 200 : 502);
+  }
+
   // Any active employee may announce a privacy-safe system event to active workspace devices.
   // No database schema or shipment records are changed by this broadcast.
   if (body.broadcast_event === true) {
