@@ -701,8 +701,27 @@
       updateAirAlertControls();
       if (permission === 'granted') {
         const pushResult = await registerAirPushSubscription();
+        let testSent = false;
+        if (pushResult) {
+          try {
+            const registration = await navigator.serviceWorker.ready;
+            const subscription = await registration.pushManager.getSubscription();
+            if (subscription) {
+              const test = await client.functions.invoke('air-logistic-push', {
+                body:{test_self:true,endpoint:subscription.endpoint}
+              });
+              testSent = !test.error && Number(test.data?.sent || 0) === 1;
+              if (!testSent) console.warn('Air Logistic test push delivery:',test.error || test.data);
+            }
+          } catch (error) { console.warn('Air Logistic test push:',error); }
+        }
         if (navigator.vibrate && airAlertPrefs.vibration) navigator.vibrate([70,40,70]);
-        if (typeof toast === 'function') toast(pushResult ? 'تم تفعيل إشعارات الهاتف في الخلفية لهذا الجهاز.' : 'تم السماح بالتنبيهات، لكن تعذر تسجيل إشعارات الخلفية. راجع الاتصال وإعدادات الخدمة.');
+        const message = !pushResult
+          ? 'تم السماح بالتنبيهات، لكن تعذر تسجيل إشعارات الخلفية. راجع الاتصال وإعدادات الخدمة.'
+          : testSent
+            ? 'تم تفعيل إشعارات الخلفية وإرسال إشعار اختبار لهذا الهاتف.'
+            : 'تم تسجيل هذا الجهاز، لكن تعذر تأكيد إرسال إشعار الاختبار.';
+        if (typeof toast === 'function') toast(message);
       } else {
         alert(permission === 'denied' ? 'إذن الإشعارات مرفوض. فعّله من إعدادات الموقع في Chrome.' : 'لم يتم منح إذن الإشعارات.');
       }
