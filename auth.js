@@ -875,7 +875,13 @@
         if (document.getElementById('chat') && !document.getElementById('chat').classList.contains('hidden')) window.renderAirChat();
       })
       .on('postgres_changes',{event:'INSERT',schema:'public',table:'notifications',filter:'recipient_id=eq.' + window.currentProfile.user_id},payload => {
-        if (payload.new) notifyAirIncoming(payload.new);
+        if (payload.new) {
+          notifyAirIncoming(payload.new);
+          // Each signed-in recipient sends only their own notification to the push service.
+          client.functions.invoke('air-logistic-push', { body:{notification_ids:[payload.new.id]} })
+            .then(result => { if (result.error) console.warn('Air Logistic background push dispatch:',result.error); })
+            .catch(error => console.warn('Air Logistic background push dispatch:',error));
+        }
         const page = document.getElementById('notifications');
         if (page && !page.classList.contains('hidden')) window.renderAirNotifications();
         const navButton = document.querySelector('#nav button[data-page=\"notifications\"]');
