@@ -664,13 +664,50 @@
       const permission = await Notification.requestPermission();
       updateAirAlertControls();
       if (permission === 'granted') {
+        const pushResult = await registerAirPushSubscription();
         if (navigator.vibrate && airAlertPrefs.vibration) navigator.vibrate([70,40,70]);
-        if (typeof toast === 'function') toast('تم تفعيل تنبيهات الهاتف لهذا الجهاز.');
+        if (typeof toast === 'function') toast(pushResult ? 'تم تفعيل إشعارات الهاتف في الخلفية لهذا الجهاز.' : 'تم السماح بالتنبيهات، لكن تعذر تسجيل إشعارات الخلفية. راجع الاتصال وإعدادات الخدمة.');
       } else {
         alert(permission === 'denied' ? 'إذن الإشعارات مرفوض. فعّله من إعدادات الموقع في Chrome.' : 'لم يتم منح إذن الإشعارات.');
       }
     } catch (error) { console.error(error); alert('تعذر تفعيل تنبيهات الهاتف على هذا الجهاز.'); }
   };
+  function airBase64ToUint8Array(value) {
+    const normalized = String(value || '').replace(/-/g,'+').replace(/_/g,'/');
+    const raw = atob(normalized + '='.repeat((4 - normalized.length % 4) % 4));
+    return Uint8Array.from(raw, char => char.charCodeAt(0));
+  }
+  async function registerAirPushSubscription() {
+    const profile = window.currentProfile;
+    if (!profile?.active || !profile.workspace_id || !('serviceWorker' in navigator) || !('PushManager' in window)) return false;
+    try {
+      const sessionResult = await client.auth.getSession();
+      if (sessionResult.error || !sessionResult.data.session) return false;
+      const configResult = await client.functions.invoke('air-logistic-push', { method:'GET' });
+      const publicKey = configResult.data?.publicKey;
+      if (configResult.error || !publicKey) throw new Error('Push service configuration unavailable');
+      const registration = await navigator.serviceWorker.ready;
+      let subscription = await registration.pushManager.getSubscription();
+      if (!subscription) subscription = await registration.pushManager.subscribe({
+        userVisibleOnly:true,
+        applicationServerKey:airBase64ToUint8Array(publicKey)
+      });
+      const json = subscription.toJSON();
+      if (!json.endpoint || !json.keys?.p256dh || !json.keys?.auth) throw new Error('Invalid browser subscription');
+      const saved = await client.from('push_subscriptions').upsert({
+        user_id:profile.user_id, workspace_id:profile.workspace_id,
+        endpoint:json.endpoint, p256dh:json.keys.p256dh, auth_key:json.keys.auth,
+        user_agent:navigator.userAgent, last_seen_at:new Date().toISOString()
+      }, { onConflict:'endpoint' });
+      if (saved.error) throw saved.error;
+      return true;
+    } catch (error) {
+      console.warn('Air Logistic push subscription:',error);
+      return false;
+    }
+  }
+  window.registerAirPushSubscription = registerAirPushSubscription;
+
   function notifyAirIncoming(row) {
     playAirAlert();
     if (airAlertPrefs.vibration && navigator.vibrate) navigator.vibrate([90,45,90]);
@@ -793,11 +830,17 @@
       workspace_id:profile.workspace_id, recipient_id:x.user_id,
       title, body, payload:{kind:'team_announcement'}
     }));
-    const result = await client.from('notifications').insert(rows);
+    const result = await client.from('notifications').insert(rows).select('id');
     if (button) button.disabled = false;
     if (result.error) return alert('تعذر إرسال التنبيه. راجع صلاحيات المدير واتصال الإنترنت.');
+    let pushNote = 'وصل التنبيه إلى صندوق الإشعارات داخل التطبيق.';
+    if (result.data?.length) {
+      const push = await client.functions.invoke('air-logistic-push', { body:{notification_ids:result.data.map(x => x.id)} });
+      if (!push.error && (push.data?.sent || 0) > 0) pushNote = 'وتم إرسال إشعار للهاتف ('+push.data.sent+').';
+      else pushNote = 'تم حفظ التنبيه داخل التطبيق، لكن إشعار الهاتف لم يصل لبعض الأجهزة أو لم تُسجّل بعد.';
+    }
     $('airAnnouncementForm').reset();
-    alert('تم إرسال التنبيه إلى '+rows.length+' حساب نشط.');
+    alert('تم إرسال التنبيه إلى '+rows.length+' حساب نشط. '+pushNote);
     await window.renderAirNotifications();
   };
 
