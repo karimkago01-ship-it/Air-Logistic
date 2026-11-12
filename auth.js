@@ -40,6 +40,40 @@
   let activeAuthUser = null;
   let syncTimer = null, realtimeChannel = null, syncBusy = false, syncPending = false;
   const deleteQueue = [];
+  let pendingAirPushEvents = [];
+  let pendingAirPushBatch = null;
+
+  // Queue a privacy-safe activity label for delivery after the cloud save succeeds.
+  window.queueAirPushEvent = function(action) {
+    const safeAction = String(action || '').replace(/\\s+/g,' ').trim().slice(0,90);
+    if (!safeAction) return;
+    pendingAirPushEvents.push(safeAction);
+    if (pendingAirPushEvents.length > 100) pendingAirPushEvents.shift();
+  };
+
+  async function flushAirPushEvents() {
+    if (!pendingAirPushBatch && pendingAirPushEvents.length) {
+      const id = window.crypto?.randomUUID ? window.crypto.randomUUID() : ('air-' + Date.now() + '-' + Math.random().toString(36).slice(2));
+      pendingAirPushBatch = { id, actions:pendingAirPushEvents.splice(0,20) };
+    }
+    if (!pendingAirPushBatch) return true;
+    const batch = pendingAirPushBatch;
+    try {
+      const result = await client.functions.invoke('air-logistic-push', {
+        body:{ broadcast_event:true, event_id:batch.id, actions:batch.actions }
+      });
+      if (result.error) throw result.error;
+      if (Number(result.data?.failed || 0) > 0 && Number(result.data?.sent || 0) === 0 && Number(result.data?.devices || 0) > 0) {
+        throw new Error('Push delivery failed for all registered devices');
+      }
+      pendingAirPushBatch = null;
+      if (pendingAirPushEvents.length) syncPending = true;
+      return true;
+    } catch (error) {
+      console.warn('Air Logistic activity push:',error);
+      return false;
+    }
+  }
 
   function lockApp() { document.body.classList.add('auth-locked'); $('authGate')?.classList.remove('hidden'); }
   function unlockApp() { document.body.classList.remove('auth-locked'); $('authGate')?.classList.add('hidden'); }
@@ -345,6 +379,7 @@
         deleteQueue.shift();
       }
       window.airSyncState = {...(window.airSyncState||{}),status:'success',lastSuccess:new Date().toISOString(),lastError:null};
+      if (pendingAirPushBatch || pendingAirPushEvents.length) await flushAirPushEvents();
       return true;
     } catch (error) {
       window.airSyncState = {...(window.airSyncState||{}),status:'error',lastError:String(error?.message||error).slice(0,240)};
@@ -441,6 +476,7 @@
     }
     if (typeof render === 'function') render();
     if (!window.currentProfile?.active) return;
+    if (!pendingAirPushEvents.length) window.queueAirPushEvent('تحديث بيانات النظام');
     clearTimeout(syncTimer);
     syncTimer = setTimeout(syncDBToCloud,350);
   };
@@ -875,13 +911,7 @@
         if (document.getElementById('chat') && !document.getElementById('chat').classList.contains('hidden')) window.renderAirChat();
       })
       .on('postgres_changes',{event:'INSERT',schema:'public',table:'notifications',filter:'recipient_id=eq.' + window.currentProfile.user_id},payload => {
-        if (payload.new) {
-          notifyAirIncoming(payload.new);
-          // Each signed-in recipient sends only their own notification to the push service.
-          client.functions.invoke('air-logistic-push', { body:{notification_ids:[payload.new.id]} })
-            .then(result => { if (result.error) console.warn('Air Logistic background push dispatch:',result.error); })
-            .catch(error => console.warn('Air Logistic background push dispatch:',error));
-        }
+        if (payload.new) notifyAirIncoming(payload.new);
         const page = document.getElementById('notifications');
         if (page && !page.classList.contains('hidden')) window.renderAirNotifications();
         const navButton = document.querySelector('#nav button[data-page=\"notifications\"]');
