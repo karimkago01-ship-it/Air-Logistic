@@ -976,7 +976,7 @@ const KEY='air_logistic_full_v1';
 let db=loadDB(),editingId=null,lastOCR='';
 function loadDB(){try{return Object.assign({shipments:[],customers:[],drivers:[],vehicles:[],expenses:[],transfers:[],audit:[],imports:[],settlements:[],remits:[],policies:{},roles:[],agents:[],priceRules:[],ledger:[]},JSON.parse(localStorage.getItem(KEY)||'{}'))}catch{return{shipments:[],customers:[],drivers:[],vehicles:[],expenses:[],transfers:[],audit:[],imports:[],settlements:[],remits:[],policies:{},roles:[],agents:[],priceRules:[],ledger:[]}}}
 function save(){localStorage.setItem(KEY,JSON.stringify(db));render()}
-function audit(action,details){db.audit=db.audit||[];db.audit.unshift({at:new Date().toISOString(),action,details});if(db.audit.length>5000)db.audit.length=5000}
+function audit(action,details){db.audit=db.audit||[];db.audit.unshift({at:new Date().toISOString(),action,details});if(db.audit.length>5000)db.audit.length=5000;if(!String(action||'').startsWith('تنزيل'))window.queueAirPushEvent?.(action)}
 function agentOptions(selected=''){return '<option value="">— بدون تعيين —</option>'+db.drivers.filter(d=>d.status!=='غير نشط').map(d=>`<option value="${esc(d.name)}" ${d.name===selected?'selected':''}>${esc(d.name)}</option>`).join('')}
 function esc(s){return String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
 function money(n){return (+n||0).toLocaleString('ar-EG',{maximumFractionDigits:2})+' ج.م'}
