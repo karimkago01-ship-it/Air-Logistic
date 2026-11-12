@@ -1133,6 +1133,13 @@
       await loadCloudData();
       setAuthBar(profile,session.user.email);
       unlockApp();
+      // Re-register this signed-in device silently when the user has already granted
+      // notification permission. First-time permission still requires an explicit tap.
+      if ('Notification' in window && Notification.permission === 'granted') {
+        window.registerAirPushSubscription?.().then(ok => {
+          if (!ok) console.warn('Air Logistic: background push registration will retry on the next app open.');
+        }).catch(error => console.warn('Air Logistic background push registration:',error));
+      }
       if (isOwnerAccount(profile) && profile.role === 'admin') renderBackupApprovalRequests();
       else refreshBackupApprovalStatus();
       ensureIdentityPanel();
