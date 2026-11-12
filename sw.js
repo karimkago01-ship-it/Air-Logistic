@@ -1,4 +1,4 @@
-const CACHE_NAME = "air-logistic-pwa-v30";
+const CACHE_NAME = "air-logistic-pwa-v31";
 const APP_SHELL = ["./", "./index.html", "./confirm.html", "./manifest.webmanifest", "./icon.svg", "./auth.js"];
 self.addEventListener("install", event => {
   event.waitUntil(caches.open(CACHE_NAME).then(cache => cache.addAll(APP_SHELL)).then(() => self.skipWaiting()));
@@ -17,6 +17,21 @@ self.addEventListener("fetch", event => {
       return response;
     }).catch(async () => (await caches.match(event.request)) || (await caches.match("./index.html"))));
   }
+});
+self.addEventListener("push", event => {
+  let data = {};
+  try { data = event.data ? event.data.json() : {}; }
+  catch (_) { data = { body: event.data ? event.data.text() : "" }; }
+  const title = String(data.title || "Air Logistic");
+  const options = {
+    body: String(data.body || "لديك تحديث جديد في نظام الشحن."),
+    icon: "./icon.svg",
+    badge: "./icon.svg",
+    tag: String(data.tag || "air-logistic-update"),
+    renotify: false,
+    data: { url: data.url || "./" }
+  };
+  event.waitUntil(self.registration.showNotification(title, options));
 });
 self.addEventListener("notificationclick", event => {
   event.notification.close();
