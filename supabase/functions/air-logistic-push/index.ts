@@ -12,15 +12,21 @@ const reply = (body: unknown, status = 200) => new Response(JSON.stringify(body)
 const url = Deno.env.get("SUPABASE_URL")!;
 const anon = Deno.env.get("SUPABASE_ANON_KEY")!;
 const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
-const publicKey = Deno.env.get("VAPID_PUBLIC_KEY") || "";
-const privateKey = Deno.env.get("VAPID_PRIVATE_KEY") || "";
-const subject = Deno.env.get("VAPID_SUBJECT") || "mailto:admin@air-logistic.app";
+function decodeBase64Url(value: string) {
+  const normalized = value.replace(/-/g, "+").replace(/_/g, "/");
+  return Uint8Array.from(atob(normalized + "=".repeat((4 - normalized.length % 4) % 4)), c => c.charCodeAt(0));
+}
 
 function validPublicKey(value: string) {
   try {
-    const raw = Uint8Array.from(atob(value.replace(/-/g, "+").replace(/_/g, "/")), c => c.charCodeAt(0));
+    const raw = decodeBase64Url(value);
     return raw.length === 65 && raw[0] === 4;
   } catch { return false; }
+}
+
+function validPrivateKey(value: string) {
+  try { return decodeBase64Url(value).length === 32; }
+  catch { return false; }
 }
 
 async function sendToSubscription(admin: ReturnType<typeof createClient>, sub: { id: string; endpoint: string; p256dh: string; auth_key: string }, payload: unknown) {
@@ -43,9 +49,7 @@ async function sendToSubscription(admin: ReturnType<typeof createClient>, sub: {
 
 Deno.serve(async req => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: cors });
-  if (!publicKey || !privateKey || !validPublicKey(publicKey)) return reply({ error: "VAPID secrets missing or invalid" }, 503);
-  if (req.method === "GET") return reply({ publicKey });
-  if (req.method !== "POST") return reply({ error: "Method not allowed" }, 405);
+  if (req.method !== "GET" && req.method !== "POST") return reply({ error: "Method not allowed" }, 405);
 
   const authHeader = req.headers.get("Authorization") || "";
   const token = authHeader.replace(/^Bearer\s+/i, "");
@@ -59,8 +63,24 @@ Deno.serve(async req => {
     .select("user_id,workspace_id,role,active").eq("user_id", userData.user.id).maybeSingle();
   if (profileError || !profile?.active) return reply({ error: "Forbidden" }, 403);
 
+  // VAPID material lives encrypted in Supabase Vault. This RPC is executable only by service_role.
+  const { data: vapidRows, error: vapidError } = await admin.rpc("air_get_vapid_config");
+  const vapid = Array.isArray(vapidRows) ? vapidRows[0] : null;
+  const publicKey = String(vapid?.public_key || "");
+  const privateKey = String(vapid?.private_key || "");
+  const subject = String(vapid?.subject || "");
+  if (vapidError || !validPublicKey(publicKey) || !validPrivateKey(privateKey) || !subject) {
+    console.error("Air Logistic VAPID Vault configuration unavailable:", vapidError?.message || "Invalid stored key material");
+    return reply({ error: "VAPID secrets missing or invalid" }, 503);
+  }
+
+  if (req.method === "GET") return reply({ publicKey });
   const body = await req.json().catch(() => ({}));
-  webpush.setVapidDetails(subject, publicKey, privateKey);
+  try { webpush.setVapidDetails(subject, publicKey, privateKey); }
+  catch (error) {
+    console.error("Air Logistic VAPID setup failed:", error);
+    return reply({ error: "Invalid VAPID configuration" }, 503);
+  }
 
   // Any active employee may announce a privacy-safe system event to active workspace devices.
   // No database schema or shipment records are changed by this broadcast.
