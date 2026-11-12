@@ -52,27 +52,11 @@
   };
 
   async function flushAirPushEvents() {
-    if (!pendingAirPushBatch && pendingAirPushEvents.length) {
-      const id = window.crypto?.randomUUID ? window.crypto.randomUUID() : ('air-' + Date.now() + '-' + Math.random().toString(36).slice(2));
-      pendingAirPushBatch = { id, actions:pendingAirPushEvents.splice(0,20) };
-    }
-    if (!pendingAirPushBatch) return true;
-    const batch = pendingAirPushBatch;
-    try {
-      const result = await client.functions.invoke('air-logistic-push', {
-        body:{ broadcast_event:true, event_id:batch.id, actions:batch.actions }
-      });
-      if (result.error) throw result.error;
-      if (Number(result.data?.failed || 0) > 0 && Number(result.data?.sent || 0) === 0 && Number(result.data?.devices || 0) > 0) {
-        throw new Error('Push delivery failed for all registered devices');
-      }
-      pendingAirPushBatch = null;
-      if (pendingAirPushEvents.length) syncPending = true;
-      return true;
-    } catch (error) {
-      console.warn('Air Logistic activity push:',error);
-      return false;
-    }
+    // Background push is now dispatched server-side from the notifications table.
+    // Do not send a second workspace-wide broadcast from the browser (prevents duplicates).
+    pendingAirPushEvents = [];
+    pendingAirPushBatch = null;
+    return true;
   }
 
   function lockApp() { document.body.classList.add('auth-locked'); $('authGate')?.classList.remove('hidden'); }
@@ -838,7 +822,7 @@
     const profile = window.currentProfile;
     const box = $('airNotificationList'), status = $('airNotificationStatus');
     if (!profile?.active || !box) return;
-    const canBroadcast = ['admin','manager'].includes(profile.role);
+    const canBroadcast = isOwnerAccount(profile) && profile.role === 'admin';
     $('airAnnouncementPanel')?.classList.toggle('hidden',!canBroadcast);
     if (status) status.textContent = 'جارٍ تحميل إشعارات حسابك...';
     const result = await client.from('notifications')
@@ -875,7 +859,7 @@
   window.sendAirNotification = async function(event) {
     event?.preventDefault();
     const profile = window.currentProfile;
-    if (!profile?.active || !['admin','manager'].includes(profile.role)) return alert('إرسال تنبيه للفريق متاح لمدير النظام والمدير فقط.');
+    if (!profile?.active || !isOwnerAccount(profile) || profile.role !== 'admin') return alert('إرسال التنبيه الجماعي متاح لحساب مالك النظام فقط.');
     const title = $('airAnnouncementTitle')?.value.trim();
     const body = $('airAnnouncementBody')?.value.trim();
     if (!title || !body) return alert('اكتب عنوان التنبيه ونصه.');
@@ -899,14 +883,8 @@
     const result = await client.from('notifications').insert(rows).select('id');
     if (button) button.disabled = false;
     if (result.error) return alert('تعذر إرسال التنبيه. راجع صلاحيات المدير واتصال الإنترنت.');
-    let pushNote = 'وصل التنبيه إلى صندوق الإشعارات داخل التطبيق.';
-    if (result.data?.length) {
-      const push = await client.functions.invoke('air-logistic-push', { body:{notification_ids:result.data.map(x => x.id)} });
-      if (!push.error && (push.data?.sent || 0) > 0) pushNote = 'وتم إرسال إشعار للهاتف ('+push.data.sent+').';
-      else pushNote = 'تم حفظ التنبيه داخل التطبيق، لكن إشعار الهاتف لم يصل لبعض الأجهزة أو لم تُسجّل بعد.';
-    }
     $('airAnnouncementForm').reset();
-    alert('تم إرسال التنبيه إلى '+rows.length+' حساب نشط. '+pushNote);
+    alert('تم حفظ التنبيه إلى '+rows.length+' حساب نشط. وسيتم إرسال إشعارات الخلفية تلقائيًا إلى الأجهزة المسجلة.');
     await window.renderAirNotifications();
   };
 
