@@ -723,10 +723,21 @@
       const publicKey = configResult.data?.publicKey;
       if (configResult.error || !publicKey) throw new Error('Push service configuration unavailable');
       const registration = await navigator.serviceWorker.ready;
+      const applicationServerKey = airBase64ToUint8Array(publicKey);
       let subscription = await registration.pushManager.getSubscription();
+      if (subscription) {
+        const existingKey = subscription.options?.applicationServerKey;
+        const existingBytes = existingKey ? new Uint8Array(existingKey) : null;
+        const sameKey = !!existingBytes && existingBytes.length === applicationServerKey.length &&
+          existingBytes.every((byte,index) => byte === applicationServerKey[index]);
+        if (!sameKey) {
+          await subscription.unsubscribe();
+          subscription = null;
+        }
+      }
       if (!subscription) subscription = await registration.pushManager.subscribe({
         userVisibleOnly:true,
-        applicationServerKey:airBase64ToUint8Array(publicKey)
+        applicationServerKey
       });
       const json = subscription.toJSON();
       if (!json.endpoint || !json.keys?.p256dh || !json.keys?.auth) throw new Error('Invalid browser subscription');
