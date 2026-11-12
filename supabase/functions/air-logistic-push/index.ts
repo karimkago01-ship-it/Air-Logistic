@@ -48,7 +48,7 @@ Deno.serve(async req => {
   if (req.method !== "POST") return reply({ error: "Method not allowed" }, 405);
 
   const authHeader = req.headers.get("Authorization") || "";
-  const token = authHeader.replace(/^Bearer\\s+/i, "");
+  const token = authHeader.replace(/^Bearer\s+/i, "");
   if (!token) return reply({ error: "Unauthorized" }, 401);
   const userClient = createClient(url, anon, { global: { headers: { Authorization: `Bearer ${token}` } } });
   const { data: userData, error: userError } = await userClient.auth.getUser();
@@ -67,7 +67,7 @@ Deno.serve(async req => {
   if (body.broadcast_event === true) {
     const actions = Array.isArray(body.actions)
       ? body.actions.filter((x: unknown): x is string => typeof x === "string")
-          .map(x => x.replace(/\\s+/g, " ").trim().slice(0, 90)).filter(Boolean).slice(0, 10)
+          .map(x => x.replace(/\s+/g, " ").trim().slice(0, 90)).filter(Boolean).slice(0, 10)
       : [];
     const eventId = typeof body.event_id === "string" && /^[A-Za-z0-9._-]{1,80}$/.test(body.event_id)
       ? body.event_id : crypto.randomUUID();
