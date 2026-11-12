@@ -734,7 +734,14 @@
         const sameKey = !!existingBytes && existingBytes.length === applicationServerKey.length &&
           existingBytes.every((byte,index) => byte === applicationServerKey[index]);
         if (!sameKey) {
+          const staleEndpoint = subscription.endpoint;
           await subscription.unsubscribe();
+          // Remove this device's obsolete server-side token after a VAPID key rotation.
+          const cleanup = await client.from('push_subscriptions').delete()
+            .eq('workspace_id',profile.workspace_id)
+            .eq('user_id',profile.user_id)
+            .eq('endpoint',staleEndpoint);
+          if (cleanup.error) console.warn('Air Logistic stale push subscription cleanup:',cleanup.error);
           subscription = null;
         }
       }
