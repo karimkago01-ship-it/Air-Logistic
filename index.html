@@ -658,7 +658,7 @@ img,video,canvas,svg{max-width:100%}
  <div id="airMonitorStatus" class="grid"></div><div class="actions"><button class="primary" type="button" onclick="renderAirMonitor()">تحديث الفحص</button><button class="secondary" type="button" onclick="document.querySelector('#nav button[data-page=activityLog]')?.click()">فتح سجل العمليات المركزي</button></div>
  <p id="airMonitorDetails" class="muted"></p></div>
  <div class="panel"><h3>تنبيهات تحتاج متابعة</h3><div id="airMonitorAlerts"></div></div>
- <div class="panel"><h3>سجل الأعطال الذكي — خاص بحساب المالك</h3><p id="airDiagnosticsStatus" class="muted">يتم تسجيل أخطاء التشغيل تلقائيًا بعد تسجيل دخول حساب المالك.</p><div class="actions"><button class="secondary" type="button" onclick="window.airDiagnostics?.refresh()">تحديث سجل الأعطال</button></div><div id="airDiagnosticsList"></div></div>
+ <div class="panel"><h3>سجل الأعطال — جميع الحسابات النشطة (اطلاع المالك فقط)</h3><p id="airDiagnosticsStatus" class="muted">تُسجل أخطاء التشغيل من الحسابات النشطة، وتظل تفاصيل السجل خاصة بحساب المالك.</p><div class="actions"><button class="secondary" type="button" onclick="window.airDiagnostics?.refresh()">تحديث سجل الأعطال</button></div><div id="airDiagnosticsList"></div></div>
 </section>
 <section id="shipments" class="page hidden">
 <div class="panel"><h2 id="shipTitle">تسجيل شحنة جديدة</h2><form id="shipForm"><div class="formgrid">
@@ -673,6 +673,26 @@ img,video,canvas,svg{max-width:100%}
 <label>تحصيل من العميل (COD)<input name="cod" type="number" min="0" step=".01"></label><label>المبلغ المحصل<input name="collected" type="number" min="0" step=".01"></label><label>التاجر / صاحب الشحنة<input name="merchant"></label><label>رسوم المرتجع<input name="returnFee" type="number" min="0" step=".01"></label><label>عدد محاولات التوصيل<input name="attempts" type="number" min="0" step="1" value="0"></label><label>موعد المحاولة القادمة<input name="nextAttempt" type="date"></label><label class="span2">سبب التأجيل / فشل التوصيل<input name="failureReason"></label>
 <label class="span4">ملاحظات<textarea name="notes"></textarea></label></div><div class="actions"><button class="primary" type="submit" id="shipSave">حفظ الشحنة</button><button class="secondary" type="button" onclick="resetShip()">إلغاء</button></div></form></div>
 <div class="panel"><h2>سجل الشحنات</h2><div class="row"><input id="shipSearch" placeholder="ابحث برقم الشحنة أو العميل أو الهاتف أو الوجهة"><select id="statusFilter"><option value="">كل الحالات</option><option>تم إنشاء الطلب</option><option>تم الاستلام من التاجر</option><option>في المخزن / مركز التوزيع</option><option>خرجت للتوصيل</option><option>تم التسليم</option><option>مؤجل / لم يتم الرد</option><option>مرتجع</option><option>ملغاة</option></select><button class="light" onclick="exportCSV()">تصدير CSV</button></div><div class="tablewrap" id="shipTable"></div></div>
+<div class="panel" id="airDeliveryProofPanel" style="display:none">
+ <h2 id="airDeliveryProofTitle">إثبات التسليم</h2>
+ <p class="muted">الإثبات مرتبط بالشحنة. تحفظ الصورة والتوقيع في مخزن خاص غير عام، ولا تغيّر هذه الشاشة حالة الشحنة.</p>
+ <form id="airDeliveryProofForm">
+  <div class="formgrid">
+   <label>اسم المستلم *<input id="airProofRecipient" maxlength="160" required autocomplete="name"></label>
+   <label>صورة إثبات التسليم *<input id="airProofPhoto" type="file" accept="image/jpeg,image/png,image/webp" capture="environment" required></label>
+   <label class="span4">ملاحظات إضافية<textarea id="airProofNotes" maxlength="1000" rows="2"></textarea></label>
+   <label class="span2"><input id="airProofIncludeLocation" type="checkbox"> إرفاق الموقع الجغرافي بموافقة المستخدم (اختياري)</label>
+  </div>
+  <div class="panel" style="margin-top:12px">
+   <b>توقيع المستلم (اختياري)</b>
+   <canvas id="airDeliverySignature" width="900" height="260" aria-label="مساحة توقيع المستلم" style="display:block;width:100%;height:150px;background:#fff;border:1px dashed #9aa7b5;border-radius:10px;touch-action:none"></canvas>
+   <div class="actions"><button class="secondary" id="airDeliverySignatureClear" type="button">مسح التوقيع</button></div>
+  </div>
+  <p id="airDeliveryProofStatus" class="muted" aria-live="polite">أرفق صورة واضحة للتسليم واكتب اسم المستلم.</p>
+  <div class="actions"><button class="primary" id="airDeliveryProofSave" type="submit">حفظ إثبات التسليم</button><button class="secondary" id="airDeliveryProofCancel" type="button">إغلاق</button></div>
+ </form>
+ <div class="panel" style="margin-top:14px"><h3>سجل إثباتات هذه الشحنة</h3><div id="airDeliveryProofHistory">افتح إثبات التسليم لتحميل السجل.</div></div>
+</div>
 </section>
 <section id="customers" class="page hidden"><div class="panel"><h2>إضافة عميل</h2><form id="customerForm" class="formgrid"><label>اسم العميل<input name="name" required></label><label>الهاتف<input name="phone"></label><label>المحافظة / المدينة<input name="city"></label><label>سعر الشحن المتفق عليه<input name="shippingRate" type="number" min="0" step=".01"></label><label>نسبة التوصيل %<input name="deliveryPercent" type="number" min="0" max="100" step=".01"></label><label>رسوم المرتجع<input name="returnPolicy" type="number" min="0" step=".01"></label><label>دورة التسوية<select name="settlementCycle"><option>كل 3 أيام</option><option>أسبوعي</option><option>شهري</option></select></label><label class="span2">العنوان<input name="address"></label><div class="span4"><button class="primary">حفظ العميل</button></div></form></div><div class="panel"><h2>دليل العملاء</h2><div class="tablewrap" id="customerTable"></div></div></section>
 <section id="drivers" class="page hidden"><div class="panel"><h2>إضافة سائق</h2><form id="driverForm" class="formgrid"><label>اسم السائق<input name="name" required></label><label>الهاتف<input name="phone"></label><label>رقم الهوية<input name="code"></label><label>نوع المركبة<input name="vehicleType" placeholder="موتوسيكل / سيارة"></label><label>العهدة المالية<input name="cashCustody" type="number" min="0" step=".01"></label><label>الحد الائتماني<input name="creditLimit" type="number" min="0" step=".01"></label><label>عمولة لكل شحنة<input name="commission" type="number" min="0" step=".01"></label><label>الحالة<select name="status"><option>نشط</option><option>غير نشط</option></select></label><div class="span4"><button class="primary">حفظ السائق</button></div></form></div><div class="panel"><h2>السائقون</h2><div class="tablewrap" id="driverTable"></div></div></section>
@@ -1063,7 +1083,7 @@ document.getElementById('driverTable').innerHTML=table(['الاسم','الهات
 document.getElementById('vehicleTable').innerHTML=table(['اللوحة','الموديل','السائق','الصيانة القادمة'],db.vehicles.map(x=>[x.plate,x.model,x.driver,x.service]));
 document.getElementById('expenseTable').innerHTML=table(['التاريخ','النوع','البيان','القيمة'],db.expenses.map(x=>[x.date,x.type,x.desc,money(x.amount)]))}
 function table(head,rows){if(!rows.length)return'<p class="muted">لا توجد بيانات مسجلة حتى الآن.</p>';return'<div class="tablewrap"><table><thead><tr>'+head.map(x=>`<th>${x}</th>`).join('')+'</tr></thead><tbody>'+rows.map(r=>'<tr>'+r.map(x=>`<td>${esc(x)}</td>`).join('')+'</tr>').join('')+'</tbody></table></div>'}
-function renderShip(){let q=(document.getElementById('shipSearch')?.value||'').toLowerCase(),st=document.getElementById('statusFilter')?.value||'';let arr=db.shipments.filter(x=>(!st||x.status===st)&&[x.id,x.customer,x.phone,x.to,x.carrier].join(' ').toLowerCase().includes(q)).slice().reverse();let h=['رقم الشحنة','العميل','الهاتف','الوجهة','المندوب','شركة النقل','الحالة','موعد التسليم','الإجراءات'];let rows=arr.map(x=>`<tr><td>${esc(x.id)}</td><td>${esc(x.customer)}</td><td>${esc(x.phone)}</td><td>${esc(x.to)}</td><td>${esc(x.agent||'غير معين')}</td><td>${esc(x.carrier)}</td><td><span class="tag">${esc(x.status)}</span></td><td>${esc(x.due)}</td><td><button class="light" onclick="editShip('${encodeURIComponent(x.id)}')">تعديل</button> <button class="danger" onclick="deleteShip('${encodeURIComponent(x.id)}')">حذف</button></td></tr>`).join('');document.getElementById('shipTable').innerHTML=arr.length?`<table><thead><tr>${h.map(x=>`<th>${x}</th>`).join('')}</tr></thead><tbody>${rows}</tbody></table>`:'<p class="muted">لا توجد شحنات مطابقة.</p>'}
+function renderShip(){let q=(document.getElementById('shipSearch')?.value||'').toLowerCase(),st=document.getElementById('statusFilter')?.value||'';let arr=db.shipments.filter(x=>(!st||x.status===st)&&[x.id,x.customer,x.phone,x.to,x.carrier].join(' ').toLowerCase().includes(q)).slice().reverse();let h=['رقم الشحنة','العميل','الهاتف','الوجهة','المندوب','شركة النقل','الحالة','موعد التسليم','الإجراءات'];let rows=arr.map(x=>`<tr><td>${esc(x.id)}</td><td>${esc(x.customer)}</td><td>${esc(x.phone)}</td><td>${esc(x.to)}</td><td>${esc(x.agent||'غير معين')}</td><td>${esc(x.carrier)}</td><td><span class="tag">${esc(x.status)}</span></td><td>${esc(x.due)}</td><td><button class="light" onclick="editShip('${encodeURIComponent(x.id)}')">تعديل</button> <button class="secondary" type="button" onclick="openAirDeliveryProof('${encodeURIComponent(x.id)}')">إثبات التسليم</button> <button class="danger" onclick="deleteShip('${encodeURIComponent(x.id)}')">حذف</button></td></tr>`).join('');document.getElementById('shipTable').innerHTML=arr.length?`<table><thead><tr>${h.map(x=>`<th>${x}</th>`).join('')}</tr></thead><tbody>${rows}</tbody></table>`:'<p class="muted">لا توجد شحنات مطابقة.</p>'}
 document.getElementById('shipSearch').oninput=renderShip;document.getElementById('statusFilter').onchange=renderShip;
 function resetShip(){editingId=null;document.getElementById('shipForm').reset();document.getElementById('shipTitle').textContent='تسجيل شحنة جديدة';document.getElementById('shipSave').textContent='حفظ الشحنة'}
 function editShip(id){let x=db.shipments.find(s=>s.id===decodeURIComponent(id));if(!x)return;editingId=x.id;let f=document.getElementById('shipForm');Object.keys(x).forEach(k=>{if(f.elements[k])f.elements[k].value=x[k]??''});document.getElementById('shipTitle').textContent='تعديل الشحنة '+x.id;document.getElementById('shipSave').textContent='حفظ التعديلات';window.scrollTo({top:0,behavior:'smooth'})}
@@ -1622,7 +1642,8 @@ let activeAuthUser = null;
 
 
 
-<script src="./auth.js?v=20261113-notification-logo"></script>
+<script src="./auth.js?v=20261113-offline-retry"></script>
+<script src="./delivery-proof.js?v=20261113-delivery-proof-v1"></script>
 <script>
 if ("serviceWorker" in navigator) {
   window.addEventListener("load", () => {
