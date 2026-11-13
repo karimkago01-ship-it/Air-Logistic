@@ -1,4 +1,4 @@
-const CACHE_NAME = "air-logistic-pwa-v39";
+const CACHE_NAME = "air-logistic-pwa-v40";
 const APP_SHELL = ["./", "./index.html", "./confirm.html", "./manifest.webmanifest", "./icon.svg", "./auth.js", "./diagnostics.js", "./delivery-proof.js", "./dispatch.js"];
 self.addEventListener("install", event => {
   event.waitUntil(caches.open(CACHE_NAME).then(cache => cache.addAll(APP_SHELL)).then(() => self.skipWaiting()));
