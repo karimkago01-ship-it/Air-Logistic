@@ -1,5 +1,5 @@
-const CACHE_NAME = "air-logistic-pwa-v35";
-const APP_SHELL = ["./", "./index.html", "./confirm.html", "./manifest.webmanifest", "./icon.svg", "./auth.js"];
+const CACHE_NAME = "air-logistic-pwa-v36";
+const APP_SHELL = ["./", "./index.html", "./confirm.html", "./manifest.webmanifest", "./icon.svg", "./auth.js", "./diagnostics.js", "./delivery-proof.js"];
 self.addEventListener("install", event => {
   event.waitUntil(caches.open(CACHE_NAME).then(cache => cache.addAll(APP_SHELL)).then(() => self.skipWaiting()));
 });
@@ -16,7 +16,18 @@ self.addEventListener("fetch", event => {
       }
       return response;
     }).catch(async () => (await caches.match(event.request)) || (await caches.match("./index.html"))));
+    return;
   }
+  event.respondWith(caches.match(event.request).then(cached => {
+    const network = fetch(event.request).then(response => {
+      if (response.ok) {
+        const copy = response.clone();
+        caches.open(CACHE_NAME).then(cache => cache.put(event.request, copy));
+      }
+      return response;
+    });
+    return cached || network.catch(() => caches.match(event.request));
+  }));
 });
 self.addEventListener("push", event => {
   let data = {};
