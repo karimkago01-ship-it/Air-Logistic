@@ -35,7 +35,7 @@ textarea{min-height:85px;resize:vertical}.span2{grid-column:span 2}.span4{grid-c
 @media(max-width:850px){.grid{grid-template-columns:repeat(2,minmax(0,1fr))}.formgrid{grid-template-columns:repeat(2,minmax(0,1fr))}.span4{grid-column:span 2}}
 @media(max-width:650px){header{min-height:0;padding:12px;gap:10px;align-items:center;flex-wrap:wrap}.brand{gap:10px;width:100%;flex:1 1 100%}.brand-logo{width:112px;height:92px}.brand-copy h1{font-size:25px}.brand-copy p{font-size:12px}header>.row{width:100%;justify-content:space-between}.wrap{padding:12px}.grid{gap:8px}.kpi{padding:12px}.kpi strong{font-size:24px}.formgrid{gap:9px}.panel{padding:12px}}
 .scan-frame{border:3px solid var(--teal);border-radius:14px}.scan-actions button{min-width:130px}.okrow{background:#f0faf5}.badrow{background:#fff4f3}.warnrow{background:#fff9e9}.mapping-item{padding:8px;border:1px solid var(--line);border-radius:9px;background:#fafcfd}.pill{display:inline-block;border-radius:20px;padding:4px 8px;font-size:12px;background:#edf3f6;margin:2px}
-.recent-status{display:inline-block;white-space:normal;line-height:1.6;max-width:220px}.recent-meta{display:inline-block;margin-top:4px;line-height:1.6}</style><style>
+.recent-status{display:inline-block;white-space:normal;line-height:1.6;max-width:220px}.recent-meta{display:inline-block;margin-top:4px;line-height:1.6}.air-chat-tools{display:flex;align-items:center;gap:8px;flex-wrap:wrap}.air-chat-tool{width:42px;height:42px;border:1px solid #d8e2ed;border-radius:12px;background:#f4f8fc;font-size:21px;cursor:pointer}.air-chat-tools .primary{margin-inline-start:auto;min-width:100px}.air-chat-emoji{display:flex;flex-wrap:wrap;gap:6px;padding:10px;background:#f4f7fb;border:1px solid #dce5ef;border-radius:12px}.air-chat-emoji button{border:0;background:white;border-radius:9px;padding:7px;font-size:23px}.air-chat-photo{display:block;max-width:min(100%,280px);max-height:300px;border-radius:12px;object-fit:contain}.air-chat-popup{position:fixed;z-index:10050;top:max(12px,env(safe-area-inset-top));left:12px;right:12px;max-width:480px;margin:auto;display:flex;gap:10px;align-items:center;padding:13px 15px;background:#102b46;color:white;border:1px solid #d99b36;border-radius:15px;box-shadow:0 12px 34px #102b4650;direction:rtl;opacity:0;transform:translateY(-18px);pointer-events:none;transition:opacity .2s,transform .2s}.air-chat-popup.visible{opacity:1;transform:translateY(0);pointer-events:auto}.air-chat-popup b{white-space:nowrap}.air-chat-popup span{flex:1;overflow-wrap:anywhere;font-size:14px}.air-chat-popup button{border:0;background:transparent;color:white;font-size:23px}</style><style>
 
 /* ===== Air Logistic full dashboard redesign ===== */
 :root{
@@ -1114,8 +1114,17 @@ button{min-height:44px}
   <div id="airChatStatus" class="muted" role="status">جارٍ تحميل المحادثة...</div>
   <div id="airChatMessages" class="air-chat-messages" aria-live="polite"></div>
   <form id="airChatForm" class="air-chat-compose" onsubmit="sendAirChatMessage(event)">
-   <textarea id="airChatInput" maxlength="5000" rows="2" placeholder="اكتب رسالتك للفريق..." required></textarea>
-   <button class="primary" type="submit">إرسال الرسالة</button>
+   <textarea id="airChatInput" maxlength="5000" rows="2" placeholder="اكتب رسالتك للفريق..."></textarea>
+   <div class="air-chat-tools">
+    <button type="button" class="air-chat-tool" onclick="toggleAirChatEmoji()" aria-label="إيموشن">😊</button>
+    <button id="airChatImageButton" type="button" class="air-chat-tool" onclick="document.getElementById('airChatPhoto').click()" aria-label="إرفاق صورة">📷</button>
+    <input id="airChatPhoto" type="file" accept="image/jpeg,image/png,image/webp" hidden onchange="uploadAirChatImage(this.files[0]);this.value=''">
+    <button type="button" class="air-chat-tool" onclick="shareAirChat()" aria-label="مشاركة">↗</button>
+    <button class="primary" type="submit">إرسال</button>
+   </div>
+   <div id="airChatEmojiPicker" class="air-chat-emoji" hidden>
+    <button type="button" onclick="insertAirChatEmoji('😀')">😀</button><button type="button" onclick="insertAirChatEmoji('😂')">😂</button><button type="button" onclick="insertAirChatEmoji('😍')">😍</button><button type="button" onclick="insertAirChatEmoji('🥰')">🥰</button><button type="button" onclick="insertAirChatEmoji('👍')">👍</button><button type="button" onclick="insertAirChatEmoji('👏')">👏</button><button type="button" onclick="insertAirChatEmoji('🙏')">🙏</button><button type="button" onclick="insertAirChatEmoji('❤️')">❤️</button><button type="button" onclick="insertAirChatEmoji('🔥')">🔥</button><button type="button" onclick="insertAirChatEmoji('🎉')">🎉</button><button type="button" onclick="insertAirChatEmoji('🚚')">🚚</button><button type="button" onclick="insertAirChatEmoji('📦')">📦</button><button type="button" onclick="insertAirChatEmoji('✅')">✅</button>
+   </div>
   </form>
  </div>
 </section>
@@ -1908,7 +1917,7 @@ let activeAuthUser = null;
 
 
 
-<script src="./auth.js?v=20261113-background-chat-push-v1"></script>
+<script src="./auth.js?v=20261113-chat-media-popup-v1"></script>
 <script src="./delivery-proof.js?v=20261113-delivery-proof-v1"></script>
 <script>
 if ("serviceWorker" in navigator) {
