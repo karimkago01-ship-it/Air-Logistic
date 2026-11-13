@@ -771,6 +771,15 @@ button{min-height:44px}
 
 <section id="home" class="page">
 <div class="grid" id="kpis"></div>
+ <div class="air-more-quick">
+  <div class="air-more-quick-head"><b>وصول سريع</b><small>الأدوات الأكثر استخداماً</small></div>
+  <div class="air-more-quick-grid">
+   <button type="button" class="air-more-quick-card" data-subpage="customers" onclick="window.airNavigateToPage('customers')"><span>👥</span><b>العملاء والتجار</b></button>
+   <button type="button" class="air-more-quick-card" data-subpage="drivers" onclick="window.airNavigateToPage('drivers')"><span>🚚</span><b>المناديب</b></button>
+   <button type="button" class="air-more-quick-card" data-subpage="notifications" onclick="window.airNavigateToPage('notifications')"><span>🔔</span><b>الإشعارات</b></button>
+   <button type="button" class="air-more-quick-card" data-subpage="monitor" onclick="window.airNavigateToPage('monitor')"><span>◉</span><b>مراقبة النظام</b></button>
+  </div>
+ </div>
 <div class="panel air-portal-launcher">
  <h2>بوابات النظام</h2>
  <p class="muted">خمس وجهات أساسية، وكل وجهة تجمع الأدوات المرتبطة بها.</p>
@@ -813,15 +822,7 @@ button{min-height:44px}
 </section>
 <section id="portalMore" class="page hidden">
  <div class="air-portal-heading"><div><h2>المزيد</h2><p>بيانات التشغيل والتواصل ومراقبة النظام والإعدادات والأدوات.</p></div><button class="light" type="button" onclick="window.airNavigateToPage('home')">الرئيسية</button></div>
- <div class="air-more-quick">
-  <div class="air-more-quick-head"><b>وصول سريع</b><small>الأدوات الأكثر استخداماً</small></div>
-  <div class="air-more-quick-grid">
-   <button type="button" class="air-more-quick-card" data-subpage="customers" onclick="window.airNavigateToPage('customers')"><span>👥</span><b>العملاء والتجار</b></button>
-   <button type="button" class="air-more-quick-card" data-subpage="drivers" onclick="window.airNavigateToPage('drivers')"><span>🚚</span><b>المناديب</b></button>
-   <button type="button" class="air-more-quick-card" data-subpage="notifications" onclick="window.airNavigateToPage('notifications')"><span>🔔</span><b>الإشعارات</b></button>
-   <button type="button" class="air-more-quick-card" data-subpage="monitor" onclick="window.airNavigateToPage('monitor')"><span>◉</span><b>مراقبة النظام</b></button>
-  </div>
- </div>
+
  <div class="air-portal-group"><h3>دليل التشغيل</h3><div class="air-portal-grid">
   <button class="air-portal-card" type="button" data-subpage="customers" onclick="window.airNavigateToPage('customers')"><span class="air-portal-card-icon">👥</span><b>العملاء والتجار</b><small>بيانات العملاء واتفاقات الشحن</small></button>
   <button class="air-portal-card" type="button" data-subpage="drivers" onclick="window.airNavigateToPage('drivers')"><span class="air-portal-card-icon">🧑‍✈️</span><b>المناديب والسائقون</b><small>الحسابات والعمولات وبيانات التواصل</small></button>
