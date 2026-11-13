@@ -601,7 +601,7 @@ img,video,canvas,svg{max-width:100%}
 .air-nav-symbol{display:grid;place-items:center;flex:0 0 34px;width:34px;height:34px;border-radius:10px;background:#ffffff16;color:#ffd28c;font-size:18px}
 #nav button.air-main-portal.active .air-nav-symbol{background:#ffffff24;color:#fff}
 .air-portal-launcher{margin:0 0 14px}
-.air-portal-heading{display:flex;justify-content:space-between;align-items:center;gap:12px;margin:0 0 14px;padding:14px 16px;border:1px solid #d9e6f3;border-radius:14px;background:linear-gradient(110deg,#edf5fc,#fff)}
+.air-portal-group{margin-top:16px}.air-portal-group>h3{margin:0 0 9px;color:#244c70;font-size:14px;font-weight:800}.air-portal-heading{display:flex;justify-content:space-between;align-items:center;gap:12px;margin:0 0 14px;padding:14px 16px;border:1px solid #d9e6f3;border-radius:14px;background:linear-gradient(110deg,#edf5fc,#fff)}
 .air-portal-heading small{display:block;color:#c17a1a;font-weight:900;font-size:10px;letter-spacing:1px}
 .air-portal-heading h2{margin:4px 0;color:#123b68;font-size:20px}
 .air-portal-heading p{margin:0;color:#6e8195;font-size:12px;line-height:1.6}
@@ -628,6 +628,9 @@ img,video,canvas,svg{max-width:100%}
  .air-portal-heading button{font-size:10px;padding:8px;min-height:38px}
 }
 @media(max-width:360px){.air-portal-grid{grid-template-columns:1fr}.air-portal-card{min-height:0}.air-portal-card:last-child{grid-column:auto}}
+
+#airMobileBottomNav{grid-template-columns:repeat(5,minmax(0,1fr))}
+@media(max-width:680px){.air-portal-group{margin-top:14px}.air-portal-group>h3{font-size:12px;margin-bottom:8px}}
 </style>
 </head>
 <body class="auth-locked">
@@ -693,13 +696,11 @@ img,video,canvas,svg{max-width:100%}
 <aside class="air-sidebar">
 <div class="sidebar-brand"><span class="sidebar-mark">📦</span><div><b>Air Logistic</b><small>القائمة الرئيسية</small></div></div>
 <nav id="nav" aria-label="بوابات Air Logistic">
-<button class="air-main-portal active" data-page="home" data-portal-nav="home"><span class="air-nav-symbol" aria-hidden="true">⌂</span><span>مركز القيادة</span></button>
+<button class="air-main-portal active" data-page="home" data-portal-nav="home"><span class="air-nav-symbol" aria-hidden="true">⌂</span><span>الرئيسية</span></button>
 <button class="air-main-portal" data-page="portalShipments" data-portal-nav="portalShipments"><span class="air-nav-symbol" aria-hidden="true">📦</span><span>الشحنات</span></button>
 <button class="air-main-portal" data-page="portalDispatch" data-portal-nav="portalDispatch"><span class="air-nav-symbol" aria-hidden="true">🚚</span><span>التوزيع</span></button>
-<button class="air-main-portal" data-page="portalScanner" data-portal-nav="portalScanner"><span class="air-nav-symbol" aria-hidden="true">⌗</span><span>الماسح الذكي</span></button>
 <button class="air-main-portal" data-page="portalFinance" data-portal-nav="portalFinance"><span class="air-nav-symbol" aria-hidden="true">▤</span><span>المالية</span></button>
-<button class="air-main-portal" data-page="portalDirectory" data-portal-nav="portalDirectory"><span class="air-nav-symbol" aria-hidden="true">▦</span><span>دليل التشغيل</span></button>
-<button class="air-main-portal" data-page="portalServices" data-portal-nav="portalServices"><span class="air-nav-symbol" aria-hidden="true">⚙</span><span>مركز الخدمات</span></button>
+<button class="air-main-portal" data-page="portalMore" data-portal-nav="portalMore"><span class="air-nav-symbol" aria-hidden="true">☰</span><span>المزيد</span></button>
 <div id="airLegacyNavHooks" hidden aria-hidden="true">
  <button data-page="monitor">مركز مراقبة النظام</button><button data-page="shipments">الشحنات</button>
  <button data-page="customers">العملاء</button><button data-page="drivers">السائقون</button><button data-page="vehicles">السيارات</button>
@@ -726,75 +727,65 @@ img,video,canvas,svg{max-width:100%}
 <section id="home" class="page">
 <div class="grid" id="kpis"></div>
 <div class="panel air-portal-launcher">
- <h2>بوابات النظام الرئيسية</h2>
- <p class="muted">كل وظيفة في مكانها؛ افتح البوابة المناسبة للوصول إلى أدواتها مباشرة.</p>
+ <h2>بوابات النظام</h2>
+ <p class="muted">خمس وجهات أساسية، وكل وجهة تجمع الأدوات المرتبطة بها.</p>
  <div class="air-portal-grid">
-  <button class="air-portal-card" type="button" data-portal-card="home" onclick="window.airNavigateToPage('home')"><span class="air-portal-card-icon">⌂</span><b>مركز القيادة</b><small>مؤشرات التشغيل وآخر الشحنات والملخص اليومي</small></button>
-  <button class="air-portal-card" type="button" data-portal-card="portalShipments" onclick="window.airNavigateToPage('portalShipments')"><span class="air-portal-card-icon">📦</span><b>الشحنات</b><small>تسجيل ومتابعة الحالات والاستيراد والتتبع</small></button>
-  <button class="air-portal-card" type="button" data-portal-card="portalDispatch" onclick="window.airNavigateToPage('portalDispatch')"><span class="air-portal-card-icon">🚚</span><b>التوزيع</b><small>إسناد الشحنات للمندوبين ومتابعة التسليم</small></button>
-  <button class="air-portal-card" type="button" data-portal-card="portalScanner" onclick="window.airNavigateToPage('portalScanner')"><span class="air-portal-card-icon">⌗</span><b>الماسح الذكي</b><small>باركود وQR وقراءة بوليصة الشحن بالكاميرا</small></button>
-  <button class="air-portal-card" type="button" data-portal-card="portalFinance" onclick="window.airNavigateToPage('portalFinance')"><span class="air-portal-card-icon">▤</span><b>المالية</b><small>الحسابات والتوريدات والتسويات والتقارير</small></button>
-  <button class="air-portal-card" type="button" data-portal-card="portalDirectory" onclick="window.airNavigateToPage('portalDirectory')"><span class="air-portal-card-icon">▦</span><b>دليل التشغيل</b><small>العملاء والمناديب والمركبات والمناطق والأسعار</small></button>
-  <button class="air-portal-card" type="button" data-portal-card="portalServices" onclick="window.airNavigateToPage('portalServices')"><span class="air-portal-card-icon">⚙</span><b>مركز الخدمات</b><small>الإشعارات والمحادثة والمراقبة والإدارة</small></button>
+  <button class="air-portal-card" type="button" data-portal-card="home" onclick="window.airNavigateToPage('home')"><span class="air-portal-card-icon">⌂</span><b>الرئيسية</b><small>مؤشرات التشغيل وآخر الشحنات والملخص اليومي</small></button>
+  <button class="air-portal-card" type="button" data-portal-card="portalShipments" onclick="window.airNavigateToPage('portalShipments')"><span class="air-portal-card-icon">📦</span><b>الشحنات</b><small>تسجيل وتتبع واستيراد ومسح البوليصات</small></button>
+  <button class="air-portal-card" type="button" data-portal-card="portalDispatch" onclick="window.airNavigateToPage('portalDispatch')"><span class="air-portal-card-icon">🚚</span><b>التوزيع</b><small>إسناد الشحنات ومتابعة المندوبين والتسليم</small></button>
+  <button class="air-portal-card" type="button" data-portal-card="portalFinance" onclick="window.airNavigateToPage('portalFinance')"><span class="air-portal-card-icon">▤</span><b>المالية</b><small>الحسابات والتحصيل والتوريدات والتسويات</small></button>
+  <button class="air-portal-card" type="button" data-portal-card="portalMore" onclick="window.airNavigateToPage('portalMore')"><span class="air-portal-card-icon">☰</span><b>المزيد</b><small>العملاء والبيانات والإشعارات والإدارة والأدوات</small></button>
  </div>
 </div>
 <div class="cards2"><div class="panel"><h2>آخر الشحنات</h2><div id="recent"></div></div><div class="panel"><h2>ملخص الحسابات</h2><div id="finSummary"></div></div></div>
 </section>
  
 <section id="portalShipments" class="page hidden">
- <div class="air-portal-heading"><div><small>01 / OPERATIONS</small><h2>الشحنات والتتبع</h2><p>إدارة دورة الشحنة من التسجيل حتى التسليم أو المرتجع.</p></div><button class="light" type="button" onclick="window.airNavigateToPage('home')">مركز القيادة</button></div>
+ <div class="air-portal-heading"><div><small>01 / SHIPMENTS</small><h2>الشحنات</h2><p>كل ما يخص تسجيل الشحنة وحركتها وتتبعها وقراءة بوليصتها.</p></div><button class="light" type="button" onclick="window.airNavigateToPage('home')">الرئيسية</button></div>
  <div class="air-portal-grid">
   <button class="air-portal-card" type="button" data-subpage="shipments" onclick="window.airNavigateToPage('shipments')"><span class="air-portal-card-icon">📦</span><b>إدارة الشحنات</b><small>تسجيل وتعديل ومراجعة كل شحنة</small></button>
   <button class="air-portal-card" type="button" data-subpage="workflow" onclick="window.airNavigateToPage('workflow')"><span class="air-portal-card-icon">⟲</span><b>رحلة الشحنة</b><small>مراحل الحركة والحالات وأسباب التحديث</small></button>
   <button class="air-portal-card" type="button" data-subpage="tracking" onclick="window.airNavigateToPage('tracking')"><span class="air-portal-card-icon">⌖</span><b>تتبع العميل</b><small>عرض الحالة وسجل الرحلة برقم الشحنة</small></button>
   <button class="air-portal-card" type="button" data-subpage="importer" onclick="window.airNavigateToPage('importer')"><span class="air-portal-card-icon">⇧</span><b>الاستيراد الذكي</b><small>Excel وCSV مع معاينة قبل الاعتماد</small></button>
+  <button class="air-portal-card" type="button" data-subpage="scanner" onclick="window.airNavigateToPage('scanner')"><span class="air-portal-card-icon">⌗</span><b>ماسح الباركود وQR</b><small>كاميرا الهاتف والكشاف وقراءة البوليصة</small></button>
+  <button class="air-portal-card" type="button" data-subpage="ocr" onclick="window.airNavigateToPage('ocr')"><span class="air-portal-card-icon">▤</span><b>قارئ البوليصة</b><small>استخراج النص من الصورة ومراجعته</small></button>
  </div>
 </section>
 <section id="portalDispatch" class="page hidden">
- <div class="air-portal-heading"><div><small>02 / DISPATCH</small><h2>التوزيع والتسليم</h2><p>بوابة الإسناد، كشف المندوب، متابعة الرحلة والنتائج.</p></div><button class="light" type="button" onclick="window.airNavigateToPage('home')">مركز القيادة</button></div>
+ <div class="air-portal-heading"><div><small>02 / DISPATCH</small><h2>التوزيع</h2><p>بوابة الإسناد، كشف المندوب، متابعة الرحلة والنتائج.</p></div><button class="light" type="button" onclick="window.airNavigateToPage('home')">الرئيسية</button></div>
  <div class="air-portal-grid">
   <button class="air-portal-card" type="button" data-subpage="transfers" onclick="window.airNavigateToPage('transfers')"><span class="air-portal-card-icon">⇄</span><b>إسناد وتحويل الشحنات</b><small>توزيع الشحنات على المندوبين ومراجعة كشوفهم وتسوياتهم</small></button>
   <button class="air-portal-card" type="button" data-subpage="courierPortal" onclick="window.airNavigateToPage('courierPortal')"><span class="air-portal-card-icon">🚚</span><b>منفست المندوب</b><small>شحنات المندوب المخصصة له وتحديث نتيجة التوصيل</small></button>
  </div>
 </section>
-<section id="portalScanner" class="page hidden">
- <div class="air-portal-heading"><div><small>03 / SMART SCAN</small><h2>الماسح الذكي</h2><p>تحويل بيانات البوليصة إلى عملية مسح سريعة مع مراجعة البيانات قبل الحفظ.</p></div><button class="light" type="button" onclick="window.airNavigateToPage('home')">مركز القيادة</button></div>
- <div class="air-portal-grid">
-  <button class="air-portal-card" type="button" data-subpage="scanner" onclick="window.airNavigateToPage('scanner')"><span class="air-portal-card-icon">⌗</span><b>ماسح الباركود وQR</b><small>كاميرا الهاتف مع كشاف وقراءة البوليصة المدمجة</small></button>
-  <button class="air-portal-card" type="button" data-subpage="ocr" onclick="window.airNavigateToPage('ocr')"><span class="air-portal-card-icon">▤</span><b>قارئ البوليصة</b><small>التقاط الصورة واستخراج النص ومراجعته</small></button>
- </div>
-</section>
 <section id="portalFinance" class="page hidden">
- <div class="air-portal-heading"><div><small>04 / FINANCE</small><h2>المالية والتسويات</h2><p>عرض التحصيل والمصروفات والتوريدات وصافي المستحقات.</p></div><button class="light" type="button" onclick="window.airNavigateToPage('home')">مركز القيادة</button></div>
+ <div class="air-portal-heading"><div><small>03 / FINANCE</small><h2>المالية</h2><p>الحسابات والتحصيل والتوريدات وتسويات التجار والمناديب.</p></div><button class="light" type="button" onclick="window.airNavigateToPage('home')">الرئيسية</button></div>
  <div class="air-portal-grid">
   <button class="air-portal-card" type="button" data-subpage="finance" onclick="window.airNavigateToPage('finance')"><span class="air-portal-card-icon">▤</span><b>الحسابات</b><small>التقارير المالية والتحصيل والمصروفات</small></button>
   <button class="air-portal-card" type="button" data-subpage="financeLedger" onclick="window.airNavigateToPage('financeLedger')"><span class="air-portal-card-icon">≡</span><b>دفتر الحركة</b><small>مراجعة القيود والحركات المالية</small></button>
   <button class="air-portal-card" type="button" data-subpage="settlements" onclick="window.airNavigateToPage('settlements')"><span class="air-portal-card-icon">⇄</span><b>التسويات والتوريدات</b><small>تسويات التجار وسجل توريدات المندوبين</small></button>
  </div>
 </section>
-<section id="portalDirectory" class="page hidden">
- <div class="air-portal-heading"><div><small>05 / OPERATIONS DIRECTORY</small><h2>دليل التشغيل</h2><p>البيانات المرجعية التي تعتمد عليها عمليات الشحن والتوزيع.</p></div><button class="light" type="button" onclick="window.airNavigateToPage('home')">مركز القيادة</button></div>
- <div class="air-portal-grid">
-  <button class="air-portal-card" type="button" data-subpage="customers" onclick="window.airNavigateToPage('customers')"><span class="air-portal-card-icon">👥</span><b>العملاء والتجار</b><small>بيانات العملاء والتجار واتفاقات الشحن</small></button>
-  <button class="air-portal-card" type="button" data-subpage="drivers" onclick="window.airNavigateToPage('drivers')"><span class="air-portal-card-icon">🧑‍✈️</span><b>المناديب والسائقون</b><small>بيانات المندوبين ووسائل التواصل والعمولة</small></button>
+<section id="portalMore" class="page hidden">
+ <div class="air-portal-heading"><div><small>04 / MORE</small><h2>المزيد</h2><p>بيانات التشغيل والتواصل ومراقبة النظام والإعدادات والأدوات.</p></div><button class="light" type="button" onclick="window.airNavigateToPage('home')">الرئيسية</button></div>
+ <div class="air-portal-group"><h3>دليل التشغيل</h3><div class="air-portal-grid">
+  <button class="air-portal-card" type="button" data-subpage="customers" onclick="window.airNavigateToPage('customers')"><span class="air-portal-card-icon">👥</span><b>العملاء والتجار</b><small>بيانات العملاء واتفاقات الشحن</small></button>
+  <button class="air-portal-card" type="button" data-subpage="drivers" onclick="window.airNavigateToPage('drivers')"><span class="air-portal-card-icon">🧑‍✈️</span><b>المناديب والسائقون</b><small>الحسابات والعمولات وبيانات التواصل</small></button>
   <button class="air-portal-card" type="button" data-subpage="vehicles" onclick="window.airNavigateToPage('vehicles')"><span class="air-portal-card-icon">🚐</span><b>المركبات</b><small>السيارات والمركبات والصيانة</small></button>
   <button class="air-portal-card" type="button" data-subpage="agents" onclick="window.airNavigateToPage('agents')"><span class="air-portal-card-icon">🏢</span><b>الوكلاء</b><small>الوكلاء الخارجيون ونطاقات الخدمة</small></button>
   <button class="air-portal-card" type="button" data-subpage="pricing" onclick="window.airNavigateToPage('pricing')"><span class="air-portal-card-icon">⌖</span><b>المناطق والأسعار</b><small>نطاقات التغطية والتعريفات</small></button>
   <button class="air-portal-card" type="button" data-subpage="merchantPortal" onclick="window.airNavigateToPage('merchantPortal')"><span class="air-portal-card-icon">🏪</span><b>بوابة التاجر</b><small>إدخال ومتابعة شحنات التاجر</small></button>
- </div>
-</section>
-<section id="portalServices" class="page hidden">
- <div class="air-portal-heading"><div><small>06 / SERVICE & ADMIN</small><h2>مركز الخدمات والإدارة</h2><p>التواصل والتنبيهات ومراقبة جودة التشغيل وأدوات الإدارة.</p></div><button class="light" type="button" onclick="window.airNavigateToPage('home')">مركز القيادة</button></div>
- <div class="air-portal-grid">
+ </div></div>
+ <div class="air-portal-group"><h3>التواصل والخدمات</h3><div class="air-portal-grid">
   <button class="air-portal-card" type="button" data-subpage="notifications" onclick="window.airNavigateToPage('notifications')"><span class="air-portal-card-icon">🔔</span><b>الإشعارات</b><small>مركز التنبيهات والتحديثات</small></button>
   <button class="air-portal-card" type="button" data-subpage="chat" onclick="window.airNavigateToPage('chat')"><span class="air-portal-card-icon">💬</span><b>المحادثة الجماعية</b><small>التواصل بين فريق التشغيل</small></button>
   <button class="air-portal-card" type="button" data-subpage="monitor" onclick="window.airNavigateToPage('monitor')"><span class="air-portal-card-icon">◉</span><b>مراقبة النظام</b><small>حالة الاتصال والفحص والتنبيهات الفنية</small></button>
   <button class="air-portal-card" type="button" data-subpage="activityLog" onclick="window.airNavigateToPage('activityLog')"><span class="air-portal-card-icon">≣</span><b>سجل العمليات</b><small>مراجعة أثر التغييرات والحركات</small></button>
   <button class="air-portal-card" type="button" data-subpage="policies" onclick="window.airNavigateToPage('policies')"><span class="air-portal-card-icon">✓</span><b>السياسات والتعليمات</b><small>شروط الخدمة وقواعد التشغيل</small></button>
-  <button class="air-portal-card" type="button" data-subpage="tools" onclick="window.airNavigateToPage('tools')"><span class="air-portal-card-icon">⚙</span><b>الأدوات والنسخ</b><small>أدوات الاستيراد والتصدير والنسخ المصرّح بها</small></button>
+  <button class="air-portal-card" type="button" data-subpage="tools" onclick="window.airNavigateToPage('tools')"><span class="air-portal-card-icon">⚙</span><b>الأدوات والنسخ</b><small>الاستيراد والتصدير والنسخ المصرح بها</small></button>
   <button class="air-portal-card" type="button" data-subpage="roles" onclick="window.airNavigateToPage('roles')"><span class="air-portal-card-icon">🔐</span><b>الصلاحيات والأدوار</b><small>إدارة أدوار النظام وفق صلاحية المالك</small></button>
   <button class="air-portal-card" type="button" data-subpage="accountRequests" onclick="window.airNavigateToPage('accountRequests')"><span class="air-portal-card-icon">🪪</span><b>طلبات الحسابات</b><small>مراجعة طلبات التسجيل والاعتماد</small></button>
- </div>
+ </div></div>
 </section>
 <section id="monitor" class="page hidden">
  <div class="panel"><h2>مركز مراقبة Air Logistic</h2><p class="muted">مؤشرات تشغيلية مباشرة من البيانات المحملة على هذا الجهاز وحالة الاتصال الحالية.</p>
@@ -1903,9 +1894,9 @@ if ("serviceWorker" in navigator) {
  const items=[
   {page:'home',icon:'⌂',label:'الرئيسية'},
   {page:'portalShipments',icon:'▣',label:'الشحنات'},
-  {page:'portalScanner',icon:'⌗',label:'الماسح'},
+  {page:'portalDispatch',icon:'🚚',label:'التوزيع'},
   {page:'portalFinance',icon:'▤',label:'المالية'},
-  {page:'more',icon:'☰',label:'القائمة'}
+  {page:'portalMore',icon:'☰',label:'المزيد'}
  ];
  const bar=document.createElement('nav');
  bar.id='airMobileBottomNav';bar.setAttribute('aria-label','التنقل السريع');
@@ -1914,12 +1905,7 @@ if ("serviceWorker" in navigator) {
   button.innerHTML='<span class="mobile-nav-icon" aria-hidden="true">'+item.icon+'</span><span>'+item.label+'</span>';
   if(item.page==='home'){button.classList.add('active');button.setAttribute('aria-current','page')}
   button.addEventListener('click',()=>{
-   if(item.page==='more'){
-    document.body.classList.add('air-menu-open');
-    const opener=document.getElementById('airMobileMenuBtn');if(opener)opener.setAttribute('aria-expanded','true');
-    return;
-   }
-   const target=nav.querySelector('button[data-page="'+item.page+'"]');
+      const target=nav.querySelector('button[data-page="'+item.page+'"]');
    if(target)target.click();
    setActive(item.page);
    window.scrollTo({top:0,behavior:'smooth'});
@@ -1975,7 +1961,7 @@ if ("serviceWorker" in navigator) {
  },true);
 })();
 </script>
-<script id="air-unified-page-navigation-hotfix">(function(){if(window.__airUnifiedPageNavigationInstalled)return;window.__airUnifiedPageNavigationInstalled=true;function openPage(page){const target=document.getElementById(page);if(!target||!target.classList.contains('page'))return false;if((page==='roles'||page==='accountRequests')&&window.currentProfile?.user_id!=='0e7fe9b5-bc54-403b-9884-ad1facf5efe0'){if(typeof window.toast==='function')window.toast('هذا القسم محمي ولا يفتح إلا بموافقة حساب المالك الخاص.');else alert('هذا القسم محمي ولا يفتح إلا بموافقة حساب المالك الخاص.');return false;}document.querySelectorAll('.page').forEach(function(section){const active=section===target;section.classList.toggle('hidden',!active);section.style.setProperty('display',active?'block':'none','important');section.setAttribute('aria-hidden',active?'false':'true')});const hero=document.querySelector('.air-hero');if(hero)hero.style.setProperty('display',page==='home'?'':'none','important');const portalForPage={home:'home',portalShipments:'portalShipments',shipments:'portalShipments',workflow:'portalShipments',tracking:'portalShipments',importer:'portalShipments',portalDispatch:'portalDispatch',transfers:'portalDispatch',courierPortal:'portalDispatch',portalScanner:'portalScanner',scanner:'portalScanner',ocr:'portalScanner',portalFinance:'portalFinance',finance:'portalFinance',financeLedger:'portalFinance',settlements:'portalFinance',portalDirectory:'portalDirectory',customers:'portalDirectory',drivers:'portalDirectory',vehicles:'portalDirectory',agents:'portalDirectory',pricing:'portalDirectory',merchantPortal:'portalDirectory',portalServices:'portalServices',monitor:'portalServices',notifications:'portalServices',chat:'portalServices',activityLog:'portalServices',policies:'portalServices',tools:'portalServices',roles:'portalServices',accountRequests:'portalServices',savedDocuments:'portalServices'};const activePortal=portalForPage[page]||page;document.querySelectorAll('#nav button[data-portal-nav]').forEach(function(b){b.classList.toggle('active',b.dataset.portalNav===activePortal)});document.querySelectorAll('#airLegacyNavHooks button[data-page]').forEach(function(b){b.classList.toggle('active',b.dataset.page===page)});document.querySelectorAll('#airMobileBottomNav button[data-mobile-page]').forEach(function(b){b.classList.toggle('active',b.dataset.mobilePage===activePortal)});if(!page.startsWith('portal')&&page!=='home'&&typeof renderFlexibleModules==='function')renderFlexibleModules();if(page==='transfers'){if(typeof renderTransfers==='function')renderTransfers();window.renderDispatchPortal?.()}if(page==='courierPortal')window.renderCourierPortal?.();if(page!=='scanner'&&typeof window.stopMobileScanner==='function')window.stopMobileScanner();if(page!=='ocr'&&typeof window.stopWaybillCamera==='function')window.stopWaybillCamera();if(page==='monitor'&&typeof window.renderAirMonitor==='function')window.renderAirMonitor();if(page==='monitor'&&window.airDiagnostics?.refresh)window.airDiagnostics.refresh();if(page==='finance'&&typeof window.renderFinanceReport==='function')window.renderFinanceReport();if(page==='chat'&&typeof window.renderAirChat==='function')window.renderAirChat();if(page==='notifications'&&typeof window.renderAirNotifications==='function')window.renderAirNotifications();if(page==='activityLog'&&typeof window.renderAirActivityLog==='function')window.renderAirActivityLog();if(page==='accountRequests'&&typeof window.renderAccountRequests==='function')window.renderAccountRequests();return true}window.airNavigateToPage=openPage;document.addEventListener('click',function(event){const b=event.target.closest('#nav button[data-page],#airMobileBottomNav button[data-mobile-page]');if(!b)return;const page=b.dataset.page||b.dataset.mobilePage;if(page!=='more')openPage(page)},false);document.querySelectorAll('.page').forEach(function(section){const active=section.id==='home';section.style.setProperty('display',active?'block':'none','important');section.classList.toggle('hidden',!active);section.setAttribute('aria-hidden',active?'false':'true')})})();</script>
+<script id="air-unified-page-navigation-hotfix">(function(){if(window.__airUnifiedPageNavigationInstalled)return;window.__airUnifiedPageNavigationInstalled=true;function openPage(page){const target=document.getElementById(page);if(!target||!target.classList.contains('page'))return false;if((page==='roles'||page==='accountRequests')&&window.currentProfile?.user_id!=='0e7fe9b5-bc54-403b-9884-ad1facf5efe0'){if(typeof window.toast==='function')window.toast('هذا القسم محمي ولا يفتح إلا بموافقة حساب المالك الخاص.');else alert('هذا القسم محمي ولا يفتح إلا بموافقة حساب المالك الخاص.');return false;}document.querySelectorAll('.page').forEach(function(section){const active=section===target;section.classList.toggle('hidden',!active);section.style.setProperty('display',active?'block':'none','important');section.setAttribute('aria-hidden',active?'false':'true')});const hero=document.querySelector('.air-hero');if(hero)hero.style.setProperty('display',page==='home'?'':'none','important');const portalForPage={home:'home',portalShipments:'portalShipments',shipments:'portalShipments',workflow:'portalShipments',tracking:'portalShipments',importer:'portalShipments',scanner:'portalShipments',ocr:'portalShipments',portalDispatch:'portalDispatch',transfers:'portalDispatch',courierPortal:'portalDispatch',portalFinance:'portalFinance',finance:'portalFinance',financeLedger:'portalFinance',settlements:'portalFinance',portalMore:'portalMore',portalScanner:'portalMore',portalDirectory:'portalMore',portalServices:'portalMore',customers:'portalMore',drivers:'portalMore',vehicles:'portalMore',agents:'portalMore',pricing:'portalMore',merchantPortal:'portalMore',monitor:'portalMore',notifications:'portalMore',chat:'portalMore',activityLog:'portalMore',policies:'portalMore',tools:'portalMore',roles:'portalMore',accountRequests:'portalMore',savedDocuments:'portalMore'};const activePortal=portalForPage[page]||page;document.querySelectorAll('#nav button[data-portal-nav]').forEach(function(b){b.classList.toggle('active',b.dataset.portalNav===activePortal)});document.querySelectorAll('#airLegacyNavHooks button[data-page]').forEach(function(b){b.classList.toggle('active',b.dataset.page===page)});document.querySelectorAll('#airMobileBottomNav button[data-mobile-page]').forEach(function(b){b.classList.toggle('active',b.dataset.mobilePage===activePortal)});if(!page.startsWith('portal')&&page!=='home'&&typeof renderFlexibleModules==='function')renderFlexibleModules();if(page==='transfers'){if(typeof renderTransfers==='function')renderTransfers();window.renderDispatchPortal?.()}if(page==='courierPortal')window.renderCourierPortal?.();if(page!=='scanner'&&typeof window.stopMobileScanner==='function')window.stopMobileScanner();if(page!=='ocr'&&typeof window.stopWaybillCamera==='function')window.stopWaybillCamera();if(page==='monitor'&&typeof window.renderAirMonitor==='function')window.renderAirMonitor();if(page==='monitor'&&window.airDiagnostics?.refresh)window.airDiagnostics.refresh();if(page==='finance'&&typeof window.renderFinanceReport==='function')window.renderFinanceReport();if(page==='chat'&&typeof window.renderAirChat==='function')window.renderAirChat();if(page==='notifications'&&typeof window.renderAirNotifications==='function')window.renderAirNotifications();if(page==='activityLog'&&typeof window.renderAirActivityLog==='function')window.renderAirActivityLog();if(page==='accountRequests'&&typeof window.renderAccountRequests==='function')window.renderAccountRequests();return true}window.airNavigateToPage=openPage;document.addEventListener('click',function(event){const b=event.target.closest('#nav button[data-page],#airMobileBottomNav button[data-mobile-page]');if(!b)return;const page=b.dataset.page||b.dataset.mobilePage;if(page!=='more')openPage(page)},false);document.querySelectorAll('.page').forEach(function(section){const active=section.id==='home';section.style.setProperty('display',active?'block':'none','important');section.classList.toggle('hidden',!active);section.setAttribute('aria-hidden',active?'false':'true')})})();</script>
 <script src="./diagnostics.js"></script>
 
 <script id="air-monitor-reliability-hotfix">
