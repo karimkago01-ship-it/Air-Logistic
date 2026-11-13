@@ -60,7 +60,7 @@ Deno.serve(async req => {
 
   const admin = createClient(url, serviceKey);
   const { data: profile, error: profileError } = await admin.from("profiles")
-    .select("user_id,workspace_id,role,active").eq("user_id", userData.user.id).maybeSingle();
+    .select("user_id,workspace_id,full_name,role,active").eq("user_id", userData.user.id).maybeSingle();
   if (profileError || !profile?.active) return reply({ error: "Forbidden" }, 403);
 
   // VAPID material lives encrypted in Supabase Vault. This RPC is executable only by service_role.
@@ -80,6 +80,53 @@ Deno.serve(async req => {
   catch (error) {
     console.error("Air Logistic VAPID setup failed:", error);
     return reply({ error: "Invalid VAPID configuration" }, 503);
+  }
+
+  // Login alerts are private to active system administrators and the protected owner.
+  // The caller cannot choose recipients or message content.
+  if (body.login_event === true) {
+    const ownerId = "0e7fe9b5-bc54-403b-9884-ad1facf5efe0";
+    const { data: admins, error: adminsError } = await admin.from("profiles")
+      .select("user_id")
+      .eq("workspace_id", profile.workspace_id)
+      .eq("active", true)
+      .or(`role.eq.admin,user_id.eq.${ownerId}`);
+    if (adminsError) return reply({ error: "Could not load administrator recipients" }, 500);
+    const recipientIds = [...new Set((admins || []).map(x => x.user_id).filter(Boolean))];
+    if (!recipientIds.length) return reply({ login_event: true, notifications: 0, sent: 0, failed: 0, recipients: 0 });
+
+    const eventId = crypto.randomUUID();
+    const roleLabel: Record<string,string> = {
+      admin: "مدير النظام", manager: "مدير", employee: "مدير التسليمات", courier: "مندوب"
+    };
+    const title = "تسجيل دخول جديد إلى Air Logistic";
+    const message = `${String(profile.full_name || "مستخدم").slice(0,100)} (${roleLabel[profile.role] || "مستخدم"}) فتح التطبيق بنجاح.`;
+    const rows = recipientIds.map(recipient_id => ({
+      workspace_id: profile.workspace_id,
+      recipient_id,
+      title,
+      body: message,
+      link: "./",
+      payload: { kind: "login_event", actor_id: userData.user.id, event_id: eventId }
+    }));
+    const saved = await admin.from("notifications").insert(rows).select("id,recipient_id");
+    if (saved.error) return reply({ error: "Could not save administrator login alerts" }, 500);
+
+    const { data: subscriptions, error: subscriptionsError } = await admin.from("push_subscriptions")
+      .select("id,user_id,endpoint,p256dh,auth_key")
+      .eq("workspace_id", profile.workspace_id)
+      .in("user_id", recipientIds);
+    if (subscriptionsError) return reply({ login_event: true, notifications: saved.data?.length || 0, sent: 0, failed: 0, push_error: "Could not load device subscriptions" }, 200);
+
+    let sent = 0, failed = 0;
+    for (const sub of subscriptions || []) {
+      const result = await sendToSubscription(admin, sub, {
+        title, body: message, url: "./", tag: "air-logistic-login-" + eventId
+      });
+      sent += result.sent;
+      failed += result.failed;
+    }
+    return reply({ login_event: true, notifications: saved.data?.length || 0, sent, failed, devices: subscriptions?.length || 0, recipients: recipientIds.length });
   }
 
   // Device-scoped smoke test: the authenticated user can send only to their exact
