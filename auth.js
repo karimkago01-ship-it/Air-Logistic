@@ -39,7 +39,15 @@
   window.currentProfile = null;
   let activeAuthUser = null;
   let syncTimer = null, realtimeChannel = null, syncBusy = false, syncPending = false;
-  const deleteQueue = [];
+  const DELETE_QUEUE_KEY = 'air_logistic_cloud_delete_queue_v1';
+  const deleteQueue = (() => {
+    try { const q=JSON.parse(localStorage.getItem(DELETE_QUEUE_KEY)||'[]'); return Array.isArray(q)?q.slice(-500):[]; }
+    catch(_) { return []; }
+  })();
+  function persistDeleteQueue() {
+    try { localStorage.setItem(DELETE_QUEUE_KEY,JSON.stringify(deleteQueue.slice(-500))); }
+    catch(error) { console.warn('Air Logistic pending delete queue:',error); }
+  }
   let pendingAirPushEvents = [];
   let pendingAirPushBatch = null;
 
@@ -303,6 +311,10 @@
   async function syncDBToCloud() {
     const profile = window.currentProfile;
     if (!profile || !profile.active) return false;
+    if (!navigator.onLine) {
+      window.airSyncState = {...(window.airSyncState||{}),status:'offline',lastError:null};
+      return false;
+    }
     if (syncBusy) { syncPending = true; return false; }
     syncBusy = true;
     window.airSyncState = {...(window.airSyncState||{}),status:'syncing',lastError:null};
@@ -361,6 +373,7 @@
           .eq('workspace_id',profile.workspace_id).eq('collection',item.collection).eq('record_id',item.record_id);
         if (result.error) throw result.error;
         deleteQueue.shift();
+        persistDeleteQueue();
       }
       window.airSyncState = {...(window.airSyncState||{}),status:'success',lastSuccess:new Date().toISOString(),lastError:null};
       if (pendingAirPushBatch || pendingAirPushEvents.length) await flushAirPushEvents();
@@ -450,6 +463,17 @@
     if (typeof render === 'function') render();
   }
 
+  window.addEventListener('online',() => {
+    if (!window.currentProfile?.active) return;
+    clearTimeout(syncTimer);
+    syncTimer = setTimeout(syncDBToCloud,150);
+  });
+  document.addEventListener('visibilitychange',() => {
+    if (document.hidden || !navigator.onLine || !window.currentProfile?.active) return;
+    clearTimeout(syncTimer);
+    syncTimer = setTimeout(syncDBToCloud,250);
+  });
+
   window.save = function() {
     // Keep a local recovery snapshot before attempting cloud sync.
     try {
@@ -467,12 +491,14 @@
 
   window.queueAirLogisticCloudDelete = function(collection,record_id) {
     deleteQueue.push({collection,record_id:String(record_id)});
+    persistDeleteQueue();
   };
   window.deleteShip = function(id) {
     if (!['admin','manager'].includes(window.currentProfile?.role)) return alert('حذف الشحنات متاح لمدير النظام أو المدير فقط.');
     const key = decodeURIComponent(String(id));
     if (!confirm('هل تريد حذف الشحنة ' + key + '؟')) return;
     deleteQueue.push({collection:'shipments',record_id:key});
+    persistDeleteQueue();
     if (typeof audit === 'function') audit('حذف شحنة',key);
     db.shipments = db.shipments.filter(x => String(x.id) !== key);
     save();
@@ -1268,6 +1294,7 @@
       ensureIdentityPanel();
       subscribeRealtime();
       window.renderAirNotifications();
+      window.dispatchEvent(new Event('air-logistic-profile-ready'));
       if (profile.role === 'admin') renderAccountRequests();
     } catch (error) {
       console.error(error); lockApp();
