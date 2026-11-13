@@ -1285,7 +1285,8 @@
     await renderIdentityPanel();
   }
 
-  async function activateSession(session) {
+  async function activateSession(session, options = {}) {
+    const loginEvent = options?.loginEvent === true;
     if (!session || !session.user) {
       window.currentProfile = null; activeAuthUser = null; lockApp(); return;
     }
@@ -1318,6 +1319,23 @@
           if (!ok) console.warn('Air Logistic: background push registration will retry on the next app open.');
         }).catch(error => console.warn('Air Logistic background push registration:',error));
       }
+      // Notify only after a real SIGNED_IN event and only after the account is active
+      // and the dashboard has loaded. Existing sessions and token refreshes stay silent.
+      if (loginEvent) {
+        (async () => {
+          try {
+            if ('Notification' in window && Notification.permission === 'granted') {
+              await window.registerAirPushSubscription?.();
+            }
+            const notice = await client.functions.invoke('air-logistic-push', {
+              body:{login_event:true}
+            });
+            if (notice.error) console.warn('Air Logistic owner login alert:',notice.error);
+          } catch (error) {
+            console.warn('Air Logistic owner login alert:',error);
+          }
+        })();
+      }
       if (isOwnerAccount(profile) && profile.role === 'admin') renderBackupApprovalRequests();
       else refreshBackupApprovalStatus();
       ensureIdentityPanel();
@@ -1338,7 +1356,7 @@
       say('تم التحقق من رابط الاستعادة. أدخل كلمة المرور الجديدة لتحديث حسابك.');
       return;
     }
-    activateSession(session);
+    activateSession(session,{loginEvent:event === 'SIGNED_IN'});
   },0));
   (async () => {
     lockApp(); showMode('login');
