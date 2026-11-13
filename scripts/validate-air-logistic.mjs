@@ -4,6 +4,7 @@ import assert from 'node:assert/strict';
 
 const read = (path) => fs.readFileSync(new URL(path, import.meta.url), 'utf8');
 const auth = read('../auth.js');
+const dispatch = read('../dispatch.js');
 const html = read('../index.html');
 const sw = read('../sw.js');
 const diagnostics = read('../diagnostics.js');
@@ -11,6 +12,7 @@ const diagnosticsMigration = read('../supabase/migrations/20261110113000_owner_o
 const auditMigration = read('../supabase/migrations/20261109051126_central_append_only_air_logistic_activity_audit.sql');
 
 new vm.Script(auth, { filename: 'auth.js' });
+new vm.Script(dispatch, { filename: 'dispatch.js' });
 new vm.Script(sw, { filename: 'sw.js' });
 new vm.Script(diagnostics, { filename: 'diagnostics.js' });
 
@@ -33,6 +35,18 @@ assert.ok(auth.includes('let activeAuthUser = null;'), 'auth state must be decla
 assert.ok(auth.includes('air_logistic_recovery_v1'), 'local recovery archive must remain enabled');
 assert.ok(!auth.includes("removeItem('air_logistic_full_v1')"), 'local recovery snapshot must never be silently removed');
 assert.ok(auth.includes('resolveAirCourierUserId'), 'authenticated courier resolver must exist');
+assert.ok(auth.includes("const courierPages = new Set(['home','courierPortal','chat','notifications'])"), 'courier accounts must be restricted to their dedicated app pages');
+assert.ok(auth.includes("#airMobileBottomNav button[data-mobile-page]"), 'courier restrictions must also cover mobile navigation');
+assert.ok(dispatch.includes('airDispatchPanel'), 'courier bulk dispatch portal must exist inside the Transfers section');
+assert.ok(dispatch.includes('window.resolveAirCourierUserId(target)'), 'dispatch must resolve the authenticated courier account before assignment');
+assert.ok(dispatch.includes('dispatchBatchId=batchId'), 'bulk dispatch must persist a batch reference on each issued shipment');
+assert.ok(dispatch.includes('type:\'صرف شحنة للمندوب\''), 'bulk dispatch must create an auditable transfer ledger row');
+assert.ok(dispatch.includes('refusalPaymentStatus'), 'refusal workflow must persist payment status');
+assert.ok(dispatch.includes('refusalPaidAmount'), 'refusal workflow must persist the amount paid');
+assert.ok(dispatch.includes('function') && dispatch.includes('ملاحظة التأجيل / الرفض'), 'home page must show an explicit postponement/refusal note');
+assert.ok(dispatch.includes('courier_user_id||\'\')===String(profile.user_id)'), 'courier manifest must scope shipments to the signed-in courier ID');
+assert.ok(dispatch.includes('const x=old?{...old,...values}:values'), 'shipment edit must preserve assignment and outcome metadata');
+assert.ok(dispatch.includes('window.renderTransfers=function()'), 'Transfers page must show dispatch rows in its activity ledger');
 assert.ok(auth.includes("String(item.courier_user_id || '')"), 'courier cloud sync must be scoped by authenticated user ID');
 assert.ok(auth.includes(".update({data:row.data,updated_by:profile.user_id})"), 'courier sync must update assigned rows without attempting an unauthorized insert');
 assert.ok(auth.includes(".eq('collection','shipments')"), 'courier sync updates must be restricted to shipment records');
@@ -71,6 +85,7 @@ assert.ok(html.includes('air-logo-page-transition'), 'page navigation must show 
 assert.ok(html.includes("#nav button[data-page],#airMobileBottomNav button[data-mobile-page]"), 'loader must cover desktop and mobile page navigation');
 assert.ok(/serviceWorker|service-worker/i.test(html), 'PWA service worker registration must remain present');
 assert.ok(/CACHE_NAME|cacheName/i.test(sw), 'service worker must define a cache version');
+assert.ok(sw.includes('"./dispatch.js"'), 'service worker app shell must cache the dispatch module');
 assert.match(sw, /const\s+CACHE_NAME\s*=\s*["']air-logistic-pwa-v\d+["']/, 'PWA cache name must be versioned so installed clients refresh the app shell');
 
 console.log('Air Logistic validation passed.');
