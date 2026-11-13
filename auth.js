@@ -970,6 +970,21 @@
     if (result.error) return alert('تعذر إرسال الرسالة. تأكد من اتصال الإنترنت وصلاحيات الحساب.');
     input.value = '';
     await window.renderAirChat();
+    // Send a background push to subscribed teammates; the sender is excluded server-side.
+    try {
+      const preview = message.replace(/\s+/g,' ').trim().slice(0,90);
+      const senderName = String(profile.full_name || 'عضو الفريق').slice(0,40);
+      const push = await client.functions.invoke('air-logistic-push', {
+        body:{
+          broadcast_event:true,
+          exclude_user_id:profile.user_id,
+          event_id:'chat-' + (crypto.randomUUID ? crypto.randomUUID() : Date.now() + '-' + Math.random().toString(36).slice(2)),
+          actions:[senderName + ': ' + preview]
+        }
+      });
+      if (push.error) console.warn('Air Logistic chat background push:',push.error);
+      else if (Number(push.data?.sent || 0) === 0) console.warn('Air Logistic chat push has no registered recipient devices:',push.data);
+    } catch (pushError) { console.warn('Air Logistic chat background push:',pushError); }
   };
 
   window.renderAirNotifications = async function() {
