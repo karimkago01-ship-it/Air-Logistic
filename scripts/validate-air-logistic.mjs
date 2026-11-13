@@ -24,7 +24,7 @@ inlineScripts.forEach((source, index) => {
 });
 
 assert.ok(diagnostics.includes('air_diagnostics') === false, 'diagnostics must use the dedicated private table');
-assert.ok(diagnostics.includes("const OWNER_ID = '0e7fe9b5-bc54-403b-9884-ad1facf5efe0'"), 'diagnostics capture must be restricted to the owner account');
+assert.match(diagnostics, /const\s+OWNER_ID\s*=\s*'0e7fe9b5-bc54-403b-9884-ad1facf5efe0'\s*;/, 'diagnostics capture must be restricted to the owner account');
 assert.ok(diagnostics.includes("from('app_diagnostics')"), 'runtime diagnostics must be stored in the private diagnostics table');
 assert.ok(diagnosticsMigration.includes('enable row level security'), 'diagnostics table must enforce RLS');
 assert.ok(diagnosticsMigration.includes('app_diagnostics_owner_read') && diagnosticsMigration.includes('app_diagnostics_owner_insert'), 'diagnostics access must be owner-only');
