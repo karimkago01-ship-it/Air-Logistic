@@ -772,6 +772,11 @@ img,video,canvas,svg{max-width:100%}
  <label>رقم الشحنة<input name="shipmentId" required></label><label>المندوب الجديد<select name="toAgent" id="transferAgent" required><option value="">اختر المندوب</option></select></label>
  <label class="span2">سبب التحويل<input name="reason" required placeholder="مثال: تغيير منطقة التغطية"></label>
  <div class="span4"><button class="primary">تسجيل التحويل</button></div></form></div>
+ <div class="panel"><h2>بوابة إسناد الشحنات للمندوبين</h2>
+  <p class="muted">اختر المندوب لمراجعة الشحنات المسندة إليه، والمبالغ المطلوب تحصيلها، وما تم تحصيله والمتبقي. الإسناد لا يُعتمد إذا تعذر ربط المندوب بحسابه النشط.</p>
+  <label>المندوب<select id="transferCourierPicker" onchange="renderTransfers()"><option value="">كل المندوبين</option></select></label>
+  <div id="transferCourierManifest"></div>
+ </div>
  <div class="panel"><h2>سجل التحويلات وحركة الشحنات</h2><div class="tablewrap" id="transferTable"></div></div>
 </section>
 
@@ -1076,7 +1081,11 @@ function renderRecentShipments(){
   const status=String(x.status||last.toStatus||last.event||'غير محددة');
   const movement=String(last.reason||(last.fromStatus&&last.toStatus?last.fromStatus+' ← '+last.toStatus:(last.event&&last.event!==status?last.event:'')));
   const at=last.at?new Date(last.at).toLocaleString('ar-EG'):'';
-  return '<tr><td>'+esc(x.id||'')+'</td><td>'+esc(x.customer||'')+'</td><td>'+esc(x.to||'')+'</td><td><span class="tag recent-status">'+esc(status)+'</span></td><td>'+(movement?'<small class="muted">آخر حركة: '+esc(movement)+'</small>':'<small class="muted">لا توجد تفاصيل حركة إضافية</small>')+(at?'<br><small class="muted">'+esc(at)+'</small>':'')+'</td></tr>';
+  const needsContact=/مؤجل|لم يتم الرد|لم يتم التسليم|غير مسلّم|غير مسلم|مرفوض/i.test(status);
+  const reason=String(x.failureReason||last.reason||x.notes||'');
+  const phone=String(x.phone||'').replace(/[^0-9+]/g,'');
+  const contact=needsContact?'<div class="recent-meta"><b>سبب الحالة:</b> '+esc(reason||'لم يُسجل سبب بعد')+'</div>'+(phone?'<div><a class="light" href="tel:'+esc(phone)+'" aria-label="اتصال بالعميل">☎ اتصال بالعميل</a></div>':'<small class="muted">لا يوجد رقم هاتف مسجل</small>'):'';
+  return '<tr><td>'+esc(x.id||'')+'</td><td>'+esc(x.customer||'')+'</td><td>'+esc(x.to||'')+'</td><td><span class="tag recent-status">'+esc(status)+'</span></td><td>'+(movement?'<small class="muted">آخر حركة: '+esc(movement)+'</small>':'<small class="muted">لا توجد تفاصيل حركة إضافية</small>')+contact+(at?'<br><small class="muted">'+esc(at)+'</small>':'')+'</td></tr>';
  }).join('');
  el.innerHTML='<div class="tablewrap"><table><thead><tr><th>رقم الشحنة</th><th>العميل</th><th>الوجهة</th><th>الحالة الكاملة</th><th>تفاصيل آخر حركة</th></tr></thead><tbody>'+body+'</tbody></table></div>';
 }
@@ -1430,9 +1439,29 @@ async function commitImport(){let good=importPreviewRows.filter(x=>!x.errors.len
 function downloadImportErrors(){let bad=importPreviewRows.filter(x=>x.errors.length);if(!bad.length)return alert('لا توجد أخطاء');let rows=[['صف الملف','رقم الشحنة','الأخطاء'],...bad.map(x=>[x.row,x.data.id,x.errors.join('؛ ')])];download('\ufeff'+rows.map(r=>r.map(v=>'"'+String(v).replace(/"/g,'""')+'"').join(',')).join('\r\n'),'air-logistic-import-errors.csv','text/csv;charset=utf-8')}
 function clearImport(){importWorkbook=null;importRows=[];importPreviewRows=[];document.getElementById('excelFile').value='';document.getElementById('mappingPanel').classList.add('hidden');document.getElementById('previewPanel').classList.add('hidden');document.getElementById('sheetPickerWrap').classList.add('hidden');document.getElementById('importStatus').textContent='اختر ملفاً لبدء القراءة.'}
 function renderTransfers(){
- const list=db.transfers||[];
- if(!list.length){document.getElementById('transferTable').innerHTML='<p class="muted">لا توجد تحويلات مسجلة.</p>';return}
- document.getElementById('transferTable').innerHTML='<table><thead><tr><th>رقم الشحنة</th><th>من مندوب</th><th>إلى مندوب</th><th>السبب</th><th>التاريخ والوقت</th><th>إجراء</th></tr></thead><tbody>'+list.map((t,i)=>`<tr><td>${esc(t.shipmentId)}</td><td>${esc(t.fromAgent||'—')}</td><td>${esc(t.toAgent)}</td><td>${esc(t.reason)}</td><td>${esc(new Date(t.at).toLocaleString('ar-EG'))}</td><td><button class="light" type="button" onclick="editTransfer(${i})">تعديل التوزيع</button></td></tr>`).join('')+'</tbody></table>';
+ const picker=document.getElementById('transferCourierPicker');
+ const selected=picker?.value||'';
+ if(picker){
+  picker.innerHTML='<option value="">كل المندوبين</option>'+(db.drivers||[]).filter(d=>d.status!=='غير نشط').map(d=>'<option value="'+esc(d.name)+'">'+esc(d.name)+'</option>').join('');
+  picker.value=selected;
+ }
+ const assigned=(db.shipments||[]).filter(s=>s.agent&&(!selected||s.agent===selected)&&!['تم التسليم','مرتجع','ملغاة','مرفوضة'].includes(String(s.status||'')));
+ const manifest=document.getElementById('transferCourierManifest');
+ if(manifest){
+  if(!assigned.length) manifest.innerHTML='<p class="muted">لا توجد شحنات مفتوحة مسندة إلى هذا المندوب.</p>';
+  else manifest.innerHTML='<div class="grid">'+[
+   ['عدد الشحنات',assigned.length],
+   ['إجمالي COD المطلوب',money(assigned.reduce((n,s)=>n+(+s.cod||0),0))],
+   ['المحصل',money(assigned.reduce((n,s)=>n+(+s.collected||0),0))],
+   ['المتبقي',money(assigned.reduce((n,s)=>n+Math.max(0,(+s.cod||0)-(+s.collected||0)),0))]
+  ].map(x=>'<div class="kpi"><small>'+x[0]+'</small><strong>'+x[1]+'</strong></div>').join('')+'</div>'+
+  '<div class="tablewrap"><table><thead><tr><th>رقم الشحنة</th><th>العميل</th><th>الهاتف</th><th>الوجهة</th><th>الحالة</th><th>COD</th><th>المحصل</th><th>المتبقي</th></tr></thead><tbody>'+
+  assigned.map(s=>'<tr><td>'+esc(s.id)+'</td><td>'+esc(s.customer)+'</td><td>'+esc(s.phone)+'</td><td>'+esc(s.to)+'</td><td>'+esc(s.status)+'</td><td>'+money(s.cod)+'</td><td>'+money(s.collected)+'</td><td>'+money(Math.max(0,(+s.cod||0)-(+s.collected||0)))+'</td></tr>').join('')+'</tbody></table></div>';
+ }
+ const list=db.transfers||[],host=document.getElementById('transferTable');
+ if(!host)return;
+ if(!list.length){host.innerHTML='<p class="muted">لا توجد تحويلات مسجلة.</p>';return}
+ host.innerHTML='<table><thead><tr><th>رقم الشحنة</th><th>من مندوب</th><th>إلى مندوب</th><th>السبب</th><th>التاريخ والوقت</th><th>إجراء</th></tr></thead><tbody>'+list.map((t,i)=>`<tr><td>${esc(t.shipmentId)}</td><td>${esc(t.fromAgent||'—')}</td><td>${esc(t.toAgent)}</td><td>${esc(t.reason)}</td><td>${esc(new Date(t.at).toLocaleString('ar-EG'))}</td><td><button class="light" type="button" onclick="editTransfer(${i})">تعديل التوزيع</button></td></tr>`).join('')+'</tbody></table>';
 }
 async function editTransfer(index){
  const t=(db.transfers||[])[index];if(!t)return;
