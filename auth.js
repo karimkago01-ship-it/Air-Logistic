@@ -498,6 +498,56 @@
     return result.data.user_id;
   };
 
+  async function renderAirOwnerGraceRequests() {
+    const profile = window.currentProfile;
+    const panel = $('airGraceOwnerPanel');
+    const target = $('airGraceOwnerList');
+    if (!panel || !target) return;
+    const owner = profile?.active && profile.user_id === IDENTITY_GRACE_APPROVER_USER_ID && profile.role === 'admin';
+    panel.style.display = owner ? 'block' : 'none';
+    if (!owner) return;
+    target.textContent = 'جارٍ تحميل طلبات المهلة...';
+    const result = await client.from('identity_access_requests')
+      .select('id,user_id,status,requested_at')
+      .eq('workspace_id',profile.workspace_id)
+      .eq('status','requested')
+      .order('requested_at',{ascending:false})
+      .limit(100);
+    if (result.error) {
+      target.textContent = 'تعذر تحميل طلبات المهلة. تحقق من الاتصال والصلاحيات.';
+      console.error('Air Logistic grace requests:',result.error);
+      return;
+    }
+    const requests = result.data || [];
+    if (!requests.length) {
+      target.innerHTML = '<p class="muted">لا توجد طلبات مهلة 15 يوم معلقة حاليًا.</p>';
+      return;
+    }
+    const userIds = [...new Set(requests.map(item => item.user_id))];
+    const people = await client.from('profiles').select('user_id,full_name')
+      .eq('workspace_id',profile.workspace_id).in('user_id',userIds);
+    if (people.error) {
+      target.textContent = 'تم العثور على الطلبات، لكن تعذر تحميل أسماء أصحابها.';
+      return;
+    }
+    const names = new Map((people.data || []).map(person => [person.user_id,person.full_name || 'حساب']));
+    target.innerHTML = '<div class="tablewrap"><table><thead><tr><th>اسم المستخدم</th><th>تاريخ الطلب</th><th>الإجراء</th></tr></thead><tbody>' +
+      requests.map(item => '<tr><td><b>' + esc(names.get(item.user_id) || 'حساب') + '</b></td><td>' +
+        esc(new Date(item.requested_at).toLocaleString('ar-EG')) +
+        '</td><td><div style="display:flex;gap:7px;flex-wrap:wrap"><button class="success" type="button" data-owner-grace-approve="' + esc(item.id) + '">موافقة 15 يوم</button><button type="button" data-owner-grace-reject="' + esc(item.id) + '" style="background:#fff0f0;color:#a83232;border:1px solid #dba5a5;border-radius:8px;padding:8px 12px">رفض</button></div></td></tr>'
+      ).join('') + '</tbody></table></div>';
+    target.querySelectorAll('[data-owner-grace-approve]').forEach(button => button.addEventListener('click', async () => {
+      button.disabled = true;
+      await reviewIdentityGrace(button.dataset.ownerGraceApprove,'approved');
+      await renderAirOwnerGraceRequests();
+    }));
+    target.querySelectorAll('[data-owner-grace-reject]').forEach(button => button.addEventListener('click', async () => {
+      button.disabled = true;
+      await reviewIdentityGrace(button.dataset.ownerGraceReject,'rejected');
+      await renderAirOwnerGraceRequests();
+    }));
+  }
+
   async function renderAccountRequests() {
     const pendingBox = $('pendingAccounts'), approvedBox = $('approvedAccounts');
     if (!pendingBox || !approvedBox) return;
@@ -515,6 +565,7 @@
       approvedBox.textContent = '';
       return;
     }
+    await renderAirOwnerGraceRequests();
     const users = result.data || [];
     const pending = users.filter(x => !x.active);
     const registered = users;
