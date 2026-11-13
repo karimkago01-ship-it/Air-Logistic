@@ -186,7 +186,7 @@
       lockApp(); say('تم تسجيل الخروج بأمان.');
     });
     // Couriers receive a dedicated, self-only workspace. Database RLS remains the security boundary.
-    const courierPages = new Set(['home','courierPortal','chat','notifications']);
+    const courierPages = new Set(['home','portalDispatch','portalServices','courierPortal','chat','notifications']);
     document.querySelectorAll('#nav button[data-page],#airMobileBottomNav button[data-mobile-page]').forEach(button => {
       const page = button.dataset.page || button.dataset.mobilePage;
       if (profile.role === 'courier' && !courierPages.has(page)) {
