@@ -35,7 +35,12 @@ assert.ok(auth.includes('let activeAuthUser = null;'), 'auth state must be decla
 assert.ok(auth.includes('air_logistic_recovery_v1'), 'local recovery archive must remain enabled');
 assert.ok(!auth.includes("removeItem('air_logistic_full_v1')"), 'local recovery snapshot must never be silently removed');
 assert.ok(auth.includes('resolveAirCourierUserId'), 'authenticated courier resolver must exist');
-assert.ok(auth.includes("const courierPages = new Set(['home','courierPortal','chat','notifications'])"), 'courier accounts must be restricted to their dedicated app pages');
+assert.ok(auth.includes("const courierPages = new Set(['home','portalDispatch','portalMore','courierPortal','chat','notifications'])"), 'courier accounts must be restricted to their dedicated pages within the five-portal navigation');
+assert.equal((html.match(/class="air-main-portal/g)||[]).length,5,'main navigation must contain exactly five top-level portals');
+for (const page of ['home','portalShipments','portalDispatch','portalFinance','portalMore']) assert.ok(html.includes('id="'+page+'"'), 'required five-portal destination must exist: '+page);
+assert.ok(html.includes("{page:'portalMore',icon:'☰',label:'المزيد'}"), 'mobile navigation must expose the fifth More destination');
+assert.ok(html.includes('data-subpage="scanner"'), 'scanner tools must remain accessible within the consolidated portals');
+assert.ok(html.includes('data-subpage="customers"') && html.includes('data-subpage="notifications"'), 'directory and service tools must remain accessible within More');
 assert.ok(auth.includes("#airMobileBottomNav button[data-mobile-page]"), 'courier restrictions must also cover mobile navigation');
 assert.ok(dispatch.includes('airDispatchPanel'), 'courier bulk dispatch portal must exist inside the Transfers section');
 assert.ok(dispatch.includes('window.resolveAirCourierUserId(target)'), 'dispatch must resolve the authenticated courier account before assignment');
