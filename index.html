@@ -584,6 +584,16 @@ img,video,canvas,svg{max-width:100%}
 @media(max-width:680px){.air-home-shortcut-grid{grid-template-columns:repeat(3,minmax(0,1fr));gap:7px}.air-home-shortcut{min-height:105px;padding:10px 8px;gap:5px}.air-home-shortcut b{font-size:11px}.air-home-shortcut small{font-size:9px}}
 @media(max-width:360px){.air-home-shortcut-grid{grid-template-columns:1fr}.air-home-shortcut{min-height:0}}
 </style>
+
+<style id="air-courier-settlement-v2">
+.air-courier-settlement-card{margin:12px 0;border:1px solid #dce6f0}
+.air-courier-settlement-card h3{margin:0}
+.air-courier-settlement-card details{margin-top:12px}
+.air-courier-settlement-card summary{cursor:pointer;font-weight:700;color:#175b91;padding:10px 0}
+.air-courier-settlement-card .grid{grid-template-columns:repeat(auto-fit,minmax(135px,1fr));gap:8px}
+.air-courier-settlement-card .kpi{min-width:0}
+@media(max-width:600px){.air-courier-settlement-card .grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
+</style>
 </head>
 <body class="auth-locked">
 
@@ -714,7 +724,7 @@ img,video,canvas,svg{max-width:100%}
 </div>
 </section>
 <section id="customers" class="page hidden"><div class="panel"><h2>إضافة عميل</h2><form id="customerForm" class="formgrid"><label>اسم العميل<input name="name" required></label><label>الهاتف<input name="phone"></label><label>المحافظة / المدينة<input name="city"></label><label>سعر الشحن المتفق عليه<input name="shippingRate" type="number" min="0" step=".01"></label><label>نسبة التوصيل %<input name="deliveryPercent" type="number" min="0" max="100" step=".01"></label><label>رسوم المرتجع<input name="returnPolicy" type="number" min="0" step=".01"></label><label>دورة التسوية<select name="settlementCycle"><option>كل 3 أيام</option><option>أسبوعي</option><option>شهري</option></select></label><label class="span2">العنوان<input name="address"></label><div class="span4"><button class="primary">حفظ العميل</button></div></form></div><div class="panel"><h2>دليل العملاء</h2><div class="tablewrap" id="customerTable"></div></div></section>
-<section id="drivers" class="page hidden"><div class="panel"><h2>إضافة سائق</h2><form id="driverForm" class="formgrid"><label>اسم السائق<input name="name" required></label><label>الهاتف<input name="phone"></label><label>رقم الهوية<input name="code"></label><label>نوع المركبة<input name="vehicleType" placeholder="موتوسيكل / سيارة"></label><label>العهدة المالية<input name="cashCustody" type="number" min="0" step=".01"></label><label>الحد الائتماني<input name="creditLimit" type="number" min="0" step=".01"></label><label>عمولة لكل شحنة<input name="commission" type="number" min="0" step=".01"></label><label>الحالة<select name="status"><option>نشط</option><option>غير نشط</option></select></label><div class="span4"><button class="primary">حفظ السائق</button></div></form></div><div class="panel"><h2>السائقون</h2><div class="tablewrap" id="driverTable"></div></div></section>
+<section id="drivers" class="page hidden"><div class="panel"><h2>إضافة سائق</h2><form id="driverForm" class="formgrid"><label>اسم السائق<input name="name" required></label><label>الهاتف<input name="phone"></label><label>رقم الهوية<input name="code"></label><label>نوع المركبة<input name="vehicleType" placeholder="موتوسيكل / سيارة"></label><label>العهدة المالية<input name="cashCustody" type="number" min="0" step=".01"></label><label>الحد الائتماني<input name="creditLimit" type="number" min="0" step=".01"></label><label>عمولة لكل شحنة<input name="commission" type="number" min="0" step=".01"></label><label class="span2">تعليمات خاصة بالمندوب<textarea name="instructions" rows="2" placeholder="تعليمات التسليم والتحصيل والتعامل مع الشحنات"></textarea></label><label>الحالة<select name="status"><option>نشط</option><option>غير نشط</option></select></label><div class="span4"><button class="primary">حفظ السائق</button></div></form></div><div class="panel"><h2>السائقون</h2><div class="tablewrap" id="driverTable"></div></div></section>
 <section id="vehicles" class="page hidden"><div class="panel"><h2>إضافة سيارة</h2><form id="vehicleForm" class="formgrid"><label>رقم اللوحة<input name="plate" required></label><label>الموديل<input name="model"></label><label>السائق المسؤول<input name="driver"></label><label>الصيانة القادمة<input name="service" type="date"></label><div class="span4"><button class="primary">حفظ السيارة</button></div></form></div><div class="panel"><h2>السيارات</h2><div class="tablewrap" id="vehicleTable"></div></div></section>
 <section id="finance" class="page hidden">
  <div class="panel"><h2>تسجيل مصروف</h2><form id="expenseForm" class="formgrid"><label>التاريخ<input name="date" type="date"></label><label>نوع المصروف<select name="type"><option>وقود</option><option>صيانة</option><option>رواتب</option><option>إيجار</option><option>تغليف</option><option>اتصالات</option><option>أخرى</option></select></label><label>البيان<input name="desc" required></label><label>القيمة (جنيه)<input name="amount" type="number" min="0" step=".01" required></label><div class="span4"><button class="primary">حفظ المصروف</button></div></form></div>
@@ -1465,25 +1475,50 @@ function renderTransfers(){
  const selected=isCourier?'__current_courier__':(picker?.value||'');
  if(picker){
   if(pickerLabel)pickerLabel.style.display=isCourier?'none':'';
+  const old=picker.value;
   picker.innerHTML='<option value="">كل المندوبين</option>'+(db.drivers||[]).filter(d=>d.status!=='غير نشط').map(d=>'<option value="'+esc(d.name)+'">'+esc(d.name)+'</option>').join('');
-  picker.value=isCourier?'':selected;
+  picker.value=isCourier?'':old;
  }
  if(historyPanel)historyPanel.style.display=isCourier?'none':'';
- const assigned=(db.shipments||[]).filter(s=>s.agent&&(
-  isCourier ? !!profile.user_id&&String(s.courier_user_id||'')===String(profile.user_id) :
-  (!selected||s.agent===selected)
- )&&!['تم التسليم','مرتجع','مرتجعة','ملغاة','مرفوضة'].includes(String(s.status||'')));
  const manifest=document.getElementById('transferCourierManifest');
  if(manifest){
-  if(!assigned.length) manifest.innerHTML='<p class="muted">لا توجد شحنات مفتوحة مسندة إلى هذا المندوب.</p>';
-  else manifest.innerHTML='<div class="grid">'+[
-   ['عدد الشحنات',assigned.length],
-   ['إجمالي COD المطلوب',money(assigned.reduce((n,s)=>n+(+s.cod||0),0))],
-   ['المحصل',money(assigned.reduce((n,s)=>n+(+s.collected||0),0))],
-   ['المتبقي',money(assigned.reduce((n,s)=>n+Math.max(0,(+s.cod||0)-(+s.collected||0)),0))]
-  ].map(x=>'<div class="kpi"><small>'+x[0]+'</small><strong>'+x[1]+'</strong></div>').join('')+'</div>'+
-  '<div class="tablewrap"><table><thead><tr><th>رقم الشحنة</th><th>العميل</th><th>الهاتف</th><th>الوجهة</th><th>الحالة</th><th>COD</th><th>المحصل</th><th>المتبقي</th></tr></thead><tbody>'+
-  assigned.map(s=>'<tr><td>'+esc(s.id)+'</td><td>'+esc(s.customer)+'</td><td>'+esc(s.phone)+'</td><td>'+esc(s.to)+'</td><td>'+esc(s.status)+'</td><td>'+money(s.cod)+'</td><td>'+money(s.collected)+'</td><td>'+money(Math.max(0,(+s.cod||0)-(+s.collected||0)))+'</td></tr>').join('')+'</tbody></table></div>';
+  const drivers=(db.drivers||[]).filter(d=>d.status!=='غير نشط'&&(!selected||d.name===selected));
+  const visibleDrivers=isCourier?drivers.filter(d=>(db.shipments||[]).some(s=>s.agent===d.name&&String(s.courier_user_id||'')===String(profile.user_id||''))):drivers;
+  const allRemits=safeArr('remits');
+  manifest.innerHTML=visibleDrivers.length?visibleDrivers.map(d=>{
+   const shipments=(db.shipments||[]).filter(s=>s.agent===d.name&&(!isCourier||String(s.courier_user_id||'')===String(profile.user_id||'')));
+   const delivered=shipments.filter(s=>s.status==='تم التسليم');
+   const active=shipments.filter(s=>!['تم التسليم','مرتجع','مرتجعة','ملغاة','مرفوضة'].includes(String(s.status||'')));
+   const returned=shipments.filter(s=>['مرتجع','مرتجعة','مرفوضة','ملغاة'].includes(String(s.status||'')));
+   const cod=shipments.reduce((n,s)=>n+(+s.cod||0),0);
+   const collected=shipments.reduce((n,s)=>n+(+s.collected||0),0);
+   const outstanding=shipments.filter(s=>!['تم التسليم','مرتجع','مرتجعة','ملغاة','مرفوضة'].includes(String(s.status||''))).reduce((n,s)=>n+Math.max(0,(+s.cod||0)-(+s.collected||0)),0);
+   const remitted=allRemits.filter(r=>String(r.courier||'').trim()===String(d.name).trim()).reduce((n,r)=>n+(+r.amount||0),0);
+   const commission=delivered.reduce((n,s)=>n+(Number.isFinite(+d.commission)&&+d.commission>0?+d.commission:0),0);
+   const custodyBalance=collected-remitted;
+   const netAfterCommission=custodyBalance-commission;
+   const statusCounts={};shipments.forEach(s=>{const st=String(s.status||'غير محددة');statusCounts[st]=(statusCounts[st]||0)+1});
+   const journey=shipments.slice().sort((a,b)=>String(b.date||'').localeCompare(String(a.date||''))).map(s=>{
+    const history=Array.isArray(s.history)?s.history:[];
+    const last=history[0]||{};
+    const reason=String(s.failureReason||last.reason||s.notes||'');
+    return '<tr><td>'+esc(s.id)+'</td><td>'+esc(s.customer||'—')+'</td><td>'+esc(s.status||'غير محددة')+'</td><td>'+money(s.cod)+'</td><td>'+money(s.collected)+'</td><td>'+esc(reason||'—')+'</td><td>'+esc(last.at?new Date(last.at).toLocaleString('ar-EG'):'—')+'</td></tr>';
+   }).join('');
+   const journeyRows=Object.entries(statusCounts).map(([st,count])=>'<span class="tag">'+esc(st)+': '+count+'</span>').join(' ');
+   const instructionText=String(d.instructions||'').trim();
+   const policyText=String(getPolicy().extra||'').trim();
+   return '<div class="panel air-courier-settlement-card"><div class="row" style="justify-content:space-between;align-items:center"><h3>'+esc(d.name)+'</h3><span class="tag">'+shipments.length+' شحنة</span></div>'+
+    '<div class="grid">'+[
+     ['شحنات قيد التنفيذ',active.length],['تم التسليم',delivered.length],['مرتجع / ملغي',returned.length],['إجمالي COD',money(cod)],
+     ['المحصل على الشحنات',money(collected)],['التوريدات المسجلة',money(remitted)],['عمولة المندوب المستحقة',money(commission)],['صافي العهدة بعد العمولة',money(netAfterCommission)]
+    ].map(x=>'<div class="kpi"><small>'+x[0]+'</small><strong>'+x[1]+'</strong></div>').join('')+'</div>'+
+    '<p><b>المتبقي للتحصيل من الشحنات المفتوحة:</b> '+money(outstanding)+' | <b>فرق العهدة قبل العمولة:</b> '+money(custodyBalance)+'</p>'+
+    '<div class="recent-meta"><b>الحالات في الرحلة:</b> '+(journeyRows||'لا توجد حركات مسجلة')+'</div>'+
+    '<div class="recent-meta"><b>تعليمات المندوب:</b> '+esc(instructionText||'لا توجد تعليمات خاصة مسجلة')+'</div>'+
+    (policyText?'<div class="recent-meta"><b>تعليمات التشغيل العامة:</b> '+esc(policyText)+'</div>':'')+
+    '<details><summary>تفاصيل الشحنات ومسار كل شحنة ('+shipments.length+')</summary><div class="tablewrap"><table><thead><tr><th>رقم الشحنة</th><th>العميل</th><th>الحالة</th><th>COD</th><th>المحصل</th><th>ملاحظة / سبب</th><th>آخر حركة</th></tr></thead><tbody>'+(journey||'<tr><td colspan="7">لا توجد شحنات مسندة.</td></tr>')+'</tbody></table></div></details>'+
+    '<p class="muted">التسوية تقديرية من بيانات الشحنات والتوريدات المسجلة: صافي العهدة = المحصل − التوريدات − عمولة الشحنات المسلّمة. راجع الإيصالات قبل اعتماد أي مبلغ نهائي.</p></div>';
+  }).join(''):'<p class="muted">لا توجد شحنات مسندة إلى المندوب المحدد.</p>';
  }
  const list=db.transfers||[],host=document.getElementById('transferTable');
  if(!host)return;
