@@ -71,6 +71,7 @@ assert.ok(html.includes('air-logo-page-transition'), 'page navigation must show 
 assert.ok(html.includes("#nav button[data-page],#airMobileBottomNav button[data-mobile-page]"), 'loader must cover desktop and mobile page navigation');
 assert.ok(/serviceWorker|service-worker/i.test(html), 'PWA service worker registration must remain present');
 assert.ok(/CACHE_NAME|cacheName/i.test(sw), 'service worker must define a cache version');
+assert.match(sw, /const\s+CACHE_NAME\s*=\s*["']air-logistic-pwa-v\d+["']/, 'PWA cache name must be versioned so installed clients refresh the app shell');
 
 console.log('Air Logistic validation passed.');
 console.log('Validated auth.js, sw.js, and ' + inlineScripts.length + ' inline application scripts.');
