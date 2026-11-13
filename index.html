@@ -1439,13 +1439,21 @@ async function commitImport(){let good=importPreviewRows.filter(x=>!x.errors.len
 function downloadImportErrors(){let bad=importPreviewRows.filter(x=>x.errors.length);if(!bad.length)return alert('لا توجد أخطاء');let rows=[['صف الملف','رقم الشحنة','الأخطاء'],...bad.map(x=>[x.row,x.data.id,x.errors.join('؛ ')])];download('\ufeff'+rows.map(r=>r.map(v=>'"'+String(v).replace(/"/g,'""')+'"').join(',')).join('\r\n'),'air-logistic-import-errors.csv','text/csv;charset=utf-8')}
 function clearImport(){importWorkbook=null;importRows=[];importPreviewRows=[];document.getElementById('excelFile').value='';document.getElementById('mappingPanel').classList.add('hidden');document.getElementById('previewPanel').classList.add('hidden');document.getElementById('sheetPickerWrap').classList.add('hidden');document.getElementById('importStatus').textContent='اختر ملفاً لبدء القراءة.'}
 function renderTransfers(){
+ const profile=window.currentProfile||{},isCourier=profile.role==='courier';
  const picker=document.getElementById('transferCourierPicker');
- const selected=picker?.value||'';
+ const pickerLabel=picker?.closest('label');
+ const historyPanel=document.getElementById('transferTable')?.closest('.panel');
+ const selected=isCourier?'__current_courier__':(picker?.value||'');
  if(picker){
+  if(pickerLabel)pickerLabel.style.display=isCourier?'none':'';
   picker.innerHTML='<option value="">كل المندوبين</option>'+(db.drivers||[]).filter(d=>d.status!=='غير نشط').map(d=>'<option value="'+esc(d.name)+'">'+esc(d.name)+'</option>').join('');
-  picker.value=selected;
+  picker.value=isCourier?'':selected;
  }
- const assigned=(db.shipments||[]).filter(s=>s.agent&&(!selected||s.agent===selected)&&!['تم التسليم','مرتجع','ملغاة','مرفوضة'].includes(String(s.status||'')));
+ if(historyPanel)historyPanel.style.display=isCourier?'none':'';
+ const assigned=(db.shipments||[]).filter(s=>s.agent&&(
+  isCourier ? !!profile.user_id&&String(s.courier_user_id||'')===String(profile.user_id) :
+  (!selected||s.agent===selected)
+ )&&!['تم التسليم','مرتجع','مرتجعة','ملغاة','مرفوضة'].includes(String(s.status||'')));
  const manifest=document.getElementById('transferCourierManifest');
  if(manifest){
   if(!assigned.length) manifest.innerHTML='<p class="muted">لا توجد شحنات مفتوحة مسندة إلى هذا المندوب.</p>';
