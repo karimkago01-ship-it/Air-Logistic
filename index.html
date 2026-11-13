@@ -1049,14 +1049,19 @@ function financeRange(){
  const inRange=d=>{const day=String(d||'').slice(0,10);return day>=from&&day<=to};
  const shipments=(db.shipments||[]).filter(s=>inRange(s.date||s.created_at));
  const expenses=(db.expenses||[]).filter(e=>inRange(e.date));
- return {shipments,expenses,fees:shipments.reduce((n,s)=>n+(+s.fee||0),0),cod:shipments.reduce((n,s)=>n+(+s.cod||0),0),collected:shipments.reduce((n,s)=>n+(+s.collected||0),0),expensesTotal:expenses.reduce((n,e)=>n+(+e.amount||0),0)};
+ const remits=(db.remits||[]).filter(x=>inRange(x.date||x.at));
+ return {shipments,expenses,remits,fees:shipments.reduce((n,s)=>n+(+s.fee||0),0),cod:shipments.reduce((n,s)=>n+(+s.cod||0),0),collected:shipments.reduce((n,s)=>n+(+s.collected||0),0),expensesTotal:expenses.reduce((n,e)=>n+(+e.amount||0),0)};
 }
 function renderFinanceReport(){
  const el=document.getElementById('financeReport');if(!el)return;
  const r=financeRange(),pending=Math.max(0,r.cod-r.collected);
  const group=(items,key,amount)=>{const m=new Map();items.forEach(x=>{const k=String(x[key]||'غير محدد');m.set(k,(m.get(k)||0)+amount(x))});return [...m.entries()].sort((a,b)=>b[1]-a[1])};
  const merchants=group(r.shipments,'merchant',x=>+x.cod||0),couriers=group(r.shipments,'agent',x=>+x.collected||0);
- el.innerHTML='<div class="grid">'+[['رسوم الشحن',money(r.fees)],['COD المطلوب',money(r.cod)],['المحصل فعليًا',money(r.collected)],['المتبقي للتحصيل',money(pending)],['المصروفات',money(r.expensesTotal)],['صافي رسوم الشحن بعد المصروفات',money(r.fees-r.expensesTotal)]].map(x=>'<div class="kpi"><small>'+x[0]+'</small><strong>'+x[1]+'</strong></div>').join('')+'</div><h3>تحصيل حسب التاجر</h3>'+table(['التاجر','قيمة COD'],merchants.map(x=>[x[0],money(x[1])]))+'<h3>تحصيل حسب المندوب</h3>'+table(['المندوب','المحصل'],couriers.map(x=>[x[0],money(x[1])]));
+ const cashMap=new Map();
+ r.shipments.forEach(s=>{const name=String(s.agent||'غير محدد');const row=cashMap.get(name)||{collected:0,remitted:0};row.collected+=(+s.collected||0);cashMap.set(name,row);});
+ r.remits.forEach(item=>{const name=String(item.courier||'غير محدد');const row=cashMap.get(name)||{collected:0,remitted:0};row.remitted+=(+item.amount||0);cashMap.set(name,row);});
+ const cashRows=[...cashMap.entries()].sort((a,b)=>(b[1].collected-b[1].remitted)-(a[1].collected-a[1].remitted)).map(([name,row])=>[name,money(row.collected),money(row.remitted),money(row.collected-row.remitted)]);
+ el.innerHTML='<div class="grid">'+[['رسوم الشحن',money(r.fees)],['COD المطلوب',money(r.cod)],['المحصل فعليًا',money(r.collected)],['المتبقي للتحصيل',money(pending)],['المصروفات',money(r.expensesTotal)],['صافي رسوم الشحن بعد المصروفات',money(r.fees-r.expensesTotal)]].map(x=>'<div class="kpi"><small>'+x[0]+'</small><strong>'+x[1]+'</strong></div>').join('')+'</div><h3>تحصيل حسب التاجر</h3>'+table(['التاجر','قيمة COD'],merchants.map(x=>[x[0],money(x[1])]))+'<h3>تحصيل حسب المندوب</h3>'+table(['المندوب','المحصل'],couriers.map(x=>[x[0],money(x[1])]))+'<h3>مطابقة عهدة المندوبين — تقرير مراجعة</h3><p class="muted">الفرق = المحصل المسجل على الشحنات − التوريدات المسجلة. راجع الإيصالات والتواريخ قبل اعتماد أي تسوية؛ هذا التقرير لا يعدّل الأرصدة.</p>'+table(['المندوب','المحصل من الشحنات','إجمالي التوريدات','الفرق غير المورد'],cashRows);
 }
 function exportFinanceReport(){
  const r=financeRange(),rows=[['رقم الشحنة','التاريخ','التاجر','المندوب','رسوم الشحن','COD','المحصل','المتبقي','الحالة'],...r.shipments.map(s=>[s.id,s.date,s.merchant,s.agent,s.fee,s.cod,s.collected,Math.max(0,(+s.cod||0)-(+s.collected||0)),s.status]),[],['مصروف','التاريخ','النوع','البيان','القيمة'],...r.expenses.map(e=>['',e.date,e.type,e.desc,e.amount])];
