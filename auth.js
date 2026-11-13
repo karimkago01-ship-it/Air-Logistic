@@ -1106,12 +1106,72 @@
       else if (!hasUnread) dot?.remove();
     }
     if (status) status.textContent = 'لديك '+unread+' إشعار غير مقروء من أصل '+rows.length;
-    box.innerHTML = rows.length ? rows.map(row =>
-      '<article class="air-notification'+(!row.read_at?' unread':'')+'"><div class="air-notification-head"><b>'+airHtml(row.title)+'</b><small>'+airHtml(airDate(row.created_at))+'</small></div><p>'+airHtml(row.body)+'</p>'+
+    box.innerHTML = rows.length ?
+      '<div class="air-notification-bulk" style="display:flex;flex-wrap:wrap;align-items:center;gap:10px;padding:10px 12px;margin:10px 0;background:#f4f7fb;border:1px solid var(--line);border-radius:12px">' +
+        '<label style="display:inline-flex;align-items:center;gap:7px;font-weight:700"><input id="airNotificationsSelectAll" type="checkbox" style="width:18px;height:18px"> تحديد الكل</label>' +
+        '<span id="airNotificationsSelectedCount" class="muted" style="font-size:12px">لم يتم تحديد إشعارات</span>' +
+        '<button id="airNotificationsMarkSelected" class="light" type="button" disabled>تحديد كمقروء</button>' +
+        '<button id="airNotificationsDeleteSelected" type="button" disabled style="background:#a83232;color:white;border:0;border-radius:9px;padding:9px 13px">حذف المحدد</button>' +
+      '</div>' +
+      rows.map(row =>
+      '<article class="air-notification'+(!row.read_at?' unread':'')+'"><div class="air-notification-head"><label style="display:inline-flex;align-items:center;gap:8px;min-width:0"><input class="air-notification-select" type="checkbox" value="'+airHtml(row.id)+'" style="width:18px;height:18px;flex:0 0 auto"><b>'+airHtml(row.title)+'</b></label><small>'+airHtml(airDate(row.created_at))+'</small></div><p>'+airHtml(row.body)+'</p>'+
       ((String(row.link || '').startsWith('https://') || String(row.link || '').startsWith('http://')) ? '<a href="'+airHtml(row.link)+'" target="_blank" rel="noopener noreferrer">فتح الرابط المرتبط</a>' : '')+
-      (!row.read_at ? '<div class="actions"><button class="light" type="button" onclick="markAirNotificationRead(\''+row.id+'\')">تحديد كمقروء</button></div>' : '<small>تمت القراءة</small>')+
+      (!row.read_at ? '<div class="actions"><button class="light" type="button" data-air-notification-read="'+airHtml(row.id)+'">تحديد كمقروء</button></div>' : '<small>تمت القراءة</small>')+
       '</article>'
     ).join('') : '<p class="muted">لا توجد إشعارات حتى الآن.</p>';
+
+    const selectAll = document.getElementById('airNotificationsSelectAll');
+    const markSelected = document.getElementById('airNotificationsMarkSelected');
+    const deleteSelected = document.getElementById('airNotificationsDeleteSelected');
+    const selectedCount = document.getElementById('airNotificationsSelectedCount');
+    const updateSelection = () => {
+      const checks = [...box.querySelectorAll('.air-notification-select')];
+      const selected = checks.filter(input => input.checked);
+      if (selectAll) {
+        selectAll.checked = checks.length > 0 && selected.length === checks.length;
+        selectAll.indeterminate = selected.length > 0 && selected.length < checks.length;
+      }
+      if (selectedCount) selectedCount.textContent = selected.length ? 'تم تحديد '+selected.length+' إشعار' : 'لم يتم تحديد إشعارات';
+      if (markSelected) markSelected.disabled = !selected.length;
+      if (deleteSelected) deleteSelected.disabled = !selected.length;
+    };
+    selectAll?.addEventListener('change', () => {
+      box.querySelectorAll('.air-notification-select').forEach(input => { input.checked = selectAll.checked; });
+      updateSelection();
+    });
+    box.querySelectorAll('.air-notification-select').forEach(input => input.addEventListener('change', updateSelection));
+    markSelected?.addEventListener('click', async () => {
+      const ids = [...box.querySelectorAll('.air-notification-select:checked')].map(input => input.value);
+      await window.markAirNotificationsRead(ids);
+    });
+    deleteSelected?.addEventListener('click', async () => {
+      const ids = [...box.querySelectorAll('.air-notification-select:checked')].map(input => input.value);
+      if (!ids.length || !confirm('هل تريد حذف الإشعارات المحددة نهائيًا من حسابك؟')) return;
+      deleteSelected.disabled = true;
+      const profileNow = window.currentProfile;
+      const deletion = await client.from('notifications').delete()
+        .in('id',ids).eq('workspace_id',profileNow.workspace_id).eq('recipient_id',profileNow.user_id);
+      if (deletion.error) {
+        deleteSelected.disabled = false;
+        alert('تعذر حذف الإشعارات المحددة. حاول مرة أخرى.');
+        return;
+      }
+      await window.renderAirNotifications();
+    });
+    box.querySelectorAll('[data-air-notification-read]').forEach(button => button.addEventListener('click', async () => {
+      await window.markAirNotificationRead(button.dataset.airNotificationRead);
+    }));
+    updateSelection();
+  };
+
+  window.markAirNotificationsRead = async function(ids) {
+    const profile = window.currentProfile;
+    if (!profile?.active || !Array.isArray(ids) || !ids.length) return;
+    const result = await client.from('notifications')
+      .update({read_at:new Date().toISOString()})
+      .in('id',ids).eq('workspace_id',profile.workspace_id).eq('recipient_id',profile.user_id);
+    if (result.error) return alert('تعذر تحديد الإشعارات كمقروءة.');
+    await window.renderAirNotifications();
   };
 
   window.markAirNotificationRead = async function(id) {
