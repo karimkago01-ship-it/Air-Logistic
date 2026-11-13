@@ -926,6 +926,34 @@
   updateAirAlertControls();
 
 
+
+  function showAirChatPopup(title,body) {
+    let el=document.getElementById('airChatPopup');
+    if(!el){el=document.createElement('div');el.id='airChatPopup';el.className='air-chat-popup';el.setAttribute('role','status');document.body.appendChild(el);}
+    el.textContent='';
+    const b=document.createElement('b');b.textContent=title;
+    const span=document.createElement('span');span.textContent=body;
+    const x=document.createElement('button');x.type='button';x.textContent='×';x.onclick=()=>el.remove();
+    el.append(b,span,x);el.classList.add('visible');
+    clearTimeout(window.airChatPopupTimer);window.airChatPopupTimer=setTimeout(()=>el.classList.remove('visible'),5200);
+  }
+  window.insertAirChatEmoji=function(e){const x=$('airChatInput');if(!x)return;const p=x.selectionStart||x.value.length;x.value=x.value.slice(0,p)+e+x.value.slice(x.selectionEnd||p);x.focus();};
+  window.toggleAirChatEmoji=function(){const p=$('airChatEmojiPicker');if(p)p.hidden=!p.hidden;};
+  window.shareAirChat=async function(){const t=$('airChatInput')?.value.trim()||'محادثة فريق Air Logistic';try{if(navigator.share)await navigator.share({title:'Air Logistic',text:t});else if(navigator.clipboard){await navigator.clipboard.writeText(t);showAirChatPopup('تم النسخ','النص جاهز للمشاركة');}else showAirChatPopup('المشاركة غير متاحة','المتصفح لا يدعم المشاركة');}catch(e){if(e?.name!=='AbortError')showAirChatPopup('تعذر المشاركة','حاول مرة أخرى');}};
+  window.uploadAirChatImage=async function(file){
+    const p=window.currentProfile;if(!p?.active||!file)return;
+    if(!['image/jpeg','image/png','image/webp'].includes(file.type)||file.size>8388608){showAirChatPopup('صورة غير مدعومة','اختر JPG أو PNG أو WEBP حتى 8 ميجابايت');return;}
+    const ext=file.type==='image/png'?'png':file.type==='image/webp'?'webp':'jpg';
+    const path=p.workspace_id+'/'+p.user_id+'/'+Date.now()+'-'+Math.random().toString(36).slice(2)+'.'+ext;
+    const btn=$('airChatImageButton');if(btn)btn.disabled=true;
+    const up=await client.storage.from('air-logistic-chat-images').upload(path,file,{contentType:file.type,upsert:false});
+    if(btn)btn.disabled=false;
+    if(up.error){showAirChatPopup('فشل رفع الصورة','تحقق من الاتصال وصلاحيات الحساب');return;}
+    const ins=await client.from('chat_messages').insert({workspace_id:p.workspace_id,sender_id:p.user_id,room_key:'general',message:'[[AIR_IMAGE:'+path+']]'});
+    if(ins.error){showAirChatPopup('تعذر إرسال الصورة','فشل نشر الصورة في المحادثة');return;}
+    showAirChatPopup('تم إرسال الصورة','وصلت الصورة إلى الفريق');await window.renderAirChat();
+    try{await client.functions.invoke('air-logistic-push',{body:{broadcast_event:true,exclude_user_id:p.user_id,event_id:'chat-image-'+Date.now(),actions:[String(p.full_name||'عضو الفريق')+' أرسل صورة']}});}catch(_){}
+  };
   window.renderAirChat = async function() {
     const profile = window.currentProfile;
     const box = $('airChatMessages'), status = $('airChatStatus');
@@ -946,11 +974,19 @@
       const people = await client.from('profiles').select('user_id,full_name').in('user_id',senderIds);
       if (!people.error) senderNames = Object.fromEntries((people.data || []).map(person => [person.user_id,person.full_name]));
     }
-    box.innerHTML = rows.length ? rows.map(row => {
+    box.innerHTML = rows.length ? (await Promise.all(rows.map(async row => {
       const mine = row.sender_id === profile.user_id;
       const who = mine ? 'أنت' : (senderNames[row.sender_id] || 'عضو بالفريق');
-      return '<article class="air-chat-message'+(mine?' mine':'')+'"><div class="air-chat-meta"><b>'+who+'</b><time>'+airHtml(airDate(row.created_at))+'</time></div><div class="air-chat-text">'+airHtml(row.message)+'</div></article>';
-    }).join('') : '<p class="muted">لا توجد رسائل بعد. ابدأ أول محادثة مع الفريق.</p>';
+      const raw = String(row.message || '');
+      const isImage = raw.startsWith('[[AIR_IMAGE:') && raw.endsWith(']]');
+      let content = airHtml(raw);
+      if (isImage) {
+        const path = raw.slice(12,-2);
+        const signed = await client.storage.from('air-logistic-chat-images').createSignedUrl(path,3600);
+        content = signed.error ? '<span class="muted">تعذر تحميل الصورة</span>' : '<img class="air-chat-photo" src="'+airHtml(signed.data.signedUrl)+'" alt="صورة مرفقة" loading="lazy">';
+      }
+      return '<article class="air-chat-message'+(mine?' mine':'')+'"><div class="air-chat-meta"><b>'+airHtml(who)+'</b><time>'+airHtml(airDate(row.created_at))+'</time></div><div class="air-chat-text">'+content+'</div></article>';
+    }))).join('') : '<p class="muted">لا توجد رسائل بعد. ابدأ أول محادثة مع الفريق.</p>';
     if (status) status.textContent = rows.length ? 'آخر 150 رسالة في محادثة الفرع' : 'المحادثة جاهزة لاستقبال أول رسالة';
     box.scrollTop = box.scrollHeight;
   };
@@ -969,6 +1005,7 @@
     if (button) button.disabled = false;
     if (result.error) return alert('تعذر إرسال الرسالة. تأكد من اتصال الإنترنت وصلاحيات الحساب.');
     input.value = '';
+    showAirChatPopup('تم إرسال الرسالة','وصلت رسالتك إلى محادثة الفريق');
     await window.renderAirChat();
     // Send a background push to subscribed teammates; the sender is excluded server-side.
     try {
@@ -1147,7 +1184,7 @@
         if (typeof render === 'function') render();
       })
       .on('postgres_changes',{event:'INSERT',schema:'public',table:'chat_messages',filter:'workspace_id=eq.' + workspaceId},payload => {
-        if (payload.new) playAirChatAlert(payload.new);
+        if (payload.new) { playAirChatAlert(payload.new); if(payload.new.sender_id !== window.currentProfile.user_id){const m=String(payload.new.message||'');showAirChatPopup('رسالة جديدة من الفريق',m.startsWith('[[AIR_IMAGE:')?'أرسل صورة':m.slice(0,140));} }
         if (document.getElementById('chat') && !document.getElementById('chat').classList.contains('hidden')) window.renderAirChat();
       })
       .on('postgres_changes',{event:'INSERT',schema:'public',table:'notifications',filter:'recipient_id=eq.' + window.currentProfile.user_id},payload => {
