@@ -47,6 +47,8 @@ assert.ok(dispatch.includes('function') && dispatch.includes('ملاحظة ال�
 assert.ok(dispatch.includes('courier_user_id||\'\')===String(profile.user_id)'), 'courier manifest must scope shipments to the signed-in courier ID');
 assert.ok(dispatch.includes('const x=old?{...old,...values}:values'), 'shipment edit must preserve assignment and outcome metadata');
 assert.ok(dispatch.includes('window.renderTransfers=function()'), 'Transfers page must show dispatch rows in its activity ledger');
+assert.ok(dispatch.includes("document.getElementById('dispatchCourier')?.addEventListener('change'"), 'dispatch courier picker must refresh its metrics on selection');
+assert.ok(dispatch.includes("status.includes('لم يتم الرد')"), 'no-answer workflow states must display their recorded reason');
 assert.ok(auth.includes("String(item.courier_user_id || '')"), 'courier cloud sync must be scoped by authenticated user ID');
 assert.ok(auth.includes(".update({data:row.data,updated_by:profile.user_id})"), 'courier sync must update assigned rows without attempting an unauthorized insert');
 assert.ok(auth.includes(".eq('collection','shipments')"), 'courier sync updates must be restricted to shipment records');
