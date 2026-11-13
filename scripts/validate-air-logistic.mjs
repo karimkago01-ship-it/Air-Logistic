@@ -10,6 +10,7 @@ const sw = read('../sw.js');
 const diagnostics = read('../diagnostics.js');
 const diagnosticsMigration = read('../supabase/migrations/20261110113000_owner_only_app_diagnostics.sql');
 const auditMigration = read('../supabase/migrations/20261109051126_central_append_only_air_logistic_activity_audit.sql');
+const pushFunction = read('../supabase/functions/air-logistic-push/index.ts');
 
 new vm.Script(auth, { filename: 'auth.js' });
 new vm.Script(dispatch, { filename: 'dispatch.js' });
@@ -32,6 +33,11 @@ assert.ok(diagnosticsMigration.includes('enable row level security'), 'diagnosti
 assert.ok(diagnosticsMigration.includes('app_diagnostics_owner_read') && diagnosticsMigration.includes('app_diagnostics_owner_insert'), 'diagnostics access must be owner-only');
 assert.ok(diagnosticsMigration.includes('revoke all on public.app_diagnostics from anon, authenticated'), 'diagnostics table must not expose anonymous or broad client permissions');
 assert.ok(auth.includes('let activeAuthUser = null;'), 'auth state must be declared inside the strict-mode auth scope');
+assert.ok(auth.includes("activateSession(session,{loginEvent:event === 'SIGNED_IN'})"), 'login alerts must run only for real successful sign-in events');
+assert.ok(auth.includes("body:{login_event:true}"), 'successful sign-ins must call the protected login-alert function');
+assert.ok(pushFunction.includes('if (body.login_event === true)'), 'push function must support login alerts');
+assert.ok(pushFunction.includes('.eq("active", true)') && pushFunction.includes('.or(`role.eq.admin,user_id.eq.${ownerId}`)'), 'login alerts must target active system administrators and the protected owner only');
+assert.ok(pushFunction.includes('payload: { kind: "login_event"'), 'login alerts must be stored in the private notification inbox');
 assert.ok(auth.includes('air_logistic_recovery_v1'), 'local recovery archive must remain enabled');
 assert.ok(!auth.includes("removeItem('air_logistic_full_v1')"), 'local recovery snapshot must never be silently removed');
 assert.ok(auth.includes('resolveAirCourierUserId'), 'authenticated courier resolver must exist');
