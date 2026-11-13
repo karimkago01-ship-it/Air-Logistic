@@ -1301,6 +1301,15 @@
       await loadCloudData();
       setAuthBar(profile,session.user.email);
       unlockApp();
+      // Load the isolated courier dispatch workflow after the authenticated app shell is ready.
+      if (!document.getElementById('air-dispatch-feature-script')) {
+        const dispatchScript = document.createElement('script');
+        dispatchScript.id = 'air-dispatch-feature-script';
+        dispatchScript.src = './dispatch.js';
+        dispatchScript.async = true;
+        dispatchScript.onerror = () => console.error('Air Logistic: courier dispatch module could not be loaded.');
+        document.body.appendChild(dispatchScript);
+      }
       // Re-register this signed-in device silently when the user has already granted
       // notification permission. First-time permission still requires an explicit tap.
       if ('Notification' in window && Notification.permission === 'granted') {
