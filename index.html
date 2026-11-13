@@ -573,6 +573,17 @@ img,video,canvas,svg{max-width:100%}
 .air-clock-logo{width:44px;height:44px;flex:0 0 44px;object-fit:contain;padding:3px;background:#fff;border:1px solid #e6c76e;border-radius:10px;box-shadow:0 2px 9px #0003}
 @media(max-width:650px){.brand-copy .brand-credit{font-size:clamp(16px,4.3vw,21px);margin:5px 0}.air-clock-logo{width:34px;height:34px;flex-basis:34px}.air-datetime{gap:7px}}
 </style>
+
+<style id="air-home-shortcuts-v1">
+.air-home-shortcuts{margin:0 0 14px}
+.air-home-shortcut-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}
+.air-home-shortcut{display:flex;flex-direction:column;align-items:flex-start;gap:6px;min-height:112px;padding:15px;text-align:right;background:linear-gradient(145deg,#fff,#f4f8fd);border:1px solid #dce7f3;border-radius:13px;color:#173b60;box-shadow:0 3px 12px #173b630d}
+.air-home-shortcut>span{display:grid;place-items:center;width:34px;height:34px;border-radius:10px;background:#e8f2fc;color:#1769aa;font-size:20px}
+.air-home-shortcut b{font-size:13px}.air-home-shortcut small{font-size:10px;font-weight:500;color:#71839a;line-height:1.5}
+.air-home-shortcut-couriers>span{background:#fff2df;color:#b66a10}
+@media(max-width:680px){.air-home-shortcut-grid{grid-template-columns:repeat(3,minmax(0,1fr));gap:7px}.air-home-shortcut{min-height:105px;padding:10px 8px;gap:5px}.air-home-shortcut b{font-size:11px}.air-home-shortcut small{font-size:9px}}
+@media(max-width:360px){.air-home-shortcut-grid{grid-template-columns:1fr}.air-home-shortcut{min-height:0}}
+</style>
 </head>
 <body class="auth-locked">
 
@@ -651,6 +662,14 @@ img,video,canvas,svg{max-width:100%}
 
 <section id="home" class="page">
 <div class="grid" id="kpis"></div>
+<div class="panel air-home-shortcuts">
+ <h2>الوصول السريع</h2>
+ <div class="air-home-shortcut-grid">
+  <button class="air-home-shortcut" type="button" onclick="window.airNavigateToPage ? window.airNavigateToPage('finance') : document.querySelector('#nav button[data-page=finance]')?.click()"><span aria-hidden="true">▤</span><b>الحسابات</b><small>الملخص والحركة المالية</small></button>
+  <button class="air-home-shortcut" type="button" onclick="window.airNavigateToPage ? window.airNavigateToPage('scanner') : document.querySelector('#nav button[data-page=scanner]')?.click()"><span aria-hidden="true">⌗</span><b>الماسح</b><small>مسح الباركود وقراءة البوليصة</small></button>
+  <button class="air-home-shortcut air-home-shortcut-couriers" type="button" onclick="window.airNavigateToPage ? window.airNavigateToPage('transfers') : document.querySelector('#nav button[data-page=transfers]')?.click()"><span aria-hidden="true">🚚</span><b>شحنات المندوبين</b><small>كشف الشحنات المسندة والتحصيل</small></button>
+ </div>
+</div>
 <div class="cards2"><div class="panel"><h2>آخر الشحنات</h2><div id="recent"></div></div><div class="panel"><h2>ملخص الحسابات</h2><div id="finSummary"></div></div></div>
 </section>
 <section id="monitor" class="page hidden">
