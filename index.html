@@ -632,6 +632,19 @@ img,video,canvas,svg{max-width:100%}
 #airMobileBottomNav{grid-template-columns:repeat(5,minmax(0,1fr))}
 @media(max-width:680px){.air-portal-group{margin-top:14px}.air-portal-group>h3{font-size:12px;margin-bottom:8px}}
 </style>
+
+<style id="air-more-quick-access-v1">
+.air-more-quick{margin:0 0 18px;padding:14px;border:1px solid #e7d7b7;border-radius:16px;background:linear-gradient(125deg,#fffaf0,#fff 68%);box-shadow:0 5px 18px #8b64120b}
+.air-more-quick-head{display:flex;align-items:baseline;gap:9px;margin:0 0 11px}
+.air-more-quick-head b{font-size:14px;color:#173b60;font-weight:900}
+.air-more-quick-head small{font-size:10px;color:#8b785a}
+.air-more-quick-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:9px}
+.air-more-quick-card{display:flex;align-items:center;justify-content:flex-start;gap:8px;min-width:0;min-height:54px;padding:9px 11px;border:1px solid #ead8b6;border-radius:12px;background:#fff;color:#173b60;text-align:right;white-space:normal}
+.air-more-quick-card span{display:grid;place-items:center;flex:0 0 32px;width:32px;height:32px;border-radius:10px;background:#fff1d8;font-size:17px}
+.air-more-quick-card b{font-size:11px;line-height:1.4}
+.air-more-quick-card:focus-visible{outline:3px solid #d7a64f;outline-offset:2px}
+@media(max-width:680px){.air-more-quick{padding:11px;margin-bottom:14px}.air-more-quick-head b{font-size:12px}.air-more-quick-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:7px}.air-more-quick-card{min-height:48px;padding:7px}.air-more-quick-card b{font-size:10px}}
+</style>
 </head>
 <body class="auth-locked">
 
@@ -768,6 +781,15 @@ img,video,canvas,svg{max-width:100%}
 </section>
 <section id="portalMore" class="page hidden">
  <div class="air-portal-heading"><div><small>04 / MORE</small><h2>المزيد</h2><p>بيانات التشغيل والتواصل ومراقبة النظام والإعدادات والأدوات.</p></div><button class="light" type="button" onclick="window.airNavigateToPage('home')">الرئيسية</button></div>
+ <div class="air-more-quick">
+  <div class="air-more-quick-head"><b>وصول سريع</b><small>الأدوات الأكثر استخداماً</small></div>
+  <div class="air-more-quick-grid">
+   <button type="button" class="air-more-quick-card" data-subpage="customers" onclick="window.airNavigateToPage('customers')"><span>👥</span><b>العملاء والتجار</b></button>
+   <button type="button" class="air-more-quick-card" data-subpage="drivers" onclick="window.airNavigateToPage('drivers')"><span>🚚</span><b>المناديب</b></button>
+   <button type="button" class="air-more-quick-card" data-subpage="notifications" onclick="window.airNavigateToPage('notifications')"><span>🔔</span><b>الإشعارات</b></button>
+   <button type="button" class="air-more-quick-card" data-subpage="monitor" onclick="window.airNavigateToPage('monitor')"><span>◉</span><b>مراقبة النظام</b></button>
+  </div>
+ </div>
  <div class="air-portal-group"><h3>دليل التشغيل</h3><div class="air-portal-grid">
   <button class="air-portal-card" type="button" data-subpage="customers" onclick="window.airNavigateToPage('customers')"><span class="air-portal-card-icon">👥</span><b>العملاء والتجار</b><small>بيانات العملاء واتفاقات الشحن</small></button>
   <button class="air-portal-card" type="button" data-subpage="drivers" onclick="window.airNavigateToPage('drivers')"><span class="air-portal-card-icon">🧑‍✈️</span><b>المناديب والسائقون</b><small>الحسابات والعمولات وبيانات التواصل</small></button>
