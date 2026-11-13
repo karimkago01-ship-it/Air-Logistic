@@ -185,6 +185,19 @@
       if (realtimeChannel) { await client.removeChannel(realtimeChannel); realtimeChannel = null; }
       lockApp(); say('تم تسجيل الخروج بأمان.');
     });
+    // Couriers receive a dedicated, self-only workspace. Database RLS remains the security boundary.
+    const courierPages = new Set(['home','courierPortal','chat','notifications']);
+    document.querySelectorAll('#nav button[data-page]').forEach(button => {
+      if (profile.role === 'courier' && !courierPages.has(button.dataset.page)) {
+        if (button.dataset.airCourierHidden !== '1') button.dataset.airCourierPreviousDisplay = button.style.display || '';
+        button.dataset.airCourierHidden = '1';
+        button.style.display = 'none';
+      } else if (button.dataset.airCourierHidden === '1') {
+        button.style.display = button.dataset.airCourierPreviousDisplay || '';
+        delete button.dataset.airCourierHidden;
+        delete button.dataset.airCourierPreviousDisplay;
+      }
+    });
     const nav = document.querySelector('#nav button[data-page="accountRequests"]');
     if (nav) nav.style.display = isOwnerAccount(profile) ? '' : 'none';
     const rolesNav = document.querySelector('#nav button[data-page="roles"]');
