@@ -887,7 +887,7 @@
       workspace_id:profile.workspace_id, recipient_id:x.user_id,
       title, body, payload:{kind:'team_announcement'}
     }));
-    const result = await client.from('notifications').insert(rows).select('id');
+    const result = await client.from('notifications').insert(rows);
     if (button) button.disabled = false;
     if (result.error) return alert('تعذر إرسال التنبيه. راجع صلاحيات المدير واتصال الإنترنت.');
     $('airAnnouncementForm').reset();
