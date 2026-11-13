@@ -756,6 +756,61 @@
       oscillator.start(); oscillator.stop(airAlertAudio.currentTime + 0.34);
     } catch (error) { console.warn('Air Logistic alert sound:',error); }
   }
+  // Stronger dedicated sound for each incoming team chat message.
+  let airChatAlertLastId = null;
+  function playAirChatAlert(messageRow) {
+    const profile = window.currentProfile;
+    if (!profile?.active || !messageRow || messageRow.sender_id === profile.user_id) return;
+    const messageId = String(messageRow.id || '');
+    if (messageId && messageId === airChatAlertLastId) return;
+    airChatAlertLastId = messageId || airChatAlertLastId;
+    if (airAlertPrefs.sound) {
+      try {
+        const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+        if (AudioContextClass) {
+          airAlertAudio = airAlertAudio || new AudioContextClass();
+          if (airAlertAudio.state === 'suspended') airAlertAudio.resume();
+          const now = airAlertAudio.currentTime;
+          // Three clear, higher-volume notes distinguish chat from routine alerts.
+          [988,784,1046].forEach((frequency,index) => {
+            const start = now + index * 0.19;
+            const oscillator = airAlertAudio.createOscillator();
+            const gain = airAlertAudio.createGain();
+            oscillator.type = 'triangle';
+            oscillator.frequency.setValueAtTime(frequency,start);
+            gain.gain.setValueAtTime(0.0001,start);
+            gain.gain.exponentialRampToValueAtTime(0.42,start + 0.025);
+            gain.gain.setValueAtTime(0.42,start + 0.11);
+            gain.gain.exponentialRampToValueAtTime(0.0001,start + 0.17);
+            oscillator.connect(gain); gain.connect(airAlertAudio.destination);
+            oscillator.start(start); oscillator.stop(start + 0.18);
+          });
+        }
+      } catch (error) { console.warn('Air Logistic chat alert sound:',error); }
+    }
+    if (airAlertPrefs.vibration && navigator.vibrate) {
+      try { navigator.vibrate([220,80,220,80,320]); } catch (_) {}
+    }
+  }
+  // Mobile browsers require a user gesture before audio can play.
+  const unlockAirChatAudio = () => {
+    try {
+      const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+      if (AudioContextClass) {
+        airChatAudioContextUnlock();
+      }
+    } catch (_) {}
+  };
+  function airChatAudioContextUnlock() {
+    const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+    if (!AudioContextClass) return;
+    airAlertAudio = airAlertAudio || new AudioContextClass();
+    if (airAlertAudio.state === 'suspended') airAlertAudio.resume().catch(() => {});
+  }
+  ['pointerdown','touchstart','keydown'].forEach(type =>
+    document.addEventListener(type,unlockAirChatAudio,{once:true,passive:true})
+  );
+
   function updateAirAlertControls() {
     const sound = $('airAlertSound'), vibration = $('airAlertVibration'), permission = $('airAlertPermission');
     if (sound) sound.checked = !!airAlertPrefs.sound;
@@ -1077,6 +1132,7 @@
         if (typeof render === 'function') render();
       })
       .on('postgres_changes',{event:'INSERT',schema:'public',table:'chat_messages',filter:'workspace_id=eq.' + workspaceId},payload => {
+        if (payload.new) playAirChatAlert(payload.new);
         if (document.getElementById('chat') && !document.getElementById('chat').classList.contains('hidden')) window.renderAirChat();
       })
       .on('postgres_changes',{event:'INSERT',schema:'public',table:'notifications',filter:'recipient_id=eq.' + window.currentProfile.user_id},payload => {
