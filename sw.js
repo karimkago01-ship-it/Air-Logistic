@@ -41,7 +41,8 @@ self.addEventListener("push", event => {
     image: brandLogo,
     badge: brandLogo,
     tag: String(data.tag || "air-logistic-update"),
-    renotify: false,
+    renotify: true,
+    vibrate: [220,80,220,80,320],
     data: { url: data.url || "./" }
   };
   event.waitUntil(self.registration.showNotification(title, options));
