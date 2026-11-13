@@ -1514,7 +1514,7 @@ function renderTransfers(){
     ].map(x=>'<div class="kpi"><small>'+x[0]+'</small><strong>'+x[1]+'</strong></div>').join('')+'</div>'+
     '<p><b>المتبقي للتحصيل من الشحنات المفتوحة:</b> '+money(outstanding)+' | <b>فرق العهدة قبل العمولة:</b> '+money(custodyBalance)+'</p>'+
     '<div class="recent-meta"><b>الحالات في الرحلة:</b> '+(journeyRows||'لا توجد حركات مسجلة')+'</div>'+
-    '<div class="recent-meta"><b>تعليمات المندوب:</b> '+esc(instructionText||'لا توجد تعليمات خاصة مسجلة')+'</div>'+
+    '<div class="recent-meta"><b>تعليمات المندوب:</b> '+esc(instructionText||'لا توجد تعليمات خاصة مسجلة')+'</div>'+(profile.role==='admin'?'<button class="light" type="button" onclick="editCourierInstructions(\''+encodeURIComponent(d.name)+'\')">تعديل تعليمات المندوب</button>':'')+
     (policyText?'<div class="recent-meta"><b>تعليمات التشغيل العامة:</b> '+esc(policyText)+'</div>':'')+
     '<details><summary>تفاصيل الشحنات ومسار كل شحنة ('+shipments.length+')</summary><div class="tablewrap"><table><thead><tr><th>رقم الشحنة</th><th>العميل</th><th>الحالة</th><th>COD</th><th>المحصل</th><th>ملاحظة / سبب</th><th>آخر حركة</th></tr></thead><tbody>'+(journey||'<tr><td colspan="7">لا توجد شحنات مسندة.</td></tr>')+'</tbody></table></div></details>'+
     '<p class="muted">التسوية تقديرية من بيانات الشحنات والتوريدات المسجلة: صافي العهدة = المحصل − التوريدات − عمولة الشحنات المسلّمة. راجع الإيصالات قبل اعتماد أي مبلغ نهائي.</p></div>';
@@ -1524,6 +1524,17 @@ function renderTransfers(){
  if(!host)return;
  if(!list.length){host.innerHTML='<p class="muted">لا توجد تحويلات مسجلة.</p>';return}
  host.innerHTML='<table><thead><tr><th>رقم الشحنة</th><th>من مندوب</th><th>إلى مندوب</th><th>السبب</th><th>التاريخ والوقت</th><th>إجراء</th></tr></thead><tbody>'+list.map((t,i)=>`<tr><td>${esc(t.shipmentId)}</td><td>${esc(t.fromAgent||'—')}</td><td>${esc(t.toAgent)}</td><td>${esc(t.reason)}</td><td>${esc(new Date(t.at).toLocaleString('ar-EG'))}</td><td><button class="light" type="button" onclick="editTransfer(${i})">تعديل التوزيع</button></td></tr>`).join('')+'</tbody></table>';
+}
+function editCourierInstructions(encodedName){
+ const profile=window.currentProfile||{};
+ if(profile.role!=='admin'){alert('تعديل التعليمات متاح للمدير فقط.');return}
+ const name=decodeURIComponent(encodedName||'');
+ const driver=(db.drivers||[]).find(d=>d.name===name);if(!driver)return;
+ const next=prompt('تعليمات المندوب '+name+':',driver.instructions||'');
+ if(next===null)return;
+ driver.instructions=next.trim();
+ audit('تعديل تعليمات مندوب',name);
+ save();renderTransfers();toast('تم حفظ تعليمات المندوب');
 }
 async function editTransfer(index){
  const t=(db.transfers||[])[index];if(!t)return;
