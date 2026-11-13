@@ -828,6 +828,62 @@
   window.renderAirNotifications = async function() {
     const profile = window.currentProfile;
     const box = $('airNotificationList'), status = $('airNotificationStatus');
+    const notificationPage = $('notifications');
+    const canReviewGrace = profile?.user_id === IDENTITY_GRACE_APPROVER_USER_ID && profile?.role === 'admin';
+    let gracePanel = document.getElementById('airGraceRequestsPanel');
+    if (canReviewGrace && notificationPage) {
+      if (!gracePanel) {
+        gracePanel = document.createElement('section');
+        gracePanel.id = 'airGraceRequestsPanel';
+        gracePanel.className = 'panel';
+        gracePanel.style.cssText = 'border:2px solid #d8a33b;background:#fffdf7;margin-bottom:14px';
+        notificationPage.insertBefore(gracePanel, notificationPage.firstElementChild);
+      }
+      gracePanel.style.display = 'block';
+      gracePanel.innerHTML = '<h2>طلبات مهلة 15 يوم — تحتاج موافقتك</h2><p class="muted">طلبات الموظفين التي تنتظر اعتمادك تظهر هنا مباشرة، دون الحاجة إلى فتح شاشة المستندات.</p><div id="airGraceRequestsList">جارٍ تحميل الطلبات...</div>';
+      const pendingGrace = await client.from('identity_access_requests')
+        .select('id,user_id,requested_at')
+        .eq('workspace_id',profile.workspace_id)
+        .eq('status','requested')
+        .order('requested_at',{ascending:false})
+        .limit(100);
+      const list = document.getElementById('airGraceRequestsList');
+      if (pendingGrace.error) {
+        if (list) list.textContent = 'تعذر تحميل طلبات المهلة. تحقق من الاتصال والصلاحيات.';
+      } else if (list) {
+        const requests = pendingGrace.data || [];
+        const ids = [...new Set(requests.map(request => request.user_id))];
+        let names = new Map();
+        if (ids.length) {
+          const people = await client.from('profiles').select('user_id,full_name')
+            .eq('workspace_id',profile.workspace_id).in('user_id',ids);
+          if (!people.error) names = new Map((people.data || []).map(person => [person.user_id,person.full_name || 'حساب']));
+        }
+        list.innerHTML = requests.length ? requests.map(request =>
+          '<article style="border:1px solid #e7d8b2;border-radius:10px;padding:11px;margin:8px 0;background:white"><b>' +
+          identityEscape(names.get(request.user_id) || 'حساب') +
+          '</b><div style="font-size:12px;color:#65758a;margin:4px 0">طلب مهلة 15 يوم · ' +
+          identityEscape(new Date(request.requested_at).toLocaleString('ar-EG')) +
+          '</div><div style="display:flex;gap:8px;flex-wrap:wrap"><button type="button" data-air-grace-approve="' +
+          identityEscape(request.id) +
+          '" style="background:#176b46;color:#fff;border:0;border-radius:8px;padding:9px 13px">موافقة 15 يوم</button><button type="button" data-air-grace-reject="' +
+          identityEscape(request.id) +
+          '" style="background:#a83232;color:#fff;border:0;border-radius:8px;padding:9px 13px">رفض</button></div></article>'
+        ).join('') : '<p class="muted">لا توجد طلبات مهلة معلقة حاليًا.</p>';
+        list.querySelectorAll('[data-air-grace-approve]').forEach(button => button.addEventListener('click', async () => {
+          button.disabled = true;
+          await reviewIdentityGrace(button.dataset.airGraceApprove,'approved');
+          await window.renderAirNotifications();
+        }));
+        list.querySelectorAll('[data-air-grace-reject]').forEach(button => button.addEventListener('click', async () => {
+          button.disabled = true;
+          await reviewIdentityGrace(button.dataset.airGraceReject,'rejected');
+          await window.renderAirNotifications();
+        }));
+      }
+    } else if (gracePanel) {
+      gracePanel.style.display = 'none';
+    }
     if (!profile?.active || !box) return;
     const canBroadcast = isOwnerAccount(profile) && profile.role === 'admin';
     $('airAnnouncementPanel')?.classList.toggle('hidden',!canBroadcast);
