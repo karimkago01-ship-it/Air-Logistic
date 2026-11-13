@@ -187,8 +187,9 @@
     });
     // Couriers receive a dedicated, self-only workspace. Database RLS remains the security boundary.
     const courierPages = new Set(['home','courierPortal','chat','notifications']);
-    document.querySelectorAll('#nav button[data-page]').forEach(button => {
-      if (profile.role === 'courier' && !courierPages.has(button.dataset.page)) {
+    document.querySelectorAll('#nav button[data-page],#airMobileBottomNav button[data-mobile-page]').forEach(button => {
+      const page = button.dataset.page || button.dataset.mobilePage;
+      if (profile.role === 'courier' && !courierPages.has(page)) {
         if (button.dataset.airCourierHidden !== '1') button.dataset.airCourierPreviousDisplay = button.style.display || '';
         button.dataset.airCourierHidden = '1';
         button.style.display = 'none';
