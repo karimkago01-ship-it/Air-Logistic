@@ -35,7 +35,9 @@ assert.ok(auth.includes('let activeAuthUser = null;'), 'auth state must be decla
 assert.ok(auth.includes('air_logistic_recovery_v1'), 'local recovery archive must remain enabled');
 assert.ok(!auth.includes("removeItem('air_logistic_full_v1')"), 'local recovery snapshot must never be silently removed');
 assert.ok(auth.includes('resolveAirCourierUserId'), 'authenticated courier resolver must exist');
-assert.ok(dispatch.includes('id=\'airDispatchPanel\''), 'courier bulk dispatch portal must exist inside the Transfers section');
+assert.ok(auth.includes("const courierPages = new Set(['home','courierPortal','chat','notifications'])"), 'courier accounts must be restricted to their dedicated app pages');
+assert.ok(auth.includes("#airMobileBottomNav button[data-mobile-page]"), 'courier restrictions must also cover mobile navigation');
+assert.ok(dispatch.includes('airDispatchPanel'), 'courier bulk dispatch portal must exist inside the Transfers section');
 assert.ok(dispatch.includes('window.resolveAirCourierUserId(target)'), 'dispatch must resolve the authenticated courier account before assignment');
 assert.ok(dispatch.includes('dispatchBatchId=batchId'), 'bulk dispatch must persist a batch reference on each issued shipment');
 assert.ok(dispatch.includes('type:\'صرف شحنة للمندوب\''), 'bulk dispatch must create an auditable transfer ledger row');
