@@ -975,9 +975,15 @@
       return;
     }
     const rows = result.data || [];
-    const navButton = document.querySelector('#nav button[data-page="notifications"]');
-    if (navButton && rows.every(x => !!x.read_at)) { navButton.dataset.hasUnread = 'false'; navButton.querySelector('.air-unread-dot')?.remove(); }
     const unread = rows.filter(x => !x.read_at).length;
+    const navButton = document.querySelector('#nav button[data-page="notifications"]');
+    if (navButton) {
+      const hasUnread = unread > 0;
+      navButton.dataset.hasUnread = String(hasUnread);
+      const dot = navButton.querySelector('.air-unread-dot');
+      if (hasUnread && !dot) navButton.insertAdjacentHTML('beforeend','<span class="air-unread-dot">جديد</span>');
+      else if (!hasUnread) dot?.remove();
+    }
     if (status) status.textContent = 'لديك '+unread+' إشعار غير مقروء من أصل '+rows.length;
     box.innerHTML = rows.length ? rows.map(row =>
       '<article class="air-notification'+(!row.read_at?' unread':'')+'"><div class="air-notification-head"><b>'+airHtml(row.title)+'</b><small>'+airHtml(airDate(row.created_at))+'</small></div><p>'+airHtml(row.body)+'</p>'+

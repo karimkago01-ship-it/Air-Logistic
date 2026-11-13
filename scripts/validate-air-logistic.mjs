@@ -37,6 +37,9 @@ assert.ok(auth.includes("String(item.courier_user_id || '')"), 'courier cloud sy
 assert.ok(auth.includes(".update({data:row.data,updated_by:profile.user_id})"), 'courier sync must update assigned rows without attempting an unauthorized insert');
 assert.ok(auth.includes(".eq('collection','shipments')"), 'courier sync updates must be restricted to shipment records');
 assert.ok(auth.includes("result.data.length !== 1"), 'courier sync must detect when RLS prevents the assigned shipment update');
+assert.ok(auth.includes('const hasUnread = unread > 0;'), 'notification inbox must restore unread state from the server when the app opens');
+assert.ok(auth.includes("navButton.insertAdjacentHTML('beforeend','<span class=\"air-unread-dot\">جديد</span>')"), 'unread notifications must display the navigation badge without requiring a push event');
+assert.ok(auth.includes('else if (!hasUnread) dot?.remove();'), 'the unread navigation badge must clear after all notifications are read');
 
 assert.ok(html.includes("shipForm').onsubmit=async"), 'shipment save must resolve courier account before saving');
 assert.ok(html.includes('async function commitImport()'), 'bulk import must resolve courier accounts before saving');
