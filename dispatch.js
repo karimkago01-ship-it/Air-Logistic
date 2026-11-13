@@ -76,7 +76,7 @@ window.shipmentOutcomeNote=function(s){
   const amount=Number(s.refusalPaidAmount)||0;
   return reason+' — '+(amount>0?'تم الدفع: '+moneyFmt(amount):'لم يتم تحصيل مبلغ');
  }
- if(status.includes('مؤجل')||status.includes('تأجيل'))return String(s.failureReason||s.outcomeReason||'لم يتم تسجيل سبب التأجيل');
+ if(status.includes('مؤجل')||status.includes('تأجيل')||status.includes('لم يتم الرد'))return String(s.failureReason||s.outcomeReason||'لم يتم تسجيل سبب التأجيل أو عدم الرد');
  return '';
 };
 
@@ -183,6 +183,7 @@ document.getElementById('dispatchList')?.addEventListener('change',event=>{
 document.getElementById('dispatchSelectVisible')?.addEventListener('click',()=>selectVisible(true));
 document.getElementById('dispatchClearVisible')?.addEventListener('click',()=>selectVisible(false));
 document.getElementById('dispatchSearch')?.addEventListener('input',()=>window.renderDispatchPortal());
+document.getElementById('dispatchCourier')?.addEventListener('change',()=>window.renderDispatchPortal());
 
 document.getElementById('dispatchSubmit')?.addEventListener('click',async()=>{
  const profile=window.currentProfile;
