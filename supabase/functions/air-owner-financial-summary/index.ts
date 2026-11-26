@@ -5,7 +5,8 @@ const AIR_URL = Deno.env.get("SUPABASE_URL") ?? "";
 const AIR_SERVICE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "";
 const OWNER_URL = "https://pfvlspauxehshkrzidoc.supabase.co";
 const OWNER_PUBLISHABLE_KEY = "sb_publishable_-WoB_agEAKTo3YmX9RfjOw_9cKN_fr7";
-const OWNER_USER_ID = "0e7fe9b5-bc54-403b-9884-ad1facf5efe0";
+const OWNER_CONSOLE_USER_ID = "dab35ee3-372a-40ac-8d2b-a895ade6986d";
+const AIR_OWNER_USER_ID = "0e7fe9b5-bc54-403b-9884-ad1facf5efe0";
 const SETTING_KEY = "air_logistic_financial_integration";
 const ALLOWED_ORIGINS = new Set([
   "https://abo-rizq-owner-console.pages.dev",
@@ -94,14 +95,14 @@ Deno.serve(async (req: Request) => {
   });
   const { data: userData, error: userError } = await ownerClient.auth.getUser(ownerJwt);
   const user = userData?.user;
-  if (userError || !user || user.id !== OWNER_USER_ID) return reply({ error: "Owner identity rejected" }, 403, origin);
+  if (userError || !user || user.id !== OWNER_CONSOLE_USER_ID) return reply({ error: "Owner identity rejected" }, 403, origin);
   const { data: assurance, error: assuranceError } = await ownerClient.auth.mfa.getAuthenticatorAssuranceLevel();
   if (assuranceError || assurance?.currentLevel !== "aal2") return reply({ error: "Owner MFA required" }, 403, origin);
   const { data: ownerSnapshot, error: snapshotError } = await ownerClient.rpc("ar_owner_console_snapshot");
   if (snapshotError ||
       ownerSnapshot?.owner?.authenticated !== true ||
       ownerSnapshot?.owner?.identity_verified !== true ||
-      ownerSnapshot?.owner?.user_id !== OWNER_USER_ID) {
+      ownerSnapshot?.owner?.user_id !== OWNER_CONSOLE_USER_ID) {
     return reply({ error: "Owner authorization failed" }, 403, origin);
   }
 
@@ -120,7 +121,7 @@ Deno.serve(async (req: Request) => {
   const { data: airOwner, error: profileError } = await admin
     .from("profiles")
     .select("workspace_id,role,active")
-    .eq("user_id", OWNER_USER_ID)
+    .eq("user_id", AIR_OWNER_USER_ID)
     .maybeSingle();
   if (profileError || !airOwner || airOwner.role !== "admin" || airOwner.active !== true) {
     return reply({ error: "Air Logistic owner account is not active" }, 403, origin);
